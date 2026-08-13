@@ -1,0 +1,30 @@
+<header class="header">
+
+    <button class="navbar-icon-btn sidebar-hamburger" id="sidebarToggleBtn" aria-label="Abrir menú">☰</button>
+
+    <div class="header-logo">
+
+        <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Logo">
+
+    </div>
+
+    <div class="header-titulo">
+
+        Nuestro Portal de Empleo
+
+    </div>
+
+    <div class="header-usuario">
+
+        <div>
+            <strong>{{ current_user.nombres }}</strong>
+        </div>
+
+        <!--
+        <img src="{{ url_for('static', filename='img/user.png') }}"
+             class="foto-usuario">
+        -->
+
+    </div>
+
+</header>

@@ -1,0 +1,211 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Principal Usuario
+{% endblock %}
+
+{% block contenido %}
+
+    <div class="contenedor-padre">
+        <div class="contenedor-formulario">
+            <div class="titulo-personal">
+                <h2>Información Personal</h2>
+            </div>
+
+            <!-- Mostrar mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" novalidate>
+
+                {{ form.hidden_tag() }}
+
+                <div class="form-grid">
+
+                    <div class="campo">
+                        {{ form.nombres.label }}
+                        {{ form.nombres(class="form-control") }}
+                        {% for error in form.nombres.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.apellidos.label }}
+                        {{ form.apellidos(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.tipo_doc.label }}
+                        {{ form.tipo_doc(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.num_doc.label }}
+                        {{ form.num_doc(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.fecha_exp_doc.label }}
+                        {{ form.fecha_exp_doc(
+                                class="form-control",
+                                type="date"
+                        ) }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.fecha_nacimiento.label }}
+                        {{ form.fecha_nacimiento(
+                                class="form-control",
+                                type="date"
+                        ) }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.genero.label }}
+                        {{ form.genero(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.email.label }}
+                        {{ form.email(class="form-control") }}
+                        {% for error in form.email.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.num_cel.label }}
+                        {{ form.num_cel(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.num_cel_dos.label }}
+                        {{ form.num_cel_dos(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.grupo_etnico.label }}
+                        {{ form.grupo_etnico(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.nacionalidad.label }}
+                        {{ form.nacionalidad(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.departamento.label }}
+                        {{ form.departamento(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.municipio.label }}
+                        {{ form.municipio(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.barrio.label }}
+                        {{ form.barrio(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo campo-completo">
+                        {{ form.direccion.label }}
+                        {{ form.direccion(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.vive_rural.label }}
+                        {{ form.vive_rural(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.estado_civil.label }}
+                        {{ form.estado_civil(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.personas_cargo.label }}
+                        {{ form.personas_cargo(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="form-botones">
+
+                    <button type="submit" class="btn-primary">
+                        Guardar Información
+                    </button>
+
+                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+{% endblock %}

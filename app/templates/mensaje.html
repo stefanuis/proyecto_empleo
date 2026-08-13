@@ -1,0 +1,67 @@
+<!-- verification_email_compact.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verifica tu cuenta</title>
+</head>
+<body style="margin:0;padding:20px;background:#F5F5F5;font-family:'DM Sans',Arial,sans-serif;">
+    <table cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #E0E0E0;">
+        <tr>
+            <td style="background:#d9d9d9;padding:24px 30px;text-align:center;">
+                <img src="cid:logo_color"
+                    alt="Clínica Panamericana"
+                    style="max-width:220px;height:auto;">
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:35px 30px;">
+                <h2 style="font-size:20px;font-weight:600;color:#212121;margin:0 0 12px 0;">
+                    ¡Hola, {{ nombres }}!
+                </h2>
+                
+                <p style="font-size:14px;line-height:1.6;color:#757575;margin:0 0 16px 0;">
+                    Gracias por registrarte en <strong style="color:#212121;">Bolsa de Empleo</strong>. 
+                    Verifica tu correo electrónico para activar tu cuenta.
+                </p>
+                
+                <div style="background:#FCE4EC;border:1px solid #F06292;border-radius:10px;padding:24px;text-align:center;margin:24px 0;">
+                    <div style="font-size:48px;display:block;margin-bottom:12px;">✉️</div>
+                    <h3 style="color:#D81B60;font-size:16px;font-weight:600;margin:0 0 8px 0;">
+                        Verifica tu cuenta
+                    </h3>
+                    <p style="color:#757575;font-size:13px;margin:0 0 16px 0;">
+                        Haz clic en el botón para activar tu cuenta.
+                    </p>
+                    <a href="{{ enlace }}" style="display:inline-block;background:#D81B60;color:#ffffff;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
+                        Verificar mi cuenta
+                    </a>
+                </div>
+                
+                <p style="font-size:13px;color:#9e9e9e;text-align:center;margin:0 0 16px 0;">
+                    ⏱️ Este enlace expirará en <strong>{{ minutos }} minutos</strong>
+                </p>
+                
+                <div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:6px;padding:12px 16px;margin-top:16px;">
+                    <p style="font-size:12px;color:#E65100;margin:0;">
+                        💡 Si no ves el botón, copia este enlace en tu navegador:
+                    </p>
+                    <p style="font-size:11px;color:#757575;word-break:break-all;margin-top:4px;">
+                        {{ enlace }}
+                    </p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="background:#F5F5F5;padding:20px 30px;text-align:center;border-top:1px solid #E0E0E0;">
+                <p style="font-size:12px;color:#757575;margin:4px 0;">
+                    <strong>Clinica Panamericana</strong>
+                </p>
+                <p style="font-size:11px;color:#9e9e9e;margin:4px 0;">
+                    © 2026 Clinica Panamericana. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Bolsa de Empleo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ppal.css') }}">
+    <style>
+        /* Estilos adicionales específicos para la página de registro */
+        .register-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-soft) 0%, #fff 100%);
+            padding: 40px 20px;
+        }
+        
+        .register-container {
+            max-width: 620px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        
+        .register-header h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 32px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        
+        .register-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: var(--bg-soft);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .strength-text {
+            font-size: 10px;
+            margin-top: 4px;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 640px) {
+            .register-page {
+                padding: 20px 16px;
+            }
+            
+            [style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+                gap: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="register-page">
+    <div class="register-container">
+        <div class="register-header">
+            <h1>Crear cuenta</h1>
+            <p>Únete a nuestra comunidad profesional</p>
+        </div>
+
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+            <form method="POST" action="{{ url_for('web.registro') }}" novalidate id="registroForm">
+                {{ form.hidden_tag() }}
+                
+                <!-- Nombres y Apellidos -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        {{ form.nombres.label(class="form-label") }}
+                        {{ form.nombres(class="form-control" + (" is-invalid" if form.nombres.errors else ""), 
+                                       placeholder="Nombres", id="nombres") }}
+                        {% for error in form.nombres.errors %}
+                            <div class="form-error">❌ {{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.apellidos.label(class="form-label") }}
+                        {{ form.apellidos(class="form-control" + (" is-invalid" if form.apellidos.errors else ""), 
+                                       placeholder="Apellidos", id="apellidos") }}
+                        {% for error in form.apellidos.errors %}
+                            <div class="form-error">❌ {{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), 
+                               placeholder="correo@ejemplo.com", id="email") }}
+                    <div class="form-hint">
+                        <span id="emailHint">✉️ Te enviaremos un enlace de verificación</span>
+                    </div>
+                    {% for error in form.email.errors %}
+                        <div class="form-error">❌ {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Teléfono -->
+                <div class="form-group">
+                    {{ form.telefono.label(class="form-label") }}
+                    {{ form.telefono(class="form-control" + (" is-invalid" if form.telefono.errors else ""), 
+                               placeholder="300 1234567", id="telefono") }}
+                    {% for error in form.telefono.errors %}
+                        <div class="form-error">❌ {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Contraseña -->
+                <div class="form-group">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), 
+                               placeholder="Crea una contraseña segura", id="password") }}
+                    <div class="password-strength">
+                        <div class="strength-bar" id="strengthBar"></div>
+                    </div>
+                    <div class="strength-text" id="strengthText"></div>
+                    <div class="form-hint">
+                        🔐 Requisitos: mínimo 6 caracteres, 1 mayúscula, 1 minúscula y 1 número.
+                    </div>
+                    {% for error in form.password.errors %}
+                        <div class="form-error">❌ {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Confirmar contraseña -->
+                <div class="form-group">
+                    {{ form.confirm_password.label(class="form-label") }}
+                    {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), 
+                               placeholder="Repite la contraseña", id="confirmPassword") }}
+                    <div class="form-hint" id="passwordMatchHint"></div>
+                    {% for error in form.confirm_password.errors %}
+                        <div class="form-error">❌ {{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                {% if form.terms.errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.terms.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-check" style="margin: 20px 0;">
+                    {{ form.terms(class="form-check-input") }}
+
+                    <label for="{{ form.terms.id }}" class="form-check-label">
+                        Acepto los
+                        <a href="#" style="color: var(--primary);">
+                            términos y condiciones
+                        </a>
+                        y la
+                        <a href="#" style="color: var(--primary);">
+                            política de privacidad
+                        </a>
+                    </label>
+                </div>
+
+                <!-- Botón registro -->
+                <button type="submit" class="btn-primary" id="submitBtn" 
+                        style="width: 100%; justify-content: center; padding: 12px;">
+                    <span id="btnText">Registrarse</span>
+                    <span id="btnSpinner" style="display: none;">⏳</span>
+                </button>
+
+                <!-- Enlace a login -->
+                <div style="text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <span style="color: var(--text-secondary);">¿Ya tienes cuenta?</span>
+                    <a href="{{ url_for('web.login') }}" style="color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 6px;">
+                        Iniciar sesión
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info verificación -->
+        <div style="text-align: center; margin-top: 20px;">
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--bg-main); padding: 8px 16px; border-radius: 40px; font-size: 12px; color: var(--text-secondary);">
+                <span>🔒</span>
+                <span>Tus datos están seguros</span>
+                <span>✓</span>
+                <span>Verificación por email</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Medidor de fortaleza de contraseña
+        const passwordInput = document.getElementById('password');
+        const confirmInput = document.getElementById('confirmPassword');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        const matchHint = document.getElementById('passwordMatchHint');
+
+        function checkPasswordStrength(password) {
+            let score = 0;
+            if (password.length >= 6) score++;
+            if (password.length >= 8) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            
+            return score;
+        }
+
+        function updateStrength() {
+            const password = passwordInput.value;
+            const score = checkPasswordStrength(password);
+            
+            let width = 0;
+            let color = '#e0e0e0';
+            let text = '';
+            
+            if (password.length === 0) {
+                width = 0;
+                text = '';
+            } else if (score <= 2) {
+                width = 25;
+                color = '#f44336';
+                text = '🔴 Débil';
+            } else if (score <= 4) {
+                width = 50;
+                color = '#ff9800';
+                text = '🟡 Regular';
+            } else if (score <= 5) {
+                width = 75;
+                color = '#2196f3';
+                text = '🔵 Buena';
+            } else {
+                width = 100;
+                color = '#4caf50';
+                text = '🟢 Fuerte';
+            }
+            
+            strengthBar.style.width = width + '%';
+            strengthBar.style.backgroundColor = color;
+            strengthText.textContent = text;
+            
+            checkMatch();
+        }
+        
+        function checkMatch() {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+            
+            if (confirm.length > 0) {
+                if (password === confirm) {
+                    matchHint.innerHTML = '✓ Las contraseñas coinciden';
+                    matchHint.style.color = '#2E7D32';
+                } else {
+                    matchHint.innerHTML = '✗ Las contraseñas no coinciden';
+                    matchHint.style.color = '#C62828';
+                }
+            } else {
+                matchHint.innerHTML = '';
+            }
+        }
+        
+        passwordInput.addEventListener('input', updateStrength);
+        confirmInput.addEventListener('input', checkMatch);
+        
+        // Validación en tiempo real del email
+        const emailInput = document.getElementById('email');
+        const emailHint = document.getElementById('emailHint');
+        
+        emailInput.addEventListener('input', function() {
+            const email = this.value;
+            const emailRegex = /^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/;
+            if (email.length > 0 && !emailRegex.test(email)) {
+                emailHint.innerHTML = '⚠️ Ingresa un correo electrónico válido';
+                emailHint.style.color = '#C62828';
+            } else if (email.length > 0) {
+                emailHint.innerHTML = '✓ Correo válido';
+                emailHint.style.color = '#2E7D32';
+            } else {
+                emailHint.innerHTML = '✉️ Te enviaremos un enlace de verificación';
+                emailHint.style.color = 'var(--text-secondary)';
+            }
+        });
+        
+        // Prevenir envío doble
+        const form = document.getElementById('registroForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        
+        form.addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'inline';
+            submitBtn.style.opacity = '0.7';
+        });
+    </script>
+</body>
+</html>

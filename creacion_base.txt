@@ -1,0 +1,219 @@
+# Creacion del usuario
+CREATE USER 'hojero'@'%' IDENTIFIED BY 'estaEsmiSeguridad2025*';
+
+# Darle permiso solo a la base hojas
+GRANT ALL PRIVILEGES ON hojas.* TO 'hojero'@'%';
+FLUSH PRIVILEGES;
+
+
+# Creacion de las tablas de la base de datos.
+
+CREATE TABLE tbl_usuario (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    nombres VARCHAR(100),
+    apellidos VARCHAR(100),
+    correo VARCHAR(150) NOT NULL UNIQUE,
+    telefono VARCHAR(20),
+    clave_hash VARCHAR(255) NOT NULL,
+    esta_activa BOOLEAN DEFAULT TRUE,
+    esta_verificada BOOLEAN DEFAULT FALSE,
+    fecha_creacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    ultimo_login DATETIME,
+    rol VARCHAR(50),
+    ultima_actualizacion DATETIME,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_info_personal (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    nombres VARCHAR(100),
+    apellidos VARCHAR(100),
+    tipo_doc VARCHAR(10),
+    num_doc VARCHAR(30),
+    fecha_exp_doc DATETIME,
+    fecha_nacimiento DATETIME,
+    genero VARCHAR(20),
+    email VARCHAR(150),
+    num_cel VARCHAR(20),
+    num_cel_dos VARCHAR(20),
+    grupo_etnico VARCHAR(100),
+    pais VARCHAR(50),
+    departamento VARCHAR(50),
+    municipio VARCHAR(50),
+    barrio VARCHAR(50),
+    direccion VARCHAR(100),
+    nacionalidad VARCHAR(50),
+    vive_rural VARCHAR(10),
+    estado_civil VARCHAR(20),
+    personas_cargo INT(11),
+    ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    ruta_foto_perfil VARCHAR(240),
+    ruta_foto_doc VARCHAR(240),
+
+    PRIMARY KEY (id),
+    CONSTRAINT fk_info_personal_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_contacto (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    nombre VARCHAR(100),
+    apellido VARCHAR(100),
+    parentesco VARCHAR(20),
+    numero VARCHAR(20),
+    mun_residencia VARCHAR(50),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    CONSTRAINT fk_contacto_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_info_familiar (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+    id_contacto INT(11) NOT NULL,
+    depende_ec BOOLEAN,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_info_familiar_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT fk_info_familiar_contacto FOREIGN KEY (id_contacto)
+        REFERENCES tbl_contacto(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_info_academica (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    tipo VARCHAR(30),
+    nivel VARCHAR(100),
+    estado VARCHAR(30),
+    periodos_cursados INT(11),
+    area VARCHAR(30),
+    titulo VARCHAR(100),
+    institucion VARCHAR(100),
+    pais_institucion VARCHAR(50),
+    convalidacion BOOLEAN,
+    mes_finalizacion INT(11),
+    anno_finalizacion INT(11),
+    ruta_soporte VARCHAR(240),
+    intensidad_horaria INT(11),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_info_academica_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+
+CREATE TABLE tbl_info_discapacidades (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    categoria VARCHAR(50),
+    descripcion VARCHAR(250),
+    ruta_certificado VARCHAR(240),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_info_discapacidad_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_experiencia (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    entidad VARCHAR(100),
+    area VARCHAR(100),
+    cargo VARCHAR(100),
+    actual BOOLEAN,
+    motivo VARCHAR(100),
+    otro VARCHAR(250),
+    fecha_ingreso DATETIME,
+    fecha_salida DATETIME,
+    pais VARCHAR(50),
+    departamento VARCHAR(50),
+    municipio VARCHAR(50),
+    funciones_realizadas VARCHAR(500),
+    ruta_soporte VARCHAR(240),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_experiencia_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE tbl_otros_docs (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    id_usuario INT(11) NOT NULL,
+
+    nombre VARCHAR(100),
+    ruta_soporte VARCHAR(240),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT fk_otros_docs_usuario FOREIGN KEY (id_usuario)
+        REFERENCES tbl_usuario(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

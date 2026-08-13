@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BolsaEmpleos — Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ppal.css') }}">
+  <script src="{{ url_for('static', filename='js/ppal.js') }}"></script>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════ -->
+  <header class="navbar">
+    <!-- Izquierda -->
+    <div style="display:flex;align-items:center;gap:16px;">
+      <!-- Hamburguesa (móvil) -->
+      <button class="navbar-icon-btn" id="hamburgerBtn" aria-label="Menú">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+          <rect width="18" height="2" rx="1" fill="white"/>
+          <rect y="6" width="13" height="2" rx="1" fill="white"/>
+          <rect y="12" width="18" height="2" rx="1" fill="white"/>
+        </svg>
+      </button>
+
+      <a class="navbar-brand" href="index.html">
+        <span class="brand-dot"></span>
+        BolsaEmpleos
+      </a>
+
+      <nav style="display:flex;align-items:center;">
+        <a href="#">Inicio</a>
+        <a href="#">Vacantes</a>
+        <a href="#">Empresas</a>
+      </nav>
+    </div>
+
+    <!-- Derecha -->
+    <div class="navbar-right">
+      <button class="navbar-icon-btn" data-tooltip="Notificaciones" aria-label="Notificaciones">
+        🔔
+        <span class="badge-dot"></span>
+      </button>
+      <button class="navbar-icon-btn" data-tooltip="Ayuda" aria-label="Ayuda">?</button>
+      <div class="navbar-avatar" data-dropdown="userMenu" data-tooltip="Mi cuenta">AN</div>
+
+      <!-- Dropdown de usuario -->
+      <div class="dropdown-menu" id="userMenu">
+        <a class="dropdown-item" href="#">👤 Mi perfil</a>
+        <a class="dropdown-item" href="#">⚙️ Configuración</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item danger" href="#">↩ Cerrar sesión</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════
+       LAYOUT PRINCIPAL
+  ══════════════════════════════════════ -->
+  <div class="app-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Principal</p>
+        <ul class="sidebar-nav">
+          <li>
+            <a class="sidebar-link active" href="index.html">
+              <span class="sidebar-icon">🏠</span>
+              <span class="sidebar-text">Dashboard</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="vacantes.html">
+              <span class="sidebar-icon">📋</span>
+              <span class="sidebar-text">Vacantes</span>
+              <span class="sidebar-badge">12</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="candidatos.html">
+              <span class="sidebar-icon">👥</span>
+              <span class="sidebar-text">Candidatos</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="empresas.html">
+              <span class="sidebar-icon">🏢</span>
+              <span class="sidebar-text">Empresas</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="postulaciones.html">
+              <span class="sidebar-icon">📨</span>
+              <span class="sidebar-text">Postulaciones</span>
+              <span class="sidebar-badge">5</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Gestión</p>
+        <ul class="sidebar-nav">
+          <li>
+            <a class="sidebar-link" href="entrevistas.html">
+              <span class="sidebar-icon">🗓</span>
+              <span class="sidebar-text">Entrevistas</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="reportes.html">
+              <span class="sidebar-icon">📊</span>
+              <span class="sidebar-text">Reportes</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="mensajes.html">
+              <span class="sidebar-icon">💬</span>
+              <span class="sidebar-text">Mensajes</span>
+              <span class="sidebar-badge">3</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-section-label">Cuenta</p>
+        <ul class="sidebar-nav">
+          <li>
+            <a class="sidebar-link" href="perfil.html">
+              <span class="sidebar-icon">👤</span>
+              <span class="sidebar-text">Mi perfil</span>
+            </a>
+          </li>
+          <li>
+            <a class="sidebar-link" href="configuracion.html">
+              <span class="sidebar-icon">⚙️</span>
+              <span class="sidebar-text">Configuración</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+    </aside>
+        
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       CONTENEDOR DE TOASTS
+  ══════════════════════════════════════ -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+
+  <!-- Responsive: ajustar grid del dashboard -->
+  <style>
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+
+</body>
+</html>
+
+
+

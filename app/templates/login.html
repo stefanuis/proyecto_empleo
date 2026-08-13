@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Clínica Panamericana</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/login_app.js') }}"></script>
+
+</head>
+
+<body>
+
+<div class="page">
+    <div class="card">
+        <div class="strip"></div>
+        <div class="inner">
+            <header class="card-header">
+                <div>
+                    <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Clinica Panamericana">
+                    <br><br><br>
+                    <h1><em>Bienvenido</em></h1>
+                    <p>Ingresa tus datos para acceder</p>
+                </div>
+            </header>
+
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-container">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">
+                                <span class="flash-message">
+                                    {{ message }}
+                                </span>
+                                <button
+                                    type="button"
+                                    class="flash-close"
+                                    onclick="this.parentElement.remove()">
+                                    &times;
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- ===================== -->
+            <!-- FORMULARIO -->
+            <!-- ===================== -->
+
+            <form method="POST" action="{{ url_for('web.login_post') }}">
+                <div class="field-stack">
+                    <div class="floating-field">
+                        <input
+                            type="email"
+                            id="correo"
+                            name="correo"
+                            value="{{ request.form.get('correo', '') }}"
+                            placeholder=" "
+                            required
+                            autofocus>
+                        <label for="correo">
+                            Correo electrónico
+                        </label>
+                        <span class="field-focus-bar"></span>
+                    </div>
+
+                    <div class="floating-field">
+                        <input
+                            type="password"
+                            id="clave"
+                            name="clave"
+                            placeholder=" "
+                            required>
+                        <label for="clave">
+                            Contraseña
+                        </label>
+                        <span class="field-focus-bar"></span>
+                        <button
+                            type="button"
+                            class="eye-btn"
+                            onclick="togglePw()">
+                            <svg id="eye-icon"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="1.7">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row-meta">
+                    <a href="#" class="forgot">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <button class="btn-submit" type="submit">
+                    <span class="ripple"></span>
+                    <span class="btn-text">
+                        Iniciar sesión
+                    </span>
+                    <svg class="btn-chevron"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+            </form>
+
+            <p class="signup-link">
+                ¿No tienes cuenta?
+                <a href="{{ url_for('web.registro') }}">
+                    Regístrate
+                </a>
+            </p>
+            <p class="signup-link">
+                Inscribe tu hoja de vida y trabaja con nosotros.
+            </p>
+        </div>
+    </div>
+
+    <div class="bg-pattern" aria-hidden="true">
+        <div class="dot-grid"></div>
+    </div>
+</div>
+</body>
+</html>

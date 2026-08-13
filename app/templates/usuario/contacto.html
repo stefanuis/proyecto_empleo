@@ -1,0 +1,93 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Principal Usuario
+{% endblock %}
+
+{% block contenido %}
+
+    <div class="contenedor-padre">
+        <div class="contenedor-formulario">
+            <div class="titulo-personal">
+                <h2>Información de Contacto</h2>
+            </div>
+
+            <!-- Mostrar mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" novalidate>
+
+                {{ form.hidden_tag() }}
+
+                <div class="form-grid">
+
+                    <div class="campo">
+                        {{ form.nombres.label }}
+                        {{ form.nombres(class="form-control") }}
+                        {% for error in form.nombres.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.apellidos.label }}
+                        {{ form.apellidos(class="form-control") }}
+                        {% for error in form.apellidos.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.parentesco.label }}
+                        {{ form.parentesco(class="form-control") }}
+                        {% for error in form.parentesco.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.tel.label }}
+                        {{ form.tel(class="form-control") }}
+                        {% for error in form.tel.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <div class="campo">
+                        {{ form.num_resindencia.label }}
+                        {{ form.num_resindencia(class="form-control") }}
+                        {% for error in form.num_resindencia.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <div class="form-botones">
+
+                    <button type="submit" class="btn-primary">
+                        Guardar Información
+                    </button>
+
+                    <a href="{{ url_for('usuario.contacto') }}" class="btn-secondary">
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
+{% endblock %}

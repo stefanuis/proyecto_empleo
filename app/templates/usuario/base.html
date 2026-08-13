@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>{{ datos.titulo }}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/ppal.css') }}">
+
+</head>
+
+<body>
+
+    {% include 'usuario/header.html' %}
+
+    <div class="contenedor">
+        {% include 'usuario/menu.html' %}
+        <main class="contenido">
+            {% block contenido %}
+            {% endblock %}
+        </main>
+
+    </div>
+
+    {% include 'usuario/footer.html' %}
+
+</body>
+<script>
+
+    // Función para toggle del menú
+    function toggleMenu(element) {
+        const toggleSection = element.closest('.sidebar-toggle-section');
+        const content = toggleSection.querySelector('.toggle-content');
+        const arrow = toggleSection.querySelector('.toggle-arrow');
+        const header = toggleSection.querySelector('.toggle-header');
+        
+        // Alternar clases
+        content.classList.toggle('open');
+        arrow.classList.toggle('open');
+        header.classList.toggle('active');
+    }
+
+    // Cerrar otros menús al abrir uno
+    document.querySelectorAll('.toggle-header').forEach(header => {
+        header.addEventListener('click', function(e) {
+            const currentSection = this.closest('.sidebar-toggle-section');
+            const currentContent = currentSection.querySelector('.toggle-content');
+            
+            // Si el menú ya está abierto, no hacer nada (la función toggleMenu se encarga)
+            if (currentContent.classList.contains('open')) {
+                return;
+            }
+            
+            // Cerrar otros menús abiertos
+            document.querySelectorAll('.toggle-content.open').forEach(content => {
+                if (content !== currentContent) {
+                    content.classList.remove('open');
+                    const section = content.closest('.sidebar-toggle-section');
+                    const arrow = section.querySelector('.toggle-arrow');
+                    const header = section.querySelector('.toggle-header');
+                    if (arrow) arrow.classList.remove('open');
+                    if (header) header.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Cerrar menús al hacer clic fuera de la sidebar
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.sidebar') && !e.target.closest('#sidebarToggleBtn')) {
+            document.querySelectorAll('.toggle-content.open').forEach(content => {
+                content.classList.remove('open');
+                const section = content.closest('.sidebar-toggle-section');
+                const arrow = section.querySelector('.toggle-arrow');
+                const header = section.querySelector('.toggle-header');
+                if (arrow) arrow.classList.remove('open');
+                if (header) header.classList.remove('active');
+            });
+
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('mobile-open')) {
+                sidebar.classList.remove('mobile-open');
+            }
+        }
+    });
+
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+    if (sidebarToggleBtn && sidebar) {
+        sidebarToggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sidebar.classList.toggle('mobile-open');
+        });
+    }
+
+    document.querySelectorAll('.sidebar a').forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768 && sidebar) {
+                sidebar.classList.remove('mobile-open');
+            }
+        });
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('mobile-open')) {
+            sidebar.classList.remove('mobile-open');
+        }
+    });
+
+    // Opcional: Si quieres que el menú se cierre al hacer clic en cualquier enlace del submenú
+    document.querySelectorAll('.toggle-content a').forEach(link => {
+        link.addEventListener('click', function() {
+            const content = this.closest('.toggle-content');
+            const section = content.closest('.sidebar-toggle-section');
+            const arrow = section.querySelector('.toggle-arrow');
+            const header = section.querySelector('.toggle-header');
+            
+            content.classList.remove('open');
+            if (arrow) arrow.classList.remove('open');
+            if (header) header.classList.remove('active');
+        });
+    });
+</script>
+
+</html>

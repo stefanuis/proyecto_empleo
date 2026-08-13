@@ -1,0 +1,63 @@
+<aside class="sidebar">
+    <ul>
+        <li>
+            <a href="{{ url_for('usuario.inicial') }}">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/inicio.png') }}" alt="Logo">
+                <span class="sidebar-text">Inicio</span>
+            </a>
+        </li>
+
+        <hr>
+
+        <!-- Sección MI PERFIL con toggle -->
+        <li class="sidebar-toggle-section">
+            <div class="toggle-header" onclick="toggleMenu(this)">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/perfil.png') }}" alt="Logo">
+                <span class="sidebar-text">Mi Perfil</span>
+                <span class="toggle-arrow">▼</span>
+            </div>
+            <ul class="toggle-content">
+                <li><a href="{{ url_for('usuario.personal') }}"><span class="sidebar-text">Datos Personales</span></a></li>
+                <li><a href="{{ url_for('usuario.contacto') }}"><span class="sidebar-text">Contacto</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Perfil Profesional</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Experiencia Laboral</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Formación Académica</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Cursos</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Idiomas</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Competencias</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Referencias</span></a></li>
+                <li><a href="#"><span class="sidebar-text">Documentos</span></a></li>
+            </ul>
+        </li>
+
+        <hr>
+
+        <li>
+            <a href="#">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/misCosas.png') }}" alt="Logo">
+                <span class="sidebar-text">Vacantes</span>
+            </a>
+        </li>
+        <li>
+            <a href="#">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/tareas.png') }}" alt="Logo">
+                <span class="sidebar-text">Mis postulaciones</span>
+            </a>
+        </li>
+
+        <hr>
+
+        <li>
+            <a href="#">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/configuracion.png') }}" alt="Logo">
+                <span class="sidebar-text">Configuración</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('usuario.inicial') }}">
+                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/salir.png') }}" alt="Logo">
+                <span class="sidebar-text">Cerrar sesión</span>
+            </a>
+        </li>
+    </ul>
+</aside>
