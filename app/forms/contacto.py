@@ -48,7 +48,7 @@ class ContactoForm(FlaskForm):
         ]
     )
 
-    num_resindencia = StringField(
+    num_residencia = StringField(
         "Numero fijo, si tiene",
         validators=[
             Optional(),

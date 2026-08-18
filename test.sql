@@ -1,5 +1,7 @@
 -- demogra01.vw_persona_completa source
 
+#Esto sirve para crear una vista  en MySQL que reúne en una sola consulta información completa de una persona
+
 CREATE OR REPLACE
 ALGORITHM = UNDEFINED VIEW `demogra01`.`vw_persona_completa` AS
 select

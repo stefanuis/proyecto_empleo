@@ -25,4 +25,14 @@ def create_app():
 
     #print(app.url_map)
 
+    ##me permite utilizar varibales globales
+
+    @app.context_processor
+    def dato_global():
+        return{
+            "anio": 2026,
+            "version": "0.01",
+            "titulo": "Principal mi Usuario"
+        }
+
     return app

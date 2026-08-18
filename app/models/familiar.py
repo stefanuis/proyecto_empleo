@@ -4,7 +4,7 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 #  MODELO: User
 # ─────────────────────────────────────────────
-class familiar(db.Model):
+class Familiar(db.Model):
     __tablename__ = "tbl_info_familiar"
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)
@@ -22,3 +22,4 @@ class familiar(db.Model):
         texto += f"personas_casa: {self.personas_casa}"
         texto += f"dependen_eco: {self.dependen_eco}"
         texto += f"fecha_realizacion: {self.fecha_realizacion}"
+        return texto  

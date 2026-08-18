@@ -1,30 +1,29 @@
-<header class="header">
+<nav class="floating-navbar">
 
-    <button class="navbar-icon-btn sidebar-hamburger" id="sidebarToggleBtn" aria-label="Abrir menú">☰</button>
+    <div class="navbar-container">
 
-    <div class="header-logo">
+        <div class="navbar-start">
+            <button class="navbar-hamburger" id="sidebarToggleBtn" aria-label="Abrir menú">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
 
-        <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Logo">
-
-    </div>
-
-    <div class="header-titulo">
-
-        Nuestro Portal de Empleo
-
-    </div>
-
-    <div class="header-usuario">
-
-        <div>
-            <strong>{{ current_user.nombres }}</strong>
+            <div class="navbar-logo">
+                <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Logo">
+            </div>
         </div>
 
-        <!--
-        <img src="{{ url_for('static', filename='img/user.png') }}"
-             class="foto-usuario">
-        -->
+        <div class="navbar-center">
+            <h1 class="navbar-titulo">Portal de Empleo</h1>
+        </div>
+
+        <div class="navbar-end">
+            <div class="navbar-usuario">
+                <span class="usuario-nombre">{{ current_user.nombres }}</span>
+            </div>
+        </div>
 
     </div>
 
-</header>
+</nav>

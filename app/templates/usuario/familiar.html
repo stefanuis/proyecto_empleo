@@ -1,0 +1,98 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+    Información Familiar
+{% endblock %}
+
+{% block contenido %}
+
+    <div class="contenedor-padre">
+
+        <div class="contenedor-formulario">
+
+            <div class="titulo-personal">
+                <h2>Información familiar</h2>
+            </div>
+
+            {% include "usuario/barra_progreso.html" with context %}
+
+            <!-- Mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% if messages %}
+
+                    {% for category, message in messages %}
+
+                        <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                            {{ message }}
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="alert">
+                            </button>
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <form method="POST" novalidate>
+
+                {{ form.hidden_tag() }}
+
+                <div class="form-grid">
+
+                    <!-- Número de personas en la casa -->
+                    <div class="campo">
+
+                        {{ form.personas_casa.label }}
+
+                        {{ form.personas_casa(class="form-control") }}
+
+                        {% for error in form.personas_casa.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+
+                    </div>
+
+
+                    <!-- Dependientes económicos -->
+                    <div class="campo">
+
+                        {{ form.dependen_eco.label }}
+
+                        {{ form.dependen_eco(class="form-control") }}
+
+                        {% for error in form.dependen_eco.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-botones">
+
+                      {% if paso_anterior %}
+                        <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
+                            Anterior
+                        </a>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn-primary">
+                        Guardar y continuar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+{% endblock %}

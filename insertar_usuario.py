@@ -1,3 +1,6 @@
+#esto sivr epara ver si la base de datos se conecto
+
+
 """
 seed_usuarios.py
 ────────────────
@@ -20,12 +23,12 @@ from datetime import datetime, timezone
 # Agrega o modifica los que necesites para tus pruebas.
 USUARIOS_PRUEBA = [
     {
-        "nombres":   "Admin",
-        "apellidos": "Principal",
-        "correo":    "admin@clipan.com",
-        "clave":     "Admin1234",      # ← se cifrará automáticamente
-        "telefono":  "3001234567",
-        "rol":       "admin",
+        "nombres":   "Laura",
+        "apellidos": "Gómez",
+        "correo":    "laura.gomez@ejemplo.com",
+        "clave":     "Usuario1234",    # ← se cifrará automáticamente
+        "telefono":  "3009876543",
+        "rol":       "usuario",
         "esta_activa":     True,
         "esta_verificada": True,
     },

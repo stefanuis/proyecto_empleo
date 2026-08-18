@@ -9,8 +9,10 @@ Principal Usuario
     <div class="contenedor-padre">
         <div class="contenedor-formulario">
             <div class="titulo-personal">
-                <h2>Información Personal</h2>
+
             </div>
+
+            {% include "usuario/barra_progreso.html" with context %}
 
             <!-- Mostrar mensajes flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -49,7 +51,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.tipo_doc.label }}
                         {{ form.tipo_doc(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.tipo_doc.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -57,7 +59,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.num_doc.label }}
                         {{ form.num_doc(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.num_doc.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -68,7 +70,7 @@ Principal Usuario
                                 class="form-control",
                                 type="date"
                         ) }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.fecha_exp_doc.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -79,7 +81,7 @@ Principal Usuario
                                 class="form-control",
                                 type="date"
                         ) }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.fecha_nacimiento.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -87,7 +89,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.genero.label }}
                         {{ form.genero(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.genero.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -103,7 +105,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.num_cel.label }}
                         {{ form.num_cel(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.num_cel.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -111,7 +113,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.num_cel_dos.label }}
                         {{ form.num_cel_dos(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.num_cel_dos.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -119,7 +121,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.grupo_etnico.label }}
                         {{ form.grupo_etnico(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.grupo_etnico.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -127,7 +129,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.nacionalidad.label }}
                         {{ form.nacionalidad(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.nacionalidad.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -135,7 +137,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.departamento.label }}
                         {{ form.departamento(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.departamento.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -143,7 +145,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.municipio.label }}
                         {{ form.municipio(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.municipio.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -151,7 +153,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.barrio.label }}
                         {{ form.barrio(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.barrio.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -159,7 +161,7 @@ Principal Usuario
                     <div class="campo campo-completo">
                         {{ form.direccion.label }}
                         {{ form.direccion(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.direccion.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -167,7 +169,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.vive_rural.label }}
                         {{ form.vive_rural(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.vive_rural.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -175,7 +177,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.estado_civil.label }}
                         {{ form.estado_civil(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.estado_civil.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -183,7 +185,7 @@ Principal Usuario
                     <div class="campo">
                         {{ form.personas_cargo.label }}
                         {{ form.personas_cargo(class="form-control") }}
-                        {% for error in form.apellidos.errors %}
+                        {% for error in form.personas_cargo.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -192,13 +194,19 @@ Principal Usuario
 
                 <div class="form-botones">
 
-                    <button type="submit" class="btn-primary">
-                        Guardar Información
-                    </button>
+                    {% if paso_anterior %}
+                        <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
+                            Anterior
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                            Anterior
+                        </a>
+                    {% endif %}
 
-                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
-                        Cancelar
-                    </a>
+                    <button type="submit" class="btn-primary">
+                        Guardar y continuar
+                    </button>
 
                 </div>
 

@@ -12,6 +12,8 @@ Principal Usuario
                 <h2>Información de Contacto</h2>
             </div>
 
+            {% include "usuario/barra_progreso.html" with context %}
+
             <!-- Mostrar mensajes flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -63,9 +65,9 @@ Principal Usuario
                     </div>
 
                     <div class="campo">
-                        {{ form.num_resindencia.label }}
-                        {{ form.num_resindencia(class="form-control") }}
-                        {% for error in form.num_resindencia.errors %}
+                        {{ form.num_residencia.label }}
+                        {{ form.num_residencia(class="form-control") }}
+                        {% for error in form.num_residencia.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     </div>
@@ -74,13 +76,19 @@ Principal Usuario
 
                 <div class="form-botones">
 
-                    <button type="submit" class="btn-primary">
-                        Guardar Información
-                    </button>
+                    {% if paso_anterior %}
+                        <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
+                            Anterior
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                            Anterior
+                        </a>
+                    {% endif %}
 
-                    <a href="{{ url_for('usuario.contacto') }}" class="btn-secondary">
-                        Cancelar
-                    </a>
+                    <button type="submit" class="btn-primary">
+                        Guardar y continuar
+                    </button>
 
                 </div>
 

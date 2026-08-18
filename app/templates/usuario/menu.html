@@ -10,24 +10,11 @@
         <hr>
 
         <!-- Sección MI PERFIL con toggle -->
-        <li class="sidebar-toggle-section">
-            <div class="toggle-header" onclick="toggleMenu(this)">
+        <li>
+            <a href="{{ url_for('usuario.personal') }}" class="sidebar-link">
                 <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/perfil.png') }}" alt="Logo">
                 <span class="sidebar-text">Mi Perfil</span>
-                <span class="toggle-arrow">▼</span>
-            </div>
-            <ul class="toggle-content">
-                <li><a href="{{ url_for('usuario.personal') }}"><span class="sidebar-text">Datos Personales</span></a></li>
-                <li><a href="{{ url_for('usuario.contacto') }}"><span class="sidebar-text">Contacto</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Perfil Profesional</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Experiencia Laboral</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Formación Académica</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Cursos</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Idiomas</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Competencias</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Referencias</span></a></li>
-                <li><a href="#"><span class="sidebar-text">Documentos</span></a></li>
-            </ul>
+            </a>
         </li>
 
         <hr>

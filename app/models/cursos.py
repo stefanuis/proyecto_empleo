@@ -7,14 +7,14 @@ from datetime import datetime
 class Cursos(db.Model):
     __tablename__ = "tbl_cursos"
     id = db.Column(db.Integer, primary_key=True)
-    id_usuario = db.Column(db.Integer)
+    id_usuario = db.Column(db.Integer, db.ForeignKey("tbl_usuario.id"), nullable = False)
     nombre  = db.Column(db.String(150), nullable=False)
     institucion = db.Column(db.String(150), nullable=False)
     area = db.Column(db.String(150))
     horas = db.Column(db.Integer)
     fecha_realizacion = db.Column(db.DateTime)
     certificado = db.Column(db.Boolean)
-    fecha_realizacion = db.Column(db.DateTime)
+
 
 
     # ─────────────────────────────────────────

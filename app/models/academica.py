@@ -4,7 +4,7 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 #  MODELO: User
 # ─────────────────────────────────────────────
-class info_academica(db.Model):
+class Info_academica(db.Model):
     __tablename__ = "tbl_info_academica"
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)

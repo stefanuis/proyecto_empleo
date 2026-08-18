@@ -1,0 +1,139 @@
+{% extends 'usuario/base.html' %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <div class="contenedor-formulario">
+        <h2>Formación Académica</h2>
+
+        {% include "usuario/barra_progreso.html" with context %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div id="cursos-container">
+                {% for entry in form.Info_academica %}
+                <div class="curso-fila" data-index="{{ loop.index0 }}">
+                    {{ entry.id() }}
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            {{ entry.tipo.label }}
+                            {{ entry.tipo(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.nivel.label }}
+                            {{ entry.nivel(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.estado.label }}
+                            {{ entry.estado(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.area.label }}
+                            {{ entry.area(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.titulo.label }}
+                            {{ entry.titulo(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.institucion.label }}
+                            {{ entry.institucion(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.pais_institucion.label }}
+                            {{ entry.pais_institucion(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.anno_finalizacion.label }}
+                            {{ entry.anno_finalizacion(class="form-control") }}
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+
+            <div class="form-botones">
+                <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
+                {{ form.submit(class="btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-curso-vacio">
+    <div class="curso-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_academica-__INDEX__-id" value="">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Tipo</label>
+                <input class="form-control" name="Info_academica-__INDEX__-tipo">
+            </div>
+            <div class="campo">
+                <label>Nivel</label>
+                <input class="form-control" name="Info_academica-__INDEX__-nivel">
+            </div>
+            <div class="campo">
+                <label>Estado</label>
+                <input class="form-control" name="Info_academica-__INDEX__-estado">
+            </div>
+            <div class="campo">
+                <label>Área</label>
+                <input class="form-control" name="Info_academica-__INDEX__-area">
+            </div>
+            <div class="campo">
+                <label>Título</label>
+                <input class="form-control" name="Info_academica-__INDEX__-titulo">
+            </div>
+            <div class="campo">
+                <label>Institución</label>
+                <input class="form-control" name="Info_academica-__INDEX__-institucion">
+            </div>
+            <div class="campo">
+                <label>País institución</label>
+                <input class="form-control" name="Info_academica-__INDEX__-pais_institucion">
+            </div>
+            <div class="campo">
+                <label>Año finalización</label>
+                <input class="form-control" name="Info_academica-__INDEX__-anno_finalizacion">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("cursos-container");
+    const plantilla = document.getElementById("plantilla-curso-vacio");
+    const btnAgregar = document.getElementById("btn-agregar-curso");
+
+    let contador = container.querySelectorAll(".curso-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            e.target.closest(".curso-fila").remove();
+        }
+    });
+});
+</script>
+{% endblock %}

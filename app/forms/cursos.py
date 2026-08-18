@@ -17,7 +17,7 @@ from wtforms.validators import (
 )
 
 
-class CursoForm(FlaskForm):
+class cursoForm(FlaskForm):
 
     nombre = StringField(
         "nombre del curso",
@@ -28,20 +28,20 @@ class CursoForm(FlaskForm):
     )
 
     institucion = StringField(
-          "institucion de los cursos",
-          validators=[
-              DataRequired(),
-              Length(max= 100)
-          ]
-      )
+            "institucion de los cursos",
+            validators=[
+                DataRequired(),
+                Length(max= 100)
+            ]
+    )
 
     area = StringField(
-          "area del cursos",
-          validators=[
-              DataRequired(),
-              Length(max= 100)
-          ]
-      )
+        "area del cursos",
+        validators=[
+            DataRequired(),
+            Length(max= 100)
+        ]
+    )
 
     horas = IntegerField(
         "horas de los cursos",
@@ -61,3 +61,5 @@ class CursoForm(FlaskForm):
         format="%Y-%m-%d",
         validators=[DataRequired()]
     )
+
+    submit = SubmitField("Guardar curso")
