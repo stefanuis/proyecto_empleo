@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
@@ -6,7 +7,11 @@ from wtforms import (
     DateField,
     SubmitField,
     TextAreaField,
-    BooleanField
+    BooleanField,
+    SubmitField,
+    FieldList,
+    FormField,
+    HiddenField,
 )
 from wtforms.validators import (
     DataRequired,
@@ -15,8 +20,10 @@ from wtforms.validators import (
 )
 
 
-class experienciaForm(FlaskForm):
+class experienciaItemForm(Form):
     """Formulario para registro de experiencia laboral"""
+
+    registro_id = HiddenField()
 
     entidad = StringField(
         "Nombre de la entidad/empresa",
@@ -116,4 +123,12 @@ class experienciaForm(FlaskForm):
         ]
     )
 
-    submit = SubmitField("Guardar experiencia")
+    class experienciaForm(FlaskForm):
+
+     Info_experiencia = FieldList(
+        FormField(experienciaItemForm),
+            min_entries=1
+    )
+
+    submit = SubmitField("Guardar y continuar")
+

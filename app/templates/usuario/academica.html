@@ -19,7 +19,7 @@
             <div id="cursos-container">
                 {% for entry in form.Info_academica %}
                 <div class="curso-fila" data-index="{{ loop.index0 }}">
-                    {{ entry.id() }}
+                    {{ entry.registro_id }}
 
                     <div class="form-grid">
                         <div class="campo">
@@ -54,9 +54,18 @@
                             {{ entry.anno_finalizacion.label }}
                             {{ entry.anno_finalizacion(class="form-control") }}
                         </div>
+                         <div class="campo">
+                            {{ entry.ruta_soporte.label }}
+                            {{ entry.ruta_soporte(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.intensidad_horaria.label }}
+                            {{ entry.intensidad_horaria(class="form-control") }}
+                        </div>
                     </div>
+                    
 
-                    <button type="button" id="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                 </div>
                 {% endfor %}
             </div>
@@ -74,7 +83,7 @@
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-curso-vacio">
     <div class="curso-fila" data-index="__INDEX__">
-        <input type="hidden" name="Info_academica-__INDEX__-id" value="">
+        <input type="hidden" name="Info_academica-__INDEX__-registro_id" value="">
         <div class="form-grid">
             <div class="campo">
                 <label>Tipo</label>

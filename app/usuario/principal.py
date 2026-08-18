@@ -199,7 +199,7 @@ def contacto():
             form.tel.data = registro.tel
             form.num_residencia.data = registro.num_residencia
 
-    return render_template("usuario/contacto.html", form=form,  paso_actual=3, total_pasos=10)
+    return render_template("usuario/contacto.html",  form=form,  paso_actual=2, total_pasos=10)
 
 @usuario_bp.route('/familiar', methods=['GET', 'POST'])
 @login_required
@@ -235,15 +235,13 @@ def familiar():
         form.personas_casa.data = registro.personas_casa
         form.dependen_eco.data = registro.dependen_eco
 
-    return render_template(
-        "usuario/familiar.html",
-        form=form
-    )
+    return render_template("usuario/familiar.html",form=form, paso_actual=3, total_pasos=10)
 
 @usuario_bp.route('/academica', methods=['GET', 'POST'])
 @login_required
 def academica():
     form = InforAcademicaForm()
+
 
     if request.method == "GET":
         registros = Info_academica.query.filter_by(
@@ -252,25 +250,24 @@ def academica():
 
         for registro in registros:
             form.Info_academica.append_entry({
-                "id": registro.id,
-                "tipo": registro.tipo,
-                "nivel": registro.nivel,
-                "estado": registro.estado,
-                "periodos_cursados": registro.periodos_cursados,
-                "area": registro.area,
-                "titulo": registro.titulo,
-                "institucion": registro.institucion,
-                "pais_institucion": registro.pais_institucion,
-                "convalidacion": registro.convalidacion,
-                "mes_finalizacion": registro.mes_finalizacion,
-                "anno_finalizacion": registro.anno_finalizacion,
-                "intensidad_horaria": registro.intensidad_horaria,
-            })
-
+            "registro_id": registro.id,
+            "entidad": registro.entidad,
+            "area": registro.area,
+            "cargo": registro.cargo,
+            "actual": registro.actual,
+            "motivo": registro.motivo,
+            "otro": registro.otro,
+            "fecha_ingreso": registro.fecha_ingreso,
+            "fecha_salida": registro.fecha_salida,
+            "pais": registro.pais,
+            "departamento": registro.departamento,
+            "municipio": registro.municipio,
+            "funciones_realizadas": registro.funciones_realizadas,
+            }) 
     if form.validate_on_submit():
         for entry in form.Info_academica:
-            registro_id = entry.id.data
-
+            registro_id = entry.registro_id.data
+            
             registro = None
             if registro_id:
                 registro = Info_academica.query.filter_by(
@@ -294,6 +291,7 @@ def academica():
                 registro.intensidad_horaria = entry.intensidad_horaria.data
             else:
                 # crear nuevo
+  
                 nuevo = Info_academica(
                     id_usuario=current_user.id,
                     tipo=entry.tipo.data,
@@ -321,97 +319,20 @@ def academica():
 @usuario_bp.route('/experiencia', methods=['GET', 'POST'])
 @login_required
 def experiencia():
+    form =  experienciaForm()
 
-    form = experienciaForm()
-
-    registro = Experiencia.query.filter_by(
-        id_usuario=current_user.id
-    ).first()
-
-    if form.validate_on_submit():
-        if registro is None:
-            registro = Experiencia(id_usuario=current_user)
-
-            db.session.add(registro)
-
-            registro.entidad = form.entidad.data
-            registro.area = form.area.data
-            registro.cargo = form.cargo.data
-            registro.actual = form.actual.data
-            registro.motivo = form.motivo.data
-            registro.otro = form.otro.data
-            registro.fecha_ingreso = form.fecha_ingreso.data
-            registro.fecha_salida = form.fecha_salida.data
-            registro.pais = form.pais.data
-            registro.departamento = form.departamento.data
-            registro.municipio = form.municipio.data
-            registro.funciones_realizadas = form.funciones_realizadas.data
-            registro.fecha_registro = datetime.utcnow()
-
-            db.session.commit()
-
-            #agregamos la posicion}
-
-            paso_actual = "experiencia"
-            siguiente = PASOS_seguimiento[PASOS_seguimiento.index(paso_actual)+ 1]
-            redirect(url_for(f"usuario.{siguiente}"))
-
-    if registro:
-        form.entidad.data = registro.entidad
-        form.area.data = registro.area
-        form.cargo.data = registro.cargo
-        form.actual.data = registro.actual
-        form.motivo.data = registro.motivo
-        form.otro.data = registro.otro
-        form.fecha_ingreso.data = registro.fecha_ingreso
-        form.fecha_salida.data = registro.fecha_salida
-        form.pais.data = registro.pais
-        form.departamento.data = registro.departamento
-        form.municipio.data = registro.municipio
-        form.funciones_realizadas.data = registro.funciones_realizadas
+    if request.method == "GET":
+        registro = Experiencia.query.filter_by(
+            id_usuario = current_user.id
+        ).all()
 
 
-    return render_template("experiencia.html", form=form, titulo="informacion de experiencia")
-
+        for registros in registro:
+            form.EX
             
 @usuario_bp.route('/cursos', methods=['GET', 'POST'])
 @login_required
 def cursos():
-
-    form = cursoForm()
-
-    registro = Cursos.query.filter_by(
-        id_usuario = current_user.id
-    ).first()
-
-
-    #validacion 
-    if form.validate_on_submit():
-        if registro is None:
-            registro = Cursos(id_usuario=current_user.id)
-            db.session.add(registro)
-    
-            registro.nombre = form.nombre.data
-            registro.institucion = form.institucion.data
-            registro.area = form.area.data
-            registro.horas = form.horas.data
-            registro.certificado = form.certificado.data
-            registro.fecha_realizacion = form.fecha_realizacion.data
-    
-            db.session.commit()
-
-
-            #posicion
-
-   
-    if registro:
-        form.nombre.data = registro.nombre
-        form.institucion.data = registro.institucion
-        form.area.data = registro.area
-        form.horas.data = registro.horas
-        form.certificado.data = registro.certificado
-        form.fecha_realizacion.data = registro.fecha_realizacion
-
 
 
 @usuario_bp.route('/competencias', methods=['GET', 'POST'])

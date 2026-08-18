@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
@@ -20,9 +21,10 @@ from wtforms.validators import (
     NumberRange
 )
 
-class InforAcademicaItemForm(FlaskForm):
+class InforAcademicaItemForm(Form):
     """Formulario para información académica del usuario"""
-
+    registro_id = HiddenField()
+    
     tipo = StringField(
         "Tipo de información académica",
         validators=[
@@ -129,7 +131,8 @@ class InforAcademicaItemForm(FlaskForm):
 class InforAcademicaForm(FlaskForm):
 
     Info_academica = FieldList(
-        FormField(InforAcademicaItemForm)
+        FormField(InforAcademicaItemForm),
+        min_entries=1
     )
 
     submit = SubmitField("Guardar y continuar")
