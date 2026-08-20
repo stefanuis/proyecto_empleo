@@ -1,0 +1,176 @@
+{% extends 'usuario/base.html' %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <div class="contenedor-formulario">
+        <h2>Experiencia Laboral</h2>
+
+        {% include "usuario/barra_progreso.html" with context %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div id="cursos-container">
+                {% for entry in form.Info_experiencia %}
+                <div class="curso-fila" data-index="{{ loop.index0 }}">
+                    {{ entry.registro_id }}
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            {{ entry.entidad.label }}
+                            {{ entry.entidad(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.area.label }}
+                            {{ entry.area(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.cargo.label }}
+                            {{ entry.cargo(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.actual.label }}
+                            {{ entry.actual(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.motivo.label }}
+                            {{ entry.motivo(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.otro.label }}
+                            {{ entry.otro(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.fecha_ingreso.label }}
+                            {{ entry.fecha_ingreso(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.fecha_salida.label }}
+                            {{ entry.fecha_salida(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.pais.label }}
+                            {{ entry.pais(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.departamento.label }}
+                            {{ entry.departamento(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.municipio.label }}
+                            {{ entry.municipio(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.funciones_realizadas.label }}
+                            {{ entry.funciones_realizadas(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.ruta_soporte.label }}
+                            {{ entry.ruta_soporte(class="form-control") }}
+                        </div>
+                    </div>
+
+
+                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+
+            <div class="form-botones">
+                <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
+                {{ form.submit(class="btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-curso-vacio">
+    <div class="curso-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_experiencia-__INDEX__-registro_id" value="">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Entidad</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-entidad">
+            </div>
+            <div class="campo">
+                <label>Área</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-area">
+            </div>
+            <div class="campo">
+                <label>Cargo</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
+            </div>
+            <div class="campo">
+                <label>Actual</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-actual">
+            </div>
+            <div class="campo">
+                <label>Motivo</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-motivo">
+            </div>
+            <div class="campo">
+                <label>Otro</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-otro">
+            </div>
+            <div class="campo">
+                <label>Fecha ingreso</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-fecha_ingreso">
+            </div>
+            <div class="campo">
+                <label>Fecha salida</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-fecha_salida">
+            </div>
+            <div class="campo">
+                <label>País</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-pais">
+            </div>
+            <div class="campo">
+                <label>Departamento</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-departamento">
+            </div>
+            <div class="campo">
+                <label>Municipio</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-municipio">
+            </div>
+            <div class="campo">
+                <label>Funciones realizadas</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-funciones_realizadas">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("cursos-container");
+    const plantilla = document.getElementById("plantilla-curso-vacio");
+    const btnAgregar = document.getElementById("btn-agregar-curso");
+
+    let contador = container.querySelectorAll(".curso-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            e.target.closest(".curso-fila").remove();
+        }
+    });
+});
+</script>
+{% endblock %}

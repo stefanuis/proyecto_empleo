@@ -20,13 +20,13 @@ from app.forms.academica import InforAcademicaForm
 from app.models.academica import Info_academica
 from app.forms.experiencia import experienciaForm
 from app.models.experiencia import Experiencia
-from app.forms.cursos import cursoForm
+from app.forms.cursos import experienciaForm
 from app.models.cursos import Cursos
 from app.forms.competencias import competenciasForm
 from app.models.competencias import  Competencias 
 from app.forms.referencias import referenciasForm
 from app.models.referencias import Referencias
-from app.forms.discapacidades import discapacidadForm
+from app.forms.discapacidades import discapacidadesForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
 from app.models.docs import Docs
@@ -251,18 +251,19 @@ def academica():
         for registro in registros:
             form.Info_academica.append_entry({
             "registro_id": registro.id,
-            "entidad": registro.entidad,
+            "tipo": registro.tipo,
+            "nivel": registro.nivel,
+            "estado": registro.estado,
+            "periodos_cursados": registro.periodos_cursados,
             "area": registro.area,
-            "cargo": registro.cargo,
-            "actual": registro.actual,
-            "motivo": registro.motivo,
-            "otro": registro.otro,
-            "fecha_ingreso": registro.fecha_ingreso,
-            "fecha_salida": registro.fecha_salida,
-            "pais": registro.pais,
-            "departamento": registro.departamento,
-            "municipio": registro.municipio,
-            "funciones_realizadas": registro.funciones_realizadas,
+            "titulo": registro.titulo,
+            "institucion": registro.institucion,
+            "pais_institucion": registro.pais_institucion,
+            "convalidacion": registro.convalidacion,
+            "mes_finalizacion": registro.mes_finalizacion,
+            "anno_finalizacion": registro.anno_finalizacion,
+            "ruta_soporte": registro.ruta_soporte,
+            "intensidad_horaria": registro.intensidad_horaria,
             }) 
     if form.validate_on_submit():
         for entry in form.Info_academica:
@@ -316,40 +317,254 @@ def academica():
     return render_template("usuario/academica.html", form=form)
 
 
-@usuario_bp.route('/experiencia', methods=['GET', 'POST'])
+@usuario_bp.route("/experiencia",  methods=['GET', 'POST'])
 @login_required
 def experiencia():
-    form =  experienciaForm()
+    form = experienciaForm()
 
     if request.method == "GET":
-        registro = Experiencia.query.filter_by(
-            id_usuario = current_user.id
+        registros = Experiencia.query.filter_by(
+            id_usuario=current_user.id
         ).all()
 
+        for registro in registros:
+            form.Info_experiencia.append_entry({
+                "registro_id": registro.id,
+                "entidad": registro.entidad,
+                "area": registro.area,
+                "cargo": registro.cargo,
+                "actual": registro.actual,
+                "motivo": registro.motivo,
+                "otro": registro.otro,
+                "fecha_ingreso": registro.fecha_ingreso,
+                "fecha_salida": registro.fecha_salida,
+                "pais": registro.pais,
+                "departamento": registro.departamento,
+                "municipio": registro.municipio,
+                "funciones_realizadas": registro.funciones_realizadas
+            })
 
-        for registros in registro:
-            form.EX
-            
-@usuario_bp.route('/cursos', methods=['GET', 'POST'])
+    if form.validate_on_submit():
+        for entry in form.experiencia:
+            registro_id = entry.registro_id.data
+
+            registro = None
+            if registro_id:
+                registro = Experiencia.query.filter_by(
+                    id=registro_id,
+                    id_usuario=current_user.id
+                ).first()
+
+            if registro:
+                # editar existente
+                registro.entidad = entry.entidad.data
+                registro.area = entry.area.data
+                registro.cargo = entry.cargo.data
+                registro.actual = entry.actual.data
+                registro.motivo = entry.motivo.data
+                registro.otro = entry.otro.data
+                registro.fecha_ingreso = entry.fecha_ingreso.data
+                registro.fecha_salida = entry.fecha_salida.data
+                registro.pais = entry.pais.data
+                registro.departamento = entry.departamento.data
+                registro.municipio = entry.municipio.data
+                registro.funciones_realizadas = entry.funciones_realizadas.data
+            else:
+                # crear nuevo
+                nuevo = Experiencia(
+                    id_usuario=current_user.id,
+                    entidad=entry.entidad.data,
+                    area=entry.area.data,
+                    cargo=entry.cargo.data,
+                    actual=entry.actual.data,
+                    motivo=entry.motivo.data,
+                    otro=entry.otro.data,
+                    fecha_ingreso=entry.fecha_ingreso.data,
+                    fecha_salida=entry.fecha_salida.data,
+                    pais=entry.pais.data,
+                    departamento=entry.departamento.data,
+                    municipio=entry.municipio.data,
+                    funciones_realizadas=entry.funciones_realizadas.data,
+                    fecha_registro=datetime.utcnow(),
+                )
+                db.session.add(nuevo)
+
+        db.session.commit()
+
+        return redirect(url_for("usuario.experiencia"))
+
+    return render_template("usuario/experiencia.html", form=form)
+
+usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
-def cursos():
+def curso():
 
+    form = experienciaForm()
 
-@usuario_bp.route('/competencias', methods=['GET', 'POST'])
-def competencias():
-    pass
+    #buscar muestra todos los cursos del usuario
+    registros =  Cursos.query.filter_by(
+        id_usuario = current_user.id
+    ).all()
+
+    #precarga los datos de usuario ya registrados en la base de datos
+    for registro in registros:
+        form.Info_curso.append_entry({
+        "registro_id": registro.id,
+        "nombre": registro.nombre,
+        "institucion": registro.institucion,
+        "area": registro.area,
+        "horas": registro.horas,
+        "fecha_realizacion": registro.fecha_realizacion,
+        "certificado": registro.certificado
+        })
+
+    #acualizar informacion
+
+    #busca un id ya existente si viene  vacio lo crea
+    if form.validate_on_submit():
+        for entry in form.Info_curso:
+            registro_id = entry.registro_id.data
+
+            registro = None
+            if  registro_id:
+                registro =  Cursos.query.filter_by(
+                    id=registro_id,
+                    id_usuario=current_user.id
+                ).first()
+
+                if registro:
+                    registro.nombre = entry.nombre.data
+                    registro.institucion = entry.institucion.data
+                    registro.area = entry.area.data
+                    registro.horas = entry.horas.data
+                    registro.fecha_realizacion = entry.fecha_realizacion.data
+                    registro.certificado = entry.certificado.data
+
+                else:
+                    nuevo = Cursos(
+                        id_usuario=current_user.id,
+                        nombre=entry.nombre.data,
+                        institucion=entry.institucion.data,
+                        area=entry.area.data,
+                        horas=entry.horas.data,
+                        fecha_realizacion=entry.fecha_realizacion.data,
+                        certificado=entry.certificado.data,
+                    )
+                db.session(nuevo)
+
+            db.session.commit()
+            return redirect(url_for("usuario.competencias"))
+        return render_template("usuario/academica", form=form)
+                
 
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
+@login_required
 def referencias():
-    pass
+    form = referenciasForm()
+
+    if request.method == "GET":
+        registros = Referencias.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
+
+        for registro in registros:
+            form.Info_referencias.append_entry({
+                "registro_id": registro.id,
+                "nombres": registro.nombres,
+                "apellidos": registro.apellidos,
+                "parentesco": registro.parentesco,
+                "empresa": registro.empresa,
+                "telefono": registro.telefono,
+                "ciudad": registro.ciudad,
+                "autoriza": registro.autoriza,
+            })
+
+    if form.validate_on_submit():
+        for entry in form.Info_referencias:
+            registro_id = entry.registro_id.data
+
+            registro = None
+            if registro_id:
+                registro = Referencias.query.filter_by(
+                    id=registro_id,
+                    id_usuario=current_user.id
+                ).first()
+
+            if registro:
+                # editar existente
+                registro.nombres = entry.nombres.data
+                registro.apellidos = entry.apellidos.data
+                registro.parentesco = entry.parentesco.data
+                registro.empresa = entry.empresa.data
+                registro.telefono = entry.telefono.data
+                registro.ciudad = entry.ciudad.data
+                registro.autoriza = entry.autoriza.data
+            else:
+                # crear nuevo
+                nuevo = Referencias(
+                    id_usuario=current_user.id,
+                    nombres=entry.nombres.data,
+                    apellidos=entry.apellidos.data,
+                    parentesco=entry.parentesco.data,
+                    empresa=entry.empresa.data,
+                    telefono=entry.telefono.data,
+                    ciudad=entry.ciudad.data,
+                    autoriza=entry.autoriza.data,
+                    fecha_registro=datetime.utcnow(),
+                )
+                db.session.add(nuevo)
+
+        db.session.commit()
+
+        return redirect(url_for("usuario.referencias"))
+
+    return render_template("usuario/referencias.html", form=form)
 
 @usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
+@login_required
 def discapacidades():
-    pass
+    form = discapacidadesForm()
 
-@usuario_bp.route('/documentos', methods=['GET', 'POST'])
-def documentos():
-    pass
+    if request.method == "GET":
+        registros = Discapacidades.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
 
-    #"Si el formulario fue enviado y además todos los campos pasan las validaciones
-    #valida si los campos son validos
+        for registro in registros:
+            form.Info_discapacidades.append_entry({
+                "registro_id": registro.id,
+                "categoria": registro.categoria,
+                "descripcion": registro.descripcion,
+            })
+
+    if form.validate_on_submit():
+        for entry in form.Info_discapacidades:
+            registro_id = entry.registro_id.data
+
+            registro = None
+            if registro_id:
+                registro = Discapacidades.query.filter_by(
+                    id=registro_id,
+                    id_usuario=current_user.id
+                ).first()
+
+            if registro:
+                # editar existente
+                registro.categoria = entry.categoria.data
+                registro.descripcion = entry.descripcion.data
+            else:
+                # crear nuevo
+                nuevo = Discapacidades(
+                    id_usuario=current_user.id,
+                    categoria=entry.categoria.data,
+                    descripcion=entry.descripcion.data,
+                    fecha_registro=datetime.utcnow(),
+                )
+                db.session.add(nuevo)
+
+        db.session.commit()
+
+        return redirect(url_for("usuario.discapacidades"))
+
+    return render_template("usuario/discapacidades.html", form=form)
+

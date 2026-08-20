@@ -1,10 +1,14 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
     SelectField,
     SubmitField,
-    TextAreaField
+    TextAreaField,
+    FieldList,
+    FormField,
+    HiddenField
 )
 from wtforms.validators import (
     DataRequired,
@@ -13,7 +17,7 @@ from wtforms.validators import (
 )
 
 
-class discapacidadForm(FlaskForm):
+class discapacidadItemForm(FlaskForm):
     """Formulario para registro de discapacidades"""
 
     categoria = SelectField(
@@ -47,4 +51,11 @@ class discapacidadForm(FlaskForm):
         ]
     )
 
-    submit = SubmitField("Guardar discapacidad")
+class discapacidadesForm(FlaskForm):
+
+    Info_discapacidades = FieldList(
+    FormField(discapacidadItemForm),
+        min_entries=0
+    )
+
+submit = SubmitField("Guardar y continuar")

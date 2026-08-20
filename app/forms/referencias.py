@@ -1,8 +1,12 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
 from wtforms import (
     StringField,
     SelectField,
-    SubmitField
+    SubmitField,
+    FieldList,
+    FormField,
+    HiddenField
 )
 from wtforms.validators import (
     DataRequired,
@@ -11,7 +15,7 @@ from wtforms.validators import (
 )
 
 
-class referenciasForm(FlaskForm):
+class referenciasItemForm(Form):
     """Formulario para registro de referencias profesionales"""
 
     nombres = StringField(
@@ -71,5 +75,11 @@ class referenciasForm(FlaskForm):
         ],
         validators=[DataRequired()]
     )
+class referenciasForm(FlaskForm):
 
-    submit = SubmitField("Guardar referencia")
+    Info_referencias = FieldList(
+    FormField(referenciasItemForm),
+        min_entries=0
+    )
+
+submit = SubmitField("Guardar y continuar")

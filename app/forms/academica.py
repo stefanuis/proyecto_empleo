@@ -132,7 +132,7 @@ class InforAcademicaForm(FlaskForm):
 
     Info_academica = FieldList(
         FormField(InforAcademicaItemForm),
-        min_entries=1
+        min_entries=0
     )
 
     submit = SubmitField("Guardar y continuar")

@@ -122,13 +122,12 @@ class experienciaItemForm(Form):
                        'Solo se permiten archivos: PDF, JPG, PNG, DOC, DOCX')
         ]
     )
+class experienciaForm(FlaskForm):
 
-    class experienciaForm(FlaskForm):
-
-     Info_experiencia = FieldList(
-        FormField(experienciaItemForm),
-            min_entries=1
+    Info_experiencia = FieldList(
+    FormField(experienciaItemForm),
+        min_entries=0
     )
 
-    submit = SubmitField("Guardar y continuar")
+submit = SubmitField("Guardar y continuar")
 

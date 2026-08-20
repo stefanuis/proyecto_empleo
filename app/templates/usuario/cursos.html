@@ -1,0 +1,123 @@
+{% extends 'usuario/base.html' %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <div class="contenedor-formulario">
+        <h2>Cursos y Certificaciones</h2>
+
+        {% include "usuario/barra_progreso.html" with context %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div id="cursos-container">
+                {% for entry in form.Info_curso %}
+                <div class="curso-fila" data-index="{{ loop.index0 }}">
+                    {{ entry.registro_id }}
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            {{ entry.nombre.label }}
+                            {{ entry.nombre(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.institucion.label }}
+                            {{ entry.institucion(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.area.label }}
+                            {{ entry.area(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.horas.label }}
+                            {{ entry.horas(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.fecha_realizacion.label }}
+                            {{ entry.fecha_realizacion(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.certificado.label }}
+                            {{ entry.certificado(class="form-control") }}
+                        </div>
+                    </div>
+
+                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+
+            <div class="form-botones">
+                <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
+                {{ form.submit(class="btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-curso-vacio">
+    <div class="curso-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_curso-__INDEX__-registro_id" value="">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Nombre del curso</label>
+                <input class="form-control" name="Info_curso-__INDEX__-nombre">
+            </div>
+            <div class="campo">
+                <label>Institución</label>
+                <input class="form-control" name="Info_curso-__INDEX__-institucion">
+            </div>
+            <div class="campo">
+                <label>Área</label>
+                <input class="form-control" name="Info_curso-__INDEX__-area">
+            </div>
+            <div class="campo">
+                <label>Horas</label>
+                <input class="form-control" name="Info_curso-__INDEX__-horas">
+            </div>
+            <div class="campo">
+                <label>Fecha de realización</label>
+                <input class="form-control" name="Info_curso-__INDEX__-fecha_realizacion">
+            </div>
+            <div class="campo">
+                <label>Certificado</label>
+                <input class="form-control" name="Info_curso-__INDEX__-certificado">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("cursos-container");
+    const plantilla = document.getElementById("plantilla-curso-vacio");
+    const btnAgregar = document.getElementById("btn-agregar-curso");
+
+    let contador = container.querySelectorAll(".curso-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            e.target.closest(".curso-fila").remove();
+        }
+    });
+});
+</script>
+{% endblock %}

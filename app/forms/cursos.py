@@ -1,3 +1,4 @@
+from wtforms import Form
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -5,7 +6,10 @@ from wtforms import (
     DateField,
     IntegerField,
     SubmitField,
-    BooleanField
+    BooleanField,
+    FieldList,
+    FormField,
+    HiddenField
     
 )
 from wtforms.validators import (
@@ -17,7 +21,7 @@ from wtforms.validators import (
 )
 
 
-class cursoForm(FlaskForm):
+class cursoItemForm(Form):
 
     nombre = StringField(
         "nombre del curso",
@@ -28,11 +32,11 @@ class cursoForm(FlaskForm):
     )
 
     institucion = StringField(
-            "institucion de los cursos",
-            validators=[
-                DataRequired(),
+    "institucion de los cursos",
+        validators=[
+            DataRequired(),
                 Length(max= 100)
-            ]
+        ]
     )
 
     area = StringField(
@@ -61,5 +65,13 @@ class cursoForm(FlaskForm):
         format="%Y-%m-%d",
         validators=[DataRequired()]
     )
+class experienciaForm(FlaskForm):
 
-    submit = SubmitField("Guardar curso")
+    Info_curso = FieldList(
+    FormField(cursoItemForm),
+        min_entries=0
+    )
+
+submit = SubmitField("Guardar y continuar")
+
+

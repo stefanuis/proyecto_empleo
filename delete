@@ -1,0 +1,49 @@
+@usuario_bp.route('/competencias/eliminar/<int:registro_id>', methods=['POST'])
+@login_required
+def eliminar_competencia(registro_id):
+    registro = Competencias.query.filter_by(
+        id=registro_id,
+        id_usuario=current_user.id
+    ).first()
+
+    if not registro:
+        return jsonify({"ok": False, "error": "Registro no encontrado"}), 404
+
+    db.session.delete(registro)
+    db.session.commit()
+
+    return jsonify({"ok": True})
+
+JavaScript actualizado (reemplaza el listener del botón eliminar en tu template):
+
+javascript
+container.addEventListener("click", function (e) {
+    if (e.target.classList.contains("btn-eliminar-fila")) {
+        const fila = e.target.closest(".curso-fila");
+        const inputId = fila.querySelector('input[name$="-registro_id"]');
+        const registroId = inputId ? inputId.value : null;
+
+        if (registroId) {
+            // ya existe en la BD -> pedir confirmación y borrar en el servidor
+            if (!confirm("¿Seguro que deseas eliminar este registro?")) return;
+
+            fetch(`/usuario/competencias/eliminar/${registroId}`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token() }}"  // si usas Flask-WTF con CSRF
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    fila.remove();
+                } else {
+                    alert("No se pudo eliminar: " + data.error);
+                }
+            });
+        } else {
+            // era una fila nueva (nunca guardada), solo se quita del DOM
+            fila.remove();
+        }
+    }
+});
