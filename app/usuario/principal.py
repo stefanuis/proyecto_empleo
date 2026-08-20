@@ -385,7 +385,7 @@ def experiencia():
                     departamento=entry.departamento.data,
                     municipio=entry.municipio.data,
                     funciones_realizadas=entry.funciones_realizadas.data,
-                    fecha_registro=datetime.utcnow(),
+                    fecha_registro=datetime.now()
                 )
                 db.session.add(nuevo)
 
@@ -568,3 +568,15 @@ def discapacidades():
 
     return render_template("usuario/discapacidades.html", form=form)
 
+
+@usuario_bp.route('/vacantes', methods=["GET"])
+@login_required
+def vacantes():
+    
+    return render_template("usuario/vacantes.html")
+
+@usuario_bp.route('/postulaciones', methods=["GET"])
+@login_required
+def postulaciones():
+    
+    return render_template("usuario/postulaciones.html")

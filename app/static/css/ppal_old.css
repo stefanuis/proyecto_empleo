@@ -1690,3 +1690,135 @@ body{
     }
 
 }
+ 
+
+
+    /* CONTENEDOR DE LAS TARJETAS */
+.grid-vacantes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+/* TARJETA */
+.card-vacante {
+    background: var(--primary-light);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: 0.2s ease;
+}
+
+/* EFECTO AL PASAR EL MOUSE */
+.card-vacante:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+}
+
+/* PARTE SUPERIOR */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ICONO */
+.icono {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+}
+
+/* COLORES DEL ICONO */
+.icono-azul {
+    background: #e8f0ff;
+    color: var(--primary);
+}
+
+.icono-teal {
+    background: #e6f7f5;
+    color: var(--primary);
+}
+
+/* TÍTULOS */
+.card-titulos {
+    flex: 1;
+}
+
+.card-cargo {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.card-categoria {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* ETIQUETAS */
+.card-tags {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0;
+}
+
+.tag {
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+/* PARTE INFERIOR */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 15px;
+}
+
+/* SALARIO */
+.card-salario {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.card-fecha {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* BOTÓN */
+.btn-postular {
+    border: none;
+    background: #2563eb;
+    color: white;
+
+    padding: 9px 14px;
+    border-radius: 7px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn-postular:hover {
+    background: #1d4ed8;
+}

@@ -1,0 +1,530 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+    Vacantes
+{% endblock %}
+
+{% block contenido %}
+
+
+<style>
+
+
+/* ============ MAIN AREA ============ */
+.main-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ============ TOPBAR / HEADER ============ */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.5rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e4e6eb;
+}
+
+.topbar-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.topbar-actions i {
+    font-size: 19px;
+    color: #5b6472;
+    cursor: pointer;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #eaf1ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* ============ CONTENIDO DE PÁGINA ============ */
+.page-content {
+    padding: 1.5rem;
+}
+
+/* ============ FILTROS (buscador + selects) ============ */
+.filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.input-buscar {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.input-buscar i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #9aa1ab;
+}
+
+.input-buscar input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1px solid #dcdfe4;
+    border-radius: 8px;
+    outline: none;
+}
+
+.input-buscar input:focus {
+    border-color: #2563eb;
+}
+
+.filtros select {
+    padding: 9px 12px;
+    border: 1px solid #dcdfe4;
+    border-radius: 8px;
+    background: #ffffff;
+    outline: none;
+    min-width: 150px;
+}
+
+/* ============ GRID DE VACANTES (tarjetas) ============ */
+.grid-vacantes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (max-width: 720px) {
+    .grid-vacantes {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card-vacante {
+    background: #ffffff;
+    border: 1px solid #e4e6eb;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.icono {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 17px;
+}
+
+.icono-azul {
+    background: #eaf1ff;
+    color: #2563eb;
+}
+
+.icono-teal {
+    background: #e6f7f5;
+    color: #0d9488;
+}
+
+.card-titulos {
+    min-width: 0;
+}
+
+.card-cargo {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.card-categoria {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    font-size: 11px;
+    color: #5b6472;
+    border: 1px solid #e4e6eb;
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #e4e6eb;
+    padding-top: 10px;
+}
+
+.card-salario {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.card-fecha {
+    font-size: 11px;
+    color: #9aa1ab;
+    margin-top: 2px;
+}
+
+.btn-postular {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-postular:hover {
+    background: #1d4ed8;
+}
+
+/* ============ MIS POSTULACIONES ============ */
+.lista-postulaciones {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-postulacion {
+    background: #ffffff;
+    border: 1px solid #e4e6eb;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+}
+
+.postulacion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.postulacion-cargo {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.postulacion-meta {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.badge-azul {
+    background: #eaf1ff;
+    color: #2563eb;
+}
+
+.badge-verde {
+    background: #e7f7ec;
+    color: #15803d;
+}
+
+.badge-rojo {
+    background: #fdecec;
+    color: #dc2626;
+}
+
+.badge-gris {
+    background: #f1f2f4;
+    color: #5b6472;
+}
+
+/* barra de pasos / progreso */
+.pasos {
+    display: flex;
+    gap: 6px;
+}
+
+.paso {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.paso-barra {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: #e4e6eb;
+}
+
+.paso-barra.activo {
+    background: #2563eb;
+}
+
+.paso-barra.rechazado {
+    background: #dc2626;
+}
+
+.paso-label {
+    font-size: 11px;
+    color: #9aa1ab;
+    text-align: center;
+}
+
+/* ============ TARJETAS RESUMEN (opcional, arriba de la lista) ============ */
+.resumen {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 720px) {
+    .resumen {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.resumen-card {
+    background: #ffffff;
+    border: 1px solid #e4e6eb;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.resumen-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.resumen-valor {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 4px;
+}
+</style>
+
+<div class="app-layout">
+
+    <!-- CONTENIDO -->
+    <div class="main-area">
+
+        <!-- HEADER -->
+        <header class="topbar">
+            <p class="topbar-title">Mis postulaciones</p>
+            <div class="topbar-actions">
+                <i class="ti ti-bell"></i>
+                <div class="avatar">JP</div>
+            </div>
+        </header>
+
+        <!-- CONTENIDO DE LA PÁGINA -->
+        <main class="page-content">
+
+            <!-- Tarjetas resumen -->
+            <div class="resumen">
+                <div class="resumen-card">
+                    <p class="resumen-label">Postuladas</p>
+                    <p class="resumen-valor">5</p>
+                </div>
+                <div class="resumen-card">
+                    <p class="resumen-label">En revisión</p>
+                    <p class="resumen-valor">2</p>
+                </div>
+                <div class="resumen-card">
+                    <p class="resumen-label">Entrevistas</p>
+                    <p class="resumen-valor">1</p>
+                </div>
+                <div class="resumen-card">
+                    <p class="resumen-label">Contratado</p>
+                    <p class="resumen-valor">1</p>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filtros">
+                <div class="input-buscar">
+                    <i class="ti ti-search"></i>
+                    <input type="text" placeholder="Buscar por cargo">
+                </div>
+
+                <select>
+                    <option>Todos los estados</option>
+                    <option>Postulado</option>
+                    <option>En revisión</option>
+                    <option>Entrevista</option>
+                    <option>Rechazado</option>
+                    <option>Contratado</option>
+                </select>
+            </div>
+
+            <!-- Lista de postulaciones -->
+            <div class="lista-postulaciones" id="lista-postulaciones">
+       
+
+                <div class="card-postulacion">
+                    <div class="postulacion-header">
+                        <div>
+                            <p class="postulacion-cargo">Auxiliar administrativo</p>
+                            <p class="postulacion-meta">Medellín · Postulado el 18 ago 2026</p>
+                        </div>
+                        <span class="badge badge-gris">Postulado</span>
+                    </div>
+                    <div class="pasos">
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">Postulado</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">En revisión</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">Entrevista</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">Decisión</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-postulacion">
+                    <div class="postulacion-header">
+                        <div>
+                            <p class="postulacion-cargo">Técnico asistencial</p>
+                            <p class="postulacion-meta">Medellín · Postulado el 15 ago 2026</p>
+                        </div>
+                        <span class="badge badge-azul">En revisión</span>
+                    </div>
+                    <div class="pasos">
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">Postulado</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">En revisión</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">Entrevista</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">Decisión</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-postulacion">
+                    <div class="postulacion-header">
+                        <div>
+                            <p class="postulacion-cargo">Asistente de gerencia</p>
+                            <p class="postulacion-meta">Medellín · Postulado el 10 ago 2026</p>
+                        </div>
+                        <span class="badge badge-rojo">Rechazado</span>
+                    </div>
+                    <div class="pasos">
+                        <div class="paso">
+                            <div class="paso-barra rechazado"></div>
+                            <span class="paso-label">Postulado</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra rechazado"></div>
+                            <span class="paso-label">En revisión</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra rechazado"></div>
+                            <span class="paso-label">Entrevista</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra"></div>
+                            <span class="paso-label">Decisión</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-postulacion">
+                    <div class="postulacion-header">
+                        <div>
+                            <p class="postulacion-cargo">Auxiliar asistencial</p>
+                            <p class="postulacion-meta">Bogotá · Postulado el 20 jul 2026</p>
+                        </div>
+                        <span class="badge badge-verde">Contratado</span>
+                    </div>
+                    <div class="pasos">
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">Postulado</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">En revisión</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">Entrevista</span>
+                        </div>
+                        <div class="paso">
+                            <div class="paso-barra activo"></div>
+                            <span class="paso-label">Decisión</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>
+
+{% endblock %}

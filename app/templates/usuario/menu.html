@@ -20,13 +20,13 @@
         <hr>
 
         <li>
-            <a href="#">
+            <a href="{{ url_for('usuario.vacantes') }}">
                 <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/misCosas.png') }}" alt="Logo">
                 <span class="sidebar-text">Vacantes</span>
             </a>
         </li>
         <li>
-            <a href="#">
+            <a href="{{ url_for('usuario.postulaciones')}}">
                 <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/tareas.png') }}" alt="Logo">
                 <span class="sidebar-text">Mis postulaciones</span>
             </a>

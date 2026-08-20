@@ -26,40 +26,42 @@ Principal Usuario
             {% endif %}
         {% endwith %}
 
-        <form method="POST" enctype="multipart/form-data" novalidate>
+        <form method="POST"
+              enctype="multipart/form-data"
+              novalidate>
 
             {{ form.hidden_tag() }}
 
             <div class="form-grid">
 
-                <!-- Categoría -->
+                <!-- Nombre del documento -->
                 <div class="campo">
-                    {{ form.categoria.label }}
-                    {{ form.categoria(class="form-control") }}
+                    {{ form.nombre.label }}
+                    {{ form.nombre(class="form-control") }}
 
-                    {% for error in form.categoria.errors %}
+                    {% for error in form.nombre.errors %}
                         <span class="error">{{ error }}</span>
                     {% endfor %}
                 </div>
 
 
-                <!-- Descripción -->
+                <!-- Tipo de documento -->
                 <div class="campo">
-                    {{ form.descripcion.label }}
-                    {{ form.descripcion(class="form-control") }}
+                    {{ form.tipo.label }}
+                    {{ form.tipo(class="form-control") }}
 
-                    {% for error in form.descripcion.errors %}
+                    {% for error in form.tipo.errors %}
                         <span class="error">{{ error }}</span>
                     {% endfor %}
                 </div>
 
 
-                <!-- Certificado -->
+                <!-- Archivo -->
                 <div class="campo">
-                    {{ form.ruta_certificado.label }}
-                    {{ form.ruta_certificado(class="form-control") }}
+                    {{ form.ruta.label }}
+                    {{ form.ruta(class="form-control") }}
 
-                    {% for error in form.ruta_certificado.errors %}
+                    {% for error in form.ruta.errors %}
                         <span class="error">{{ error }}</span>
                     {% endfor %}
                 </div>

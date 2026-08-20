@@ -1,0 +1,168 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Principal Usuario
+{% endblock %}
+
+{% block contenido %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacantes activas</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo"></div>
+            <span class="brand-name">Empleo App</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item"><i class="ti ti-home"></i>Inicio</a>
+            <a href="#" class="nav-item active"><i class="ti ti-briefcase"></i>Vacantes activas</a>
+            <a href="#" class="nav-item"><i class="ti ti-file-check"></i>Mis postulaciones</a>
+            <a href="#" class="nav-item"><i class="ti ti-user"></i>Mi perfil</a>
+            <a href="#" class="nav-item"><i class="ti ti-file-text"></i>Mis documentos</a>
+        </nav>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <div class="main-area">
+
+        <!-- HEADER -->
+        <header class="topbar">
+            <p class="topbar-title">Vacantes activas</p>
+            <div class="topbar-actions">
+                <i class="ti ti-bell"></i>
+                <div class="avatar">JP</div>
+            </div>
+        </header>
+
+        <!-- CONTENIDO DE LA PÁGINA -->
+        <main class="page-content">
+
+            <div class="filtros">
+                <div class="input-buscar">
+                    <i class="ti ti-search"></i>
+                    <input type="text" placeholder="Buscar por cargo">
+                </div>
+
+                <select>
+                    <option>Todas las categorías</option>
+                    <option>Administrativo</option>
+                    <option>Asistencial</option>
+                </select>
+
+                <select>
+                    <option>Ciudad</option>
+                    <option>Medellín</option>
+                    <option>Bogotá</option>
+                </select>
+            </div>
+
+            <div class="grid-vacantes" id="lista-vacantes">
+                <!-- Las tarjetas se pueden generar aquí con Jinja: {% for vacante in vacantes %} -->
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-azul"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Auxiliar administrativo</p>
+                            <p class="card-categoria">Administrativo</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.800.000</p>
+                            <p class="card-fecha">Hace 1 día</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-azul"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Asistente de gerencia</p>
+                            <p class="card-categoria">Administrativo</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$2.200.000</p>
+                            <p class="card-fecha">Hace 2 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-teal"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Auxiliar asistencial</p>
+                            <p class="card-categoria">Asistencial</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Bogotá</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.700.000</p>
+                            <p class="card-fecha">Hace 3 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-teal"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Técnico asistencial</p>
+                            <p class="card-categoria">Asistencial</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.950.000</p>
+                            <p class="card-fecha">Hace 5 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>
+
+{% endblock %}

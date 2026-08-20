@@ -1,0 +1,437 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+    Vacantes
+{% endblock %}
+
+{% block contenido %}
+<style>
+
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    padding: 18px 25px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 25px;
+}
+
+.topbar-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.topbar-actions i {
+    font-size: 23px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.topbar-actions i:hover {
+    color: #2563eb;
+}
+
+
+/* =========================
+   CONTENIDO
+========================= */
+
+.page-content {
+    padding: 0 25px 30px;
+}
+
+
+/* =========================
+   FILTROS
+========================= */
+
+.filtros {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+
+/* =========================
+   BUSCADOR
+========================= */
+
+.input-buscar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    width: 320px;
+    height: 44px;
+
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    padding: 0 14px;
+
+    transition: 0.2s ease;
+}
+
+.input-buscar i {
+    font-size: 19px;
+    color: #9ca3af;
+}
+
+.input-buscar input {
+    width: 100%;
+    border: none;
+    outline: none;
+
+    font-size: 14px;
+    color: #374151;
+    background: transparent;
+}
+
+.input-buscar input::placeholder {
+    color: #9ca3af;
+}
+
+.input-buscar:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+
+
+
+.filtros select {
+    height: 44px;
+    min-width: 190px;
+
+    padding: 0 35px 0 13px;
+
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    color: #374151;
+    font-size: 14px;
+
+    outline: none;
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.filtros select:hover {
+    border-color: #9ca3af;
+}
+
+.filtros select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.grid-vacantes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+
+/* TARJETA */
+.card-vacante {
+    background: var(--primary-light);
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: 0.2s ease;
+    
+}
+
+/* EFECTO AL PASAR EL MOUSE */
+.card-vacante:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
+}
+
+/* PARTE SUPERIOR */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ICONO */
+.icono {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+}
+
+/* COLORES DEL ICONO */
+.icono-azul {
+    background: #e8f0ff;
+    color: var(--primary);
+}
+
+.icono-teal {
+    background: #e6f7f5;
+    color: var(--primary);
+}
+
+/* TÍTULOS */
+.card-titulos {
+    flex: 1;
+}
+
+.card-cargo {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.card-categoria {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* ETIQUETAS */
+.card-tags {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0;
+}
+
+.tag {
+    background: #f3f4f6;
+    color: #4b5563;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+
+/* PARTE INFERIOR */
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 15px;
+}
+
+/* SALARIO */
+.card-salario {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.card-fecha {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* BOTÓN */
+.btn-postular {
+    border: none;
+    background: #2563eb;
+    color: white;
+
+    padding: 9px 14px;
+    border-radius: 7px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.btn-postular:hover {
+    background: #1d4ed8;
+}
+
+@media (max-width: 768px) {
+
+    .topbar {
+        padding: 15px 18px;
+    }
+
+    .topbar-title {
+        font-size: 19px;
+    }
+
+    .page-content {
+        padding: 0 18px 25px;
+    }
+
+    .filtros {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .input-buscar {
+        width: 100%;
+    }
+
+    .filtros select {
+        width: 100%;
+    }
+}
+</style>
+
+
+<div class="app-layout">
+
+    <div class="main-area">
+
+        <header class="topbar">
+            <p class="topbar-title">Vacantes activas</p>
+            <div class="topbar-actions">
+                <i class="ti ti-bell"></i>
+
+            </div>
+        </header>
+
+
+        <main class="page-content">
+
+            <div class="filtros">
+                <div class="input-buscar">
+                    <i class="ti ti-search"></i>
+                    <input type="text" placeholder="Buscar por cargo">
+                </div>
+
+                <select>
+                    <option>Todas las categorías</option>
+                    <option>Administrativo</option>
+                    <option>Asistencial</option>
+                </select>
+
+                <select>
+                    <option>estado</option>
+                    <option>abierto</option>
+                    <option>cerrado</option>
+                </select>
+            </div>
+
+            <div class="grid-vacantes" id="lista-vacantes">
+
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-azul"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Auxiliar administrativo</p>
+                            <p class="card-categoria">Administrativo</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.800.000</p>
+                            <p class="card-fecha">Hace 1 día</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-azul"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Asistente de gerencia</p>
+                            <p class="card-categoria">Administrativo</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$2.200.000</p>
+                            <p class="card-fecha">Hace 2 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-teal"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Auxiliar asistencial</p>
+                            <p class="card-categoria">Asistencial</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Bogotá</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.700.000</p>
+                            <p class="card-fecha">Hace 3 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono icono-teal"><i class="ti ti-briefcase"></i></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">Técnico asistencial</p>
+                            <p class="card-categoria">Asistencial</p>
+                        </div>
+                    </div>
+                    <div class="card-tags">
+                        <span class="tag">Medellín</span>
+                        <span class="tag">Presencial</span>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <p class="card-salario">$1.950.000</p>
+                            <p class="card-fecha">Hace 5 días</p>
+                        </div>
+                        <button class="btn-postular">Postularme</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+
+</body>
+</html>
+
+{% endblock %}
+
+
