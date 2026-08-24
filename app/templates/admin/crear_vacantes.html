@@ -1,0 +1,144 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Principal Usuario
+{% endblock %}
+
+{% block contenido %}
+
+<div class="contenedor-padre">
+    <div class="contenedor-formulario">
+
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" novalidate>
+
+            {{ form.hidden_tag() }}
+
+            <div class="form-grid">
+
+                <!-- titulo -->
+                <div class="campo">
+                    {{ form.titulo.label }}
+                    {{ form.titulo(class="form-control") }}
+
+                    {% for error in form.titulo.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+
+                <!-- area -->
+                <div class="campo">
+                    {{ form.area.label }}
+                    {{ form.area(class="form-control") }}
+
+                    {% for error in form.area.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+
+                <!-- descripcion -->
+                <div class="campo">
+                    {{ form.descripcion.label }}
+                    {{ form.descripcion(class="form-control") }}
+
+                    {% for error in form.descripcion.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+
+                <!-- requisito -->
+                <div class="campo">
+                    {{ form.requisito.label }}
+                    {{ form.requisito(class="form-control") }}
+
+                    {% for error in form.requisito.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <!-- salario -->
+                <div class="campo">
+                    {{ form.salario.label }}
+                    {{ form.salario(class="form-control") }}
+
+                    {% for error in form.salario.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                 <!--estado de la vacante -->
+                <div class="campo">
+                    {{ form.estado.label }}
+                    {{ form.estado(class="form-control") }}
+
+                    {% for error in form.estado.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                  <!-- fecha_publicacion-->
+                <div class="campo">
+                    {{ form.fecha_publicacion.label }}
+                    {{ form.fecha_publicacion(class="form-control") }}
+
+                    {% for error in form.fecha_publicacion.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                
+                  <!--  fecha_cierre -->
+                <div class="campo">
+                    {{ form.fecha_cierre.label }}
+                    {{ form.fecha_cierre(class="form-control") }}
+
+                    {% for error in form.fecha_cierre.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+   
+
+            </div>
+
+
+            <div class="form-botones">
+
+                {% if paso_anterior %}
+                    <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                       class="btn-secondary">
+                        Anterior
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('usuario.inicial') }}"
+                       class="btn-secondary">
+                        Anterior
+                    </a>
+                {% endif %}
+
+
+                <button type="submit" class="btn-primary">
+                    Guardar y continuar
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

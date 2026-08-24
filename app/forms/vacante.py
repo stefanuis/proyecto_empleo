@@ -61,11 +61,17 @@ class VacanteForm(FlaskForm):
         choices=[
             ("", "Selecciona un estado"),
             ("Activa", "Activa"),
-            ("Cerrada", "Cerrada"),
-            ("Suspendida", "Suspendida"),
-            ("Cancelada", "Cancelada")
+            ("Cerrada", "Cerrada")
+           
         ],
         validators=[DataRequired()]
+    )
+
+    
+    fecha_publicacion = DateField(
+        "Fecha de publicacion",
+        format="%Y-%m-%d",
+        validators=[Optional()]
     )
 
     fecha_cierre = DateField(

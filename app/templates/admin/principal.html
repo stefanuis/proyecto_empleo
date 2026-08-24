@@ -1,0 +1,392 @@
+{% extends 'admin/base.html' %}
+{% block contenido %}
+
+<style>
+
+  :root{
+    --ink:        #4A1B3E;
+    --ink-soft:   #7C4468;
+    --paper:      #FBEEF2;
+    --card:       #FFFFFF;
+    --teal:       #C23B6C;
+    --teal-soft:  #FBE1E9;
+    --mustard:    #E0A24C;
+    --mustard-soft: #FBEDD4;
+    --rust:       #8F2B47;
+    --rust-soft:  #F3DEE3;
+    --line:       #F0D9E2;
+    --text-muted: #8A6379;
+
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --radius: 3px;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  body{
+    background:var(--paper);
+    font-family:var(--font-body);
+    color:var(--ink);
+    padding:32px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+
+  .dashboard{ max-width:1240px; margin:0 auto; display:flex; flex-direction:column; gap:28px; }
+
+  /* ---------- Header ---------- */
+  .dash-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:20px;
+  }
+  .dash-header .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    display:block;
+    margin-bottom:6px;
+  }
+  .dash-header h1{
+    font-family:var(--font-display);
+    font-weight:500;
+    font-size:32px;
+    letter-spacing:-0.01em;
+  }
+  .dash-header h1 em{ font-style:italic; color:var(--teal); }
+
+  .header-tools{ display:flex; align-items:center; gap:14px; }
+
+  .search-box{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:9px 14px;
+    min-width:230px;
+  }
+  .search-box svg{ flex-shrink:0; opacity:.5; }
+  .search-box input{
+    border:none; outline:none; background:none;
+    font-family:var(--font-body); font-size:13px; width:100%;
+    color:var(--ink);
+  }
+  .search-box input::placeholder{ color:#9AA2AC; }
+
+  .btn-primary{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:var(--radius);
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .btn-primary:hover{ background:var(--teal); }
+  .btn-primary:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+
+  .avatar{
+    width:38px; height:38px;
+    border-radius:50%;
+    background:var(--mustard);
+    color:var(--ink);
+    font-family:var(--font-mono);
+    font-weight:600;
+    font-size:13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------- KPI row ---------- */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+  }
+  .kpi-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 20px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .kpi-card::before{
+    content:"";
+    position:absolute;
+    top:0; left:0;
+    width:100%; height:3px;
+    background:var(--accent, var(--teal));
+  }
+  .kpi-card[data-accent="mustard"]{ --accent:var(--mustard); }
+  .kpi-card[data-accent="rust"]{ --accent:var(--rust); }
+  .kpi-card[data-accent="ink"]{ --accent:var(--ink-soft); }
+
+  .kpi-label{
+    font-size:12px;
+    color:var(--text-muted);
+    font-weight:500;
+    margin-bottom:10px;
+  }
+  .kpi-value{
+    font-family:var(--font-mono);
+    font-size:30px;
+    font-weight:600;
+    letter-spacing:-0.02em;
+  }
+  .kpi-delta{
+    margin-top:8px;
+    font-size:12px;
+    font-family:var(--font-mono);
+    color:var(--teal);
+  }
+  .kpi-delta.down{ color:var(--rust); }
+
+  /* ---------- Folder-tab panels (signature element) ---------- */
+  .content-grid{
+    display:grid;
+    grid-template-columns:1.6fr 1fr;
+    gap:20px;
+    align-items:start;
+  }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:0 var(--radius) var(--radius) var(--radius);
+    position:relative;
+    margin-top:26px; /* room for tab */
+  }
+  .panel-tab{
+    position:absolute;
+    top:-26px; left:0;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--ink);
+    color:#fff;
+    padding:7px 16px 8px;
+    border-radius:var(--radius) var(--radius) 0 0;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .panel-tab .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:var(--mustard);
+  }
+  .panel-body{ padding:22px; }
+  .panel-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:16px;
+  }
+  .panel-head h2{
+    font-family:var(--font-display);
+    font-size:19px;
+    font-weight:500;
+  }
+  .panel-head a{
+    font-size:12px;
+    color:var(--teal);
+    text-decoration:none;
+    font-weight:600;
+  }
+  .panel-head a:hover{ text-decoration:underline; }
+
+  /* ---------- Vacantes table ---------- */
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--text-muted);
+    font-weight:600;
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:13px 10px;
+    font-size:13px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  .cell-titulo{ font-weight:600; }
+  .cell-area{ color:var(--text-muted); font-size:12px; }
+  .cell-id{ font-family:var(--font-mono); color:var(--text-muted); font-size:12px; }
+
+  .badge{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:3px 9px;
+    border-radius:20px;
+    font-weight:500;
+  }
+  .badge.activa{ background:var(--teal-soft); color:var(--teal); }
+  .badge.pausada{ background:var(--mustard-soft); color:#8A6416; }
+  .badge.cerrada{ background:var(--rust-soft); color:var(--rust); }
+
+  /* ---------- Activity feed ---------- */
+  .feed-item{
+    display:flex;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .feed-item:last-child{ border-bottom:none; padding-bottom:0; }
+  .feed-icon{
+    width:32px; height:32px;
+    flex-shrink:0;
+    border-radius:var(--radius);
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .feed-text{ font-size:13px; line-height:1.45; }
+  .feed-text strong{ font-weight:600; }
+  .feed-time{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-muted);
+    margin-top:2px;
+    display:block;
+  }
+
+  @media (max-width: 980px){
+    .kpi-grid{ grid-template-columns:repeat(2,1fr); }
+    .content-grid{ grid-template-columns:1fr; }
+  }
+  @media (max-width: 560px){
+    body{ padding:18px; }
+    .kpi-grid{ grid-template-columns:1fr; }
+    .dash-header{ align-items:flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+  <!-- KPIs -->
+  <section class="kpi-grid">
+    <div class="kpi-card" data-accent="teal">
+      <div class="kpi-label">Vacantes activas</div>
+      <div class="kpi-value">18</div>
+      <div class="kpi-delta">↑ 3 esta semana</div>
+    </div>
+    <div class="kpi-card" data-accent="mustard">
+      <div class="kpi-label">Hojas de vida recibidas</div>
+      <div class="kpi-value">241</div>
+      <div class="kpi-delta">↑ 27 esta semana</div>
+    </div>
+    <div class="kpi-card" data-accent="ink">
+      <div class="kpi-label">Entrevistas programadas</div>
+      <div class="kpi-value">12</div>
+      <div class="kpi-delta down">↓ 2 vs. semana pasada</div>
+    </div>
+    <div class="kpi-card" data-accent="rust">
+      <div class="kpi-label">Vacantes por cerrar</div>
+      <div class="kpi-value">4</div>
+      <div class="kpi-delta down">Cierre en 3 días</div>
+    </div>
+  </section>
+
+  <!-- Content -->
+  <section class="content-grid">
+
+    <!-- dashboard-->
+    <div class="panel">
+      <span class="panel-tab"><span class="dot"></span> tbl_vacante</span>
+      <div class="panel-body">
+        <div class="panel-head">
+          <h2>Vacantes recientes</h2>
+          <a href="#">Ver todas →</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+         
+        </table>
+      </div>
+    </div>
+
+    <!-- Actividad reciente -->
+    <aside class="panel">
+      <span class="panel-tab"><span class="dot"></span> actividad</span>
+      <div class="panel-body">
+        <div class="panel-head">
+          <h2>Actividad reciente</h2>
+        </div>
+
+        <div class="feed-item">
+          <div class="feed-icon">HV</div>
+          <div class="feed-text">
+            <strong>Laura Gómez</strong> aplicó a Analista de Datos Senior.
+            <span class="feed-time">hace 12 min</span>
+          </div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-icon">EN</div>
+          <div class="feed-text">
+            Entrevista con <strong>David Ruiz</strong> agendada para mañana 10:00 a.m.
+            <span class="feed-time">hace 1 h</span>
+          </div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-icon">VA</div>
+          <div class="feed-text">
+            Se publicó la vacante <strong>Coordinador de Logística</strong>.
+            <span class="feed-time">hace 3 h</span>
+          </div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-icon">HV</div>
+          <div class="feed-text">
+            <strong>Mateo Silva</strong> aplicó a Ejecutivo Comercial.
+            <span class="feed-time">hace 5 h</span>
+          </div>
+        </div>
+        <div class="feed-item">
+          <div class="feed-icon">CI</div>
+          <div class="feed-text">
+            Se cerró la vacante <strong>Contador Junior</strong> — 1 contratación.
+            <span class="feed-time">ayer</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+</div>
+
+
+{% endblock%}

@@ -21,14 +21,15 @@ from datetime import datetime, timezone
 
 # ── Usuarios a insertar ───────────────────────────────────────
 # Agrega o modifica los que necesites para tus pruebas.
+
 USUARIOS_PRUEBA = [
     {
-        "nombres":   "Laura",
-        "apellidos": "Gómez",
-        "correo":    "laura.gomez@ejemplo.com",
-        "clave":     "Usuario1234",    # ← se cifrará automáticamente
+        "nombres":   "stefany",
+        "apellidos": "lopez",
+        "correo":    "victor.gomez@ejemplo.com",
+        "clave":     "stefy123",    # ← se cifrará automáticamente
         "telefono":  "3009876543",
-        "rol":       "usuario",
+        "rol":       "admin",
         "esta_activa":     True,
         "esta_verificada": True,
     },
