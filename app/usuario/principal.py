@@ -30,6 +30,8 @@ from app.forms.discapacidades import discapacidadesForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
 from app.models.docs import Docs
+from app.models import vacante
+from app.models.postulacion import postulacion
 
 
 from . import usuario_bp
@@ -92,7 +94,7 @@ def inicial():
         "version": "0.01",
         "titulo": "Principal mi Usuario"
     }
-    return render_template("principal.html", datos=misDatos)
+    return render_template("usuario/principal.html",datos=misDatos)
 
 
 
@@ -394,67 +396,75 @@ def experiencia():
         return redirect(url_for("usuario.experiencia"))
 
     return render_template("usuario/experiencia.html", form=form)
-
-usuario_bp.route("/cursos", methods=["GET", "POST"])
+@usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
 def curso():
 
     form = experienciaForm()
 
-    #buscar muestra todos los cursos del usuario
-    registros =  Cursos.query.filter_by(
-        id_usuario = current_user.id
-    ).all()
+    if request.method == "GET":
+        registros = Cursos.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
 
-    #precarga los datos de usuario ya registrados en la base de datos
-    for registro in registros:
-        form.Info_curso.append_entry({
-        "registro_id": registro.id,
-        "nombre": registro.nombre,
-        "institucion": registro.institucion,
-        "area": registro.area,
-        "horas": registro.horas,
-        "fecha_realizacion": registro.fecha_realizacion,
-        "certificado": registro.certificado
-        })
+        for registro in registros:
+            form.Info_curso.append_entry({
+                "registro_id": registro.id,
+                "nombre": registro.nombre,
+                "institucion": registro.institucion,
+                "area": registro.area,
+                "horas": registro.horas,
+                "fecha_realizacion": registro.fecha_realizacion,
+                "certificado": registro.certificado
+            })
 
-    #acualizar informacion
-
-    #busca un id ya existente si viene  vacio lo crea
     if form.validate_on_submit():
+        ids_enviados = []
+
         for entry in form.Info_curso:
             registro_id = entry.registro_id.data
 
             registro = None
-            if  registro_id:
-                registro =  Cursos.query.filter_by(
+            if registro_id:
+                registro = Cursos.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-                if registro:
-                    registro.nombre = entry.nombre.data
-                    registro.institucion = entry.institucion.data
-                    registro.area = entry.area.data
-                    registro.horas = entry.horas.data
-                    registro.fecha_realizacion = entry.fecha_realizacion.data
-                    registro.certificado = entry.certificado.data
+            if registro:
+                # editar existente
+                registro.nombre = entry.nombre.data
+                registro.institucion = entry.institucion.data
+                registro.area = entry.area.data
+                registro.horas = entry.horas.data
+                registro.fecha_realizacion = entry.fecha_realizacion.data
+                registro.certificado = entry.certificado.data
+                ids_enviados.append(registro.id)
+            else:
+                # crear nuevo
+                nuevo = Cursos(
+                    id_usuario=current_user.id,
+                    nombre=entry.nombre.data,
+                    institucion=entry.institucion.data,
+                    area=entry.area.data,
+                    horas=entry.horas.data,
+                    fecha_realizacion=entry.fecha_realizacion.data,
+                    certificado=entry.certificado.data,
+                )
+                db.session.add(nuevo)
+                db.session.flush()
+                ids_enviados.append(nuevo.id)
 
-                else:
-                    nuevo = Cursos(
-                        id_usuario=current_user.id,
-                        nombre=entry.nombre.data,
-                        institucion=entry.institucion.data,
-                        area=entry.area.data,
-                        horas=entry.horas.data,
-                        fecha_realizacion=entry.fecha_realizacion.data,
-                        certificado=entry.certificado.data,
-                    )
-                db.session(nuevo)
+        # Elimina los cursos que ya no vinieron en el envío
+        Cursos.query.filter(
+            Cursos.id_usuario == current_user.id,
+            ~Cursos.id.in_(ids_enviados) if ids_enviados else True
+        ).delete(synchronize_session=False)
 
-            db.session.commit()
-            return redirect(url_for("usuario.competencias"))
-        return render_template("usuario/academica", form=form)
+        db.session.commit()
+        return redirect(url_for("usuario.competencias"))
+
+    return render_template("usuario/cursos.html", form=form)
                 
 
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
@@ -513,7 +523,8 @@ def referencias():
                     fecha_registro=datetime.utcnow(),
                 )
                 db.session.add(nuevo)
-
+                db.session.flush()
+                
         db.session.commit()
 
         return redirect(url_for("usuario.referencias"))
@@ -567,16 +578,98 @@ def discapacidades():
         return redirect(url_for("usuario.discapacidades"))
 
     return render_template("usuario/discapacidades.html", form=form)
+@usuario_bp.route("/documentos", methods=["GET", "POST"])
+@login_required
+def documentos():
+    form = DocumentosForm()
 
+    if form.validate_on_submit():
+        for entry in form.Info_docs:
+            archivo = entry.ruta.data
+
+            # Si esta fila no trae archivo (quedó vacía), se ignora
+            if not archivo or archivo.filename == "":
+                continue
+
+            nombre_original = secure_filename(archivo.filename)
+            nombre_unico = f"{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{nombre_original}"
+
+            carpeta_destino = os.path.join(current_app.root_path, "static", "uploads", "docs")
+            os.makedirs(carpeta_destino, exist_ok=True)
+
+            ruta_completa = os.path.join(carpeta_destino, nombre_unico)
+            archivo.save(ruta_completa)
+
+            ruta_relativa = f"uploads/docs/{nombre_unico}"
+
+            nuevo_doc = Docs(
+                id_usuario=current_user.id,
+                nombre=entry.nombre.data,
+                ruta=ruta_relativa,
+                tipo=entry.tipo.data,
+                fecha_actualizacion=datetime.now()
+            )
+            db.session.add(nuevo_doc)
+
+        db.session.commit()
+        flash("Documentos guardados exitosamente.", "success")
+        return redirect(url_for("usuario.registro_completo"))
+
+    docs = Docs.query.filter_by(id_usuario=current_user.id).order_by(Docs.fecha_actualizacion.desc()).all()
+    return render_template("usuario/documentos.html", form=form, docs=docs)
 
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
 def vacantes():
-    
-    return render_template("usuario/vacantes.html")
+    categoria = request.args.get("categoria", "")
+    estado = request.args.get("estado", "abierto")   # por defecto solo muestra abiertas
+    busqueda = request.args.get("q", "")
 
-@usuario_bp.route('/postulaciones', methods=["GET"])
+    query = vacante.query.filter_by(estado=estado)
+
+    if categoria:
+        query = query.filter_by(area=categoria)
+
+    if busqueda:
+        query = query.filter(vacante.titulo.ilike(f"%{busqueda}%"))
+
+    vacantes = query.order_by(vacante.fecha_publicacion.desc()).all()
+
+    return render_template("usuario/vacantes.html", vacantes=vacantes)
+
+@usuario_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
 @login_required
-def postulaciones():
+def postular(id):
+    vac = vacante.query.get_or_404(id)
+
+    # Evitar que el usuario se postule dos veces a la misma vacante
+    ya_postulado = postulacion.query.filter_by(
+        id_usuario=current_user.id,
+        id_vacante=id
+    ).first()
+
+    if ya_postulado:
+        flash("Ya te has postulado a esta vacante.", "warning")
+        return redirect(url_for("usuario.vacantes"))
+
+    if vac.estado != "abierto":
+        flash("Esta vacante ya no está disponible.", "danger")
+        return redirect(url_for("usuario.vacantes"))
+
+    nueva_postulacion = postulacion(
+        id_usuario=current_user.id,
+        id_vacante=id,
+        estado="postulado"
+    )
+
+    db.session.add(nueva_postulacion)
+    db.session.commit()
+
+    flash("¡Te has postulado correctamente!", "success")
+    return redirect(url_for("usuario.vacantes"))
     
-    return render_template("usuario/postulaciones.html")
+
+
+
+
+

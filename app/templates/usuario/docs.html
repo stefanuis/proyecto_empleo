@@ -1,97 +1,150 @@
 {% extends 'usuario/base.html' %}
-
+ 
 {% block titulo %}
-Principal Usuario
+Documentos
 {% endblock %}
-
+ 
 {% block contenido %}
-
+ 
 <div class="contenedor-padre">
     <div class="contenedor-formulario">
-
+ 
         {% include "usuario/barra_progreso.html" with context %}
-
+ 
         <!-- Mostrar mensajes flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
                         {{ message }}
-                        <button type="button"
-                                class="btn-close"
-                                data-bs-dismiss="alert">
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
-        <form method="POST"
-              enctype="multipart/form-data"
-              novalidate>
-
+ 
+        <!-- Documentos ya subidos -->
+        {% if docs %}
+        <div class="lista-docs-subidos">
+            <p class="lista-docs-titulo">Documentos ya subidos</p>
+            <ul>
+                {% for d in docs %}
+                <li>
+                    <span>{{ d.nombre }} ({{ d.tipo }})</span>
+                    <a href="{{ url_for('static', filename=d.ruta) }}" target="_blank">Ver</a>
+                    <form method="POST" action="{{ url_for('usuario.eliminar_documento', id=d.id) }}"
+                          onsubmit="return confirm('¿Eliminar este documento?');">
+                        <button type="submit" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+ 
+        <form method="POST" enctype="multipart/form-data" novalidate>
+ 
             {{ form.hidden_tag() }}
-
-            <div class="form-grid">
-
-                <!-- Nombre del documento -->
-                <div class="campo">
-                    {{ form.nombre.label }}
-                    {{ form.nombre(class="form-control") }}
-
-                    {% for error in form.nombre.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
+ 
+            <div id="docs-container">
+                {% for entry in form.Info_docs %}
+                <div class="curso-fila" data-index="{{ loop.index0 }}">
+ 
+                    <div class="form-grid">
+                        <div class="campo">
+                            {{ entry.nombre.label }}
+                            {{ entry.nombre(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.tipo.label }}
+                            {{ entry.tipo(class="form-control") }}
+                        </div>
+                        <div class="campo">
+                            {{ entry.ruta.label }}
+                            {{ entry.ruta(class="form-control") }}
+                        </div>
+                    </div>
+ 
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                 </div>
-
-
-                <!-- Tipo de documento -->
-                <div class="campo">
-                    {{ form.tipo.label }}
-                    {{ form.tipo(class="form-control") }}
-
-                    {% for error in form.tipo.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Archivo -->
-                <div class="campo">
-                    {{ form.ruta.label }}
-                    {{ form.ruta(class="form-control") }}
-
-                    {% for error in form.ruta.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
+                {% endfor %}
             </div>
-
-
+ 
+            <button type="button" class="btn-secondary" id="btn-agregar-doc">+ Agregar documento</button>
+ 
             <div class="form-botones">
-
+ 
                 {% if paso_anterior %}
-                    <a href="{{ url_for('usuario.' + paso_anterior) }}"
-                       class="btn-secondary">
+                    <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
                         Anterior
                     </a>
                 {% else %}
-                    <a href="{{ url_for('usuario.inicial') }}"
-                       class="btn-secondary">
+                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
                         Anterior
                     </a>
                 {% endif %}
-
-                <button type="submit" class="btn-primary">
-                    Guardar y continuar
-                </button>
-
+ 
+                {{ form.submit(class="btn-primary") }}
+ 
             </div>
-
+ 
         </form>
-
+ 
     </div>
 </div>
-
+ 
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-doc-vacio">
+    <div class="curso-fila" data-index="__INDEX__">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Nombre del documento</label>
+                <input class="form-control" name="Info_docs-__INDEX__-nombre">
+            </div>
+            <div class="campo">
+                <label>Tipo de documento</label>
+                <select class="form-control" name="Info_docs-__INDEX__-tipo">
+                    <option value="">Selecciona un tipo</option>
+                    <option value="Cédula">Cédula</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Certificado">Certificado</option>
+                    <option value="Licencia">Licencia</option>
+                    <option value="Recomendación">Recomendación</option>
+                    <option value="Constancia">Constancia</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Archivo</label>
+                <input type="file" class="form-control" name="Info_docs-__INDEX__-ruta">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+ 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("docs-container");
+    const plantilla = document.getElementById("plantilla-doc-vacio");
+    const btnAgregar = document.getElementById("btn-agregar-doc");
+ 
+    let contador = container.querySelectorAll(".curso-fila").length;
+ 
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+ 
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            e.target.closest(".curso-fila").remove();
+        }
+    });
+});
+</script>
+ 
 {% endblock %}

@@ -35,6 +35,19 @@ USUARIOS_PRUEBA = [
     },
 ]
 
+USUARIOS_PRUEBA = [
+    {
+        "nombres":   "stefany",
+        "apellidos": "lopez",
+        "correo":    "aleja@gmail.com",
+        "clave":     "aleja123",    # ← se cifrará automáticamente
+        "telefono":  "3009876543",
+        "rol":       "admin",
+        "esta_activa":     True,
+        "esta_verificada": True,
+    },
+]
+
 
 def seed():
     insertados = 0

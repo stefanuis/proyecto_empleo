@@ -2,7 +2,7 @@ from app.extensions import db
 from datetime import datetime
 
 
-class vacante(db.Model):
+class Vacante(db.Model):
     __tablename__ ="tbl_vacante"
     id = db.Columna(db.Integer, primary_key=True)
     titulo = db.Columna(db.String(150))

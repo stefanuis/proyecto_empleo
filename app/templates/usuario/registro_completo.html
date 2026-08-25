@@ -1,0 +1,97 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Registro completo
+{% endblock %}
+
+{% block contenido %}
+<style>
+    .registro-exito {
+    text-align: center;
+    max-width: 600px;
+}
+
+.progreso-final {
+    background: var(--bg-soft);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.progreso-final-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.progreso-final-header span {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.icono-exito {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--badge-green);
+    color: var(--badge-green-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 20px;
+}
+
+.registro-exito h2 {
+    margin-bottom: 10px;
+}
+
+.registro-exito p {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.botones-exito {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+</style>
+<div class="contenedor-padre">
+    <div class="contenedor-formulario registro-exito">
+
+        <!-- Barra de progreso al 100% -->
+        <div class="progreso-final">
+            <div class="progreso-final-header">
+                <strong>Registro</strong>
+                <span>PASO 10 DE 10</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width:100%;"></div>
+            </div>
+        </div>
+
+        <!-- Ícono de éxito -->
+        <div class="icono-exito">✓</div>
+
+        <h2>¡Información guardada exitosamente!</h2>
+        <p>
+            Tu perfil está completo. Ya puedes explorar las vacantes disponibles
+            y postularte a las que más te interesen.
+        </p>
+
+        <div class="botones-exito">
+            <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                Ir a inicio
+            </a>
+            <a href="{{ url_for('usuario.vacantes') }}" class="btn-primary">
+                Ver vacantes
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

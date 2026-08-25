@@ -1,0 +1,97 @@
+cante · HTML
+{% extends 'admin/base.html' %}
+ 
+{% block titulo %}
+Postulantes
+{% endblock %}
+ 
+{% block contenido %}
+ 
+<div class="contenedor-padre">
+    <div class="contenedor-formulario" style="max-width: 1100px;">
+ 
+        <div class="card-header">
+            <div>
+                <span class="card-title">Postulantes — {{ vacante.titulo }}</span>
+                <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
+                    {{ vacante.area }} · {{ postulaciones|length }} postulante(s)
+                </p>
+            </div>
+            <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary">
+                Volver a vacantes
+            </a>
+        </div>
+ 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+ 
+        {% if postulaciones %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                        <th>Postulado</th>
+                        <th>Estado</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post, usuario in postulaciones %}
+                    <tr>
+                        <td>{{ usuario.nombres }} {{ usuario.apellidos }}</td>
+                        <td>{{ usuario.correo }}</td>
+                        <td>{{ usuario.telefono or '—' }}</td>
+                        <td>{{ post.fecha_postulacion.strftime('%d %b %Y') if post.fecha_postulacion else '—' }}</td>
+                        <td>
+                            {% if post.estado == 'postulado' %}
+                                <span class="badge badge-pink">Postulado</span>
+                            {% elif post.estado == 'revision' %}
+                                <span class="badge badge-blue">En revisión</span>
+                            {% elif post.estado == 'entrevista' %}
+                                <span class="badge badge-orange">Entrevista</span>
+                            {% elif post.estado == 'contratado' %}
+                                <span class="badge badge-green">Contratado</span>
+                            {% elif post.estado == 'rechazado' %}
+                                <span class="badge badge-red">Rechazado</span>
+                            {% else %}
+                                <span class="badge badge-gray">{{ post.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST"
+                                  action="{{ url_for('admin.actualizar_estado_postulacion', id=post.id) }}"
+                                  style="display:flex; gap:6px;">
+                                <select name="estado" class="form-control" style="height:34px; padding:0 8px;" onchange="this.form.submit()">
+                                    <option value="postulado" {% if post.estado == 'postulado' %}selected{% endif %}>Postulado</option>
+                                    <option value="revision" {% if post.estado == 'revision' %}selected{% endif %}>En revisión</option>
+                                    <option value="entrevista" {% if post.estado == 'entrevista' %}selected{% endif %}>Entrevista</option>
+                                    <option value="contratado" {% if post.estado == 'contratado' %}selected{% endif %}>Contratado</option>
+                                    <option value="rechazado" {% if post.estado == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">👥</span>
+            <h3>Aún no hay postulantes</h3>
+            <p>Cuando alguien se postule a esta vacante, aparecerá aquí.</p>
+        </div>
+        {% endif %}
+ 
+    </div>
+</div>
+ 
+{% endblock %}

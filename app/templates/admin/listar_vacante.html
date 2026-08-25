@@ -1,0 +1,98 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}
+Vacantes
+{% endblock %}
+
+{% block contenido %}
+
+<div class="contenedor-padre">
+    <div class="contenedor-formulario" style="max-width: 1100px;">
+
+        <div class="card-header">
+            <span class="card-title">Vacantes publicadas</span>
+            <div class="card-actions">
+                <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary">
+                    + Nueva vacante
+                </a>
+            </div>
+        </div>
+
+        <!-- Mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if vacantes %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Área</th>
+                        <th>Salario</th>
+                        <th>Estado</th>
+                        <th>Publicada</th>
+                        <th>Cierra</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in vacantes %}
+                    <tr>
+                        <td>{{ v.titulo }}</td>
+                        <td>{{ v.area }}</td>
+                        <td>{{ v.salario or '—' }}</td>
+                        <td>
+                            {% if v.estado == 'abierto' %}
+                                <span class="badge badge-green">Abierto</span>
+                            {% else %}
+                                <span class="badge badge-red">Cerrado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '—' }}</td>
+                        <td>{{ v.fecha_cierre.strftime('%d %b %Y') if v.fecha_cierre else '—' }}</td>
+                        <td>
+                            <div style="display:flex; gap:6px;">
+                                <a href="{{ url_for('admin.postulantes_vacante', id=v.id) }}"
+                                   class="btn-secondary btn-sm" title="Ver postulantes">
+                                    Postulantes
+                                </a>
+                                <a href="{{ url_for('admin.editar_vacante', id=v.id) }}"
+                                   class="btn-secondary btn-sm" title="Editar">
+                                    Editar
+                                </a>
+                                <form method="POST"
+                                      action="{{ url_for('admin.eliminar_vacante', id=v.id) }}"
+                                      onsubmit="return confirm('¿Seguro que quieres eliminar esta vacante?');">
+                                    <button type="submit" class="btn-outline btn-sm" style="border-color:#C62828; color:#C62828;">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">📋</span>
+            <h3>Aún no hay vacantes publicadas</h3>
+            <p>Crea la primera vacante para empezar a recibir postulaciones.</p>
+            <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary">+ Nueva vacante</a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
