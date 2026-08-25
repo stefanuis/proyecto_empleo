@@ -5,7 +5,6 @@ from wtforms import (
     StringField,
     SelectField,
     DateField,
-    SubmitField,
     TextAreaField,
     BooleanField,
     SubmitField,
@@ -54,12 +53,19 @@ class experienciaItemForm(Form):
         validators=[Optional()]
     )
 
-    motivo = StringField(
-        "Motivo de salida",
-        validators=[
-            Optional(),
-            Length(max=100)
-        ]
+    motivo = SelectField(
+    "Nivel",
+    choices=[
+        ("renuncia", "Renuncia"),
+        ("terminacion_contrato", "Terminación de contrato"),
+        ("despido", "Despido"),
+        ("mutuo_acuerdo", "Mutuo acuerdo"),
+        ("motivos_personales", "Motivos personales"),
+        ("otra", "Otra")
+    ],
+    validators=[
+        DataRequired()
+       ]
     )
 
     otro = StringField(
@@ -129,5 +135,5 @@ class experienciaForm(FlaskForm):
         min_entries=0
     )
 
-submit = SubmitField("Guardar y continuar")
+    submit = SubmitField("Guardar y continuar")
 

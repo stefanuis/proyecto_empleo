@@ -42,10 +42,6 @@
                             {{ entry.fecha_realizacion.label }}
                             {{ entry.fecha_realizacion(class="form-control") }}
                         </div>
-                        <div class="campo">
-                            {{ entry.certificado.label }}
-                            {{ entry.certificado(class="form-control") }}
-                        </div>
                     </div>
 
                  <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
@@ -82,15 +78,11 @@
             </div>
             <div class="campo">
                 <label>Horas</label>
-                <input class="form-control" name="Info_curso-__INDEX__-horas">
+                <input  type="number" class="form-control" name="Info_curso-__INDEX__-horas">
             </div>
             <div class="campo">
                 <label>Fecha de realización</label>
-                <input class="form-control" name="Info_curso-__INDEX__-fecha_realizacion">
-            </div>
-            <div class="campo">
-                <label>Certificado</label>
-                <input class="form-control" name="Info_curso-__INDEX__-certificado">
+                <input type="date"  class="form-control" name="Info_curso-__INDEX__-fecha_realizacion">
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>

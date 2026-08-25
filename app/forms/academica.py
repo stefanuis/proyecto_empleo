@@ -25,30 +25,36 @@ class InforAcademicaItemForm(Form):
     """Formulario para información académica del usuario"""
     registro_id = HiddenField()
     
-    tipo = StringField(
-        "Tipo de información académica",
-        validators=[
-            DataRequired(),
-            Length(max=30)
-        ]
-    )
 
-    nivel = StringField(
-        "Nivel académico",
-        validators=[
-            DataRequired(),
-            Length(max=30)
-        ]
-    )
+    nivel = SelectField(
+    "Tipo de formación académica",
+    choices=[
+        ("Bachillerato", "Bachillerato"),
+        ("tecnico", "Técnico"),
+        ("tecnologo", "Tecnólogo"),
+        ("universitario", "Universitario"),
+        ("especializacion", "Especialización"),
+        ("maestria", "Maestría"),
+        ("doctorado", "Doctorado")
+    ],
+    validators=[
+        DataRequired()
+    ]
+)
 
-    estado = StringField(
-        "Estado académico",
-        validators=[
-            DataRequired(),
-            Length(max=30)
-        ]
-    )
-
+    estado = SelectField(
+    "Estado académico",
+    choices=[
+        ("en_curso", "En curso"),
+        ("finalizado", "Finalizado"),
+        ("incompleto", "Incompleto"),
+        ("aplazado", "Aplazado"),
+        ("cancelado", "Cancelado"),
+    ],
+    validators=[
+        DataRequired()
+    ]
+)
     periodos_cursados = IntegerField(
         "Períodos cursados académicamente",
         validators=[

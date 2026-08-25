@@ -24,12 +24,16 @@ class VacanteForm(FlaskForm):
         ]
     )
 
-    area = StringField(
-        "Área/Departamento",
-        validators=[
-            DataRequired(),
-            Length(max=100)
-        ]
+    
+    area = SelectField(
+         "Área/Departamento",
+        choices=[
+            ("", "Selecciona el area"),
+            ("Asistencial", "Asistencial"),
+            ("Administrativa", "Administrativa")
+           
+        ],
+        validators=[DataRequired()]
     )
 
     descripcion = TextAreaField(
@@ -48,11 +52,11 @@ class VacanteForm(FlaskForm):
         ]
     )
 
-    salario = TextAreaField(
+    salario = StringField(
         "Información de salario",
         validators=[
             Optional(),
-            Length(max=500)
+            Length(max=100)
         ]
     )
 

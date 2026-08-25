@@ -8,7 +8,7 @@
         {% include "usuario/barra_progreso.html" with context %}
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
+            {% for category, message in messages %} 
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
         {% endwith %}
@@ -35,16 +35,8 @@
                             {{ entry.cargo(class="form-control") }}
                         </div>
                         <div class="campo">
-                            {{ entry.actual.label }}
-                            {{ entry.actual(class="form-control") }}
-                        </div>
-                        <div class="campo">
                             {{ entry.motivo.label }}
                             {{ entry.motivo(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.otro.label }}
-                            {{ entry.otro(class="form-control") }}
                         </div>
                         <div class="campo">
                             {{ entry.fecha_ingreso.label }}
@@ -69,10 +61,6 @@
                         <div class="campo">
                             {{ entry.funciones_realizadas.label }}
                             {{ entry.funciones_realizadas(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.ruta_soporte.label }}
-                            {{ entry.ruta_soporte(class="form-control") }}
                         </div>
                     </div>
 
@@ -110,24 +98,24 @@
                 <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
             </div>
             <div class="campo">
-                <label>Actual</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-actual">
-            </div>
-            <div class="campo">
-                <label>Motivo</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-motivo">
-            </div>
-            <div class="campo">
-                <label>Otro</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-otro">
+                <label>Motivo de salida</label>
+                <select class="form-control" name="Info_experiencia-__INDEX__-motivo">
+                    <option value="" disabled selected>Motivo de salida</option>
+                    <option value="renuncia">Renuncia</option>
+                    <option value="terminacion_contrato">Terminación de contrato</option>
+                    <option value="despido">Despido</option>
+                    <option value="mutuo_acuerdo">Mutuo acuerdo</option>
+                    <option value="motivos_personales">Motivos personales</option>
+                    <option value="otra">Otra</option>
+                </select>
             </div>
             <div class="campo">
                 <label>Fecha ingreso</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-fecha_ingreso">
+                <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_ingreso">
             </div>
             <div class="campo">
                 <label>Fecha salida</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-fecha_salida">
+                <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_salida">
             </div>
             <div class="campo">
                 <label>País</label>
@@ -143,7 +131,13 @@
             </div>
             <div class="campo">
                 <label>Funciones realizadas</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-funciones_realizadas">
+                <textarea
+                   class="form-control"
+                   name="Info_experiencia-__INDEX__-funciones_realizadas"
+                   rows="5"
+                   maxlength="500"
+                   placeholder="Describe las principales funciones realizadas">
+               </textarea>
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>

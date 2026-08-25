@@ -7,6 +7,10 @@ from flask import (
     flash
 )
 from flask_login import current_user, login_required
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
+
 from datetime import datetime
 from app.extensions import db
 from app.models.user import User
@@ -20,8 +24,9 @@ from app.forms.academica import InforAcademicaForm
 from app.models.academica import Info_academica
 from app.forms.experiencia import experienciaForm
 from app.models.experiencia import Experiencia
-from app.forms.cursos import experienciaForm
+from app.forms.experiencia import experienciaForm
 from app.models.cursos import Cursos
+from app.forms.cursos import CursoForm
 from app.forms.competencias import competenciasForm
 from app.models.competencias import  Competencias 
 from app.forms.referencias import referenciasForm
@@ -242,36 +247,41 @@ def familiar():
 @usuario_bp.route('/academica', methods=['GET', 'POST'])
 @login_required
 def academica():
+
     form = InforAcademicaForm()
 
-
     if request.method == "GET":
+
         registros = Info_academica.query.filter_by(
             id_usuario=current_user.id
         ).all()
 
         for registro in registros:
             form.Info_academica.append_entry({
-            "registro_id": registro.id,
-            "tipo": registro.tipo,
-            "nivel": registro.nivel,
-            "estado": registro.estado,
-            "periodos_cursados": registro.periodos_cursados,
-            "area": registro.area,
-            "titulo": registro.titulo,
-            "institucion": registro.institucion,
-            "pais_institucion": registro.pais_institucion,
-            "convalidacion": registro.convalidacion,
-            "mes_finalizacion": registro.mes_finalizacion,
-            "anno_finalizacion": registro.anno_finalizacion,
-            "ruta_soporte": registro.ruta_soporte,
-            "intensidad_horaria": registro.intensidad_horaria,
-            }) 
+                "registro_id": registro.id,
+                "nivel": registro.nivel,
+                "estado": registro.estado,
+                "periodos_cursados": registro.periodos_cursados,
+                "area": registro.area,
+                "titulo": registro.titulo,
+                "institucion": registro.institucion,
+                "pais_institucion": registro.pais_institucion,
+                "convalidacion": registro.convalidacion,
+                "mes_finalizacion": registro.mes_finalizacion,
+                "anno_finalizacion": registro.anno_finalizacion,
+                "ruta_soporte": registro.ruta_soporte,
+                "intensidad_horaria": registro.intensidad_horaria,
+            })
+
     if form.validate_on_submit():
+
+        ids_enviados = []
+
         for entry in form.Info_academica:
+
             registro_id = entry.registro_id.data
-            
             registro = None
+
             if registro_id:
                 registro = Info_academica.query.filter_by(
                     id=registro_id,
@@ -279,8 +289,7 @@ def academica():
                 ).first()
 
             if registro:
-                # editar existente
-                registro.tipo = entry.tipo.data  #el valor que el usuario escribió (o que trae precargado) en el campo tipo de este subformulario
+
                 registro.nivel = entry.nivel.data
                 registro.estado = entry.estado.data
                 registro.periodos_cursados = entry.periodos_cursados.data
@@ -292,12 +301,13 @@ def academica():
                 registro.mes_finalizacion = entry.mes_finalizacion.data
                 registro.anno_finalizacion = entry.anno_finalizacion.data
                 registro.intensidad_horaria = entry.intensidad_horaria.data
+
+                ids_enviados.append(registro.id)
+
             else:
-                # crear nuevo
-  
+
                 nuevo = Info_academica(
                     id_usuario=current_user.id,
-                    tipo=entry.tipo.data,
                     nivel=entry.nivel.data,
                     estado=entry.estado.data,
                     periodos_cursados=entry.periodos_cursados.data,
@@ -310,21 +320,43 @@ def academica():
                     anno_finalizacion=entry.anno_finalizacion.data,
                     intensidad_horaria=entry.intensidad_horaria.data,
                 )
+
                 db.session.add(nuevo)
+                db.session.flush()
+
+                ids_enviados.append(nuevo.id)
+
+        # Eliminar solo los que ya no están en el formulario
+        if ids_enviados:
+            Info_academica.query.filter(
+                Info_academica.id_usuario == current_user.id,
+                ~Info_academica.id.in_(ids_enviados)
+            ).delete(synchronize_session=False)
+
+        else:
+            Info_academica.query.filter_by(
+                id_usuario=current_user.id
+            ).delete(synchronize_session=False)
 
         db.session.commit()
 
         return redirect(url_for("usuario.experiencia"))
 
-    return render_template("usuario/academica.html", form=form)
+    return render_template(
+        "usuario/academica.html", form=form,paso_actual=4, total_pasos=10,paso_anterior="contacto"
+    )
 
 
-@usuario_bp.route("/experiencia",  methods=['GET', 'POST'])
+
+
+@usuario_bp.route("/experiencia", methods=["GET", "POST"])
 @login_required
 def experiencia():
+
     form = experienciaForm()
 
     if request.method == "GET":
+
         registros = Experiencia.query.filter_by(
             id_usuario=current_user.id
         ).all()
@@ -347,10 +379,15 @@ def experiencia():
             })
 
     if form.validate_on_submit():
-        for entry in form.experiencia:
+
+        ids_enviados = []
+
+        for entry in form.Info_experiencia:
+
             registro_id = entry.registro_id.data
 
             registro = None
+
             if registro_id:
                 registro = Experiencia.query.filter_by(
                     id=registro_id,
@@ -358,7 +395,7 @@ def experiencia():
                 ).first()
 
             if registro:
-                # editar existente
+
                 registro.entidad = entry.entidad.data
                 registro.area = entry.area.data
                 registro.cargo = entry.cargo.data
@@ -371,8 +408,11 @@ def experiencia():
                 registro.departamento = entry.departamento.data
                 registro.municipio = entry.municipio.data
                 registro.funciones_realizadas = entry.funciones_realizadas.data
+
+                ids_enviados.append(registro.id)
+
             else:
-                # crear nuevo
+
                 nuevo = Experiencia(
                     id_usuario=current_user.id,
                     entidad=entry.entidad.data,
@@ -389,23 +429,41 @@ def experiencia():
                     funciones_realizadas=entry.funciones_realizadas.data,
                     fecha_registro=datetime.now()
                 )
+
                 db.session.add(nuevo)
+                db.session.flush()
+
+                ids_enviados.append(nuevo.id)
+
+        # Eliminar solamente los registros que ya no están en el formulario
+    
 
         db.session.commit()
 
-        return redirect(url_for("usuario.experiencia"))
+        return redirect(url_for("usuario.curso"))
 
-    return render_template("usuario/experiencia.html", form=form)
+    return render_template(
+        "usuario/experiencia.html",
+        form=form,paso_actual=5, total_pasos=10, paso_anterior="academica"
+    )
+
 @usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
 def curso():
 
-    form = experienciaForm()
+    form = CursoForm()  
+
+
 
     if request.method == "GET":
         registros = Cursos.query.filter_by(
             id_usuario=current_user.id
         ).all()
+
+        if request.method == " POST":
+            print("POST recibido")
+            print("VALIDA:", form.validate())
+            print("ERRORES:", form.errors)
 
         for registro in registros:
             form.Info_curso.append_entry({
@@ -422,9 +480,10 @@ def curso():
         ids_enviados = []
 
         for entry in form.Info_curso:
-            registro_id = entry.registro_id.data
 
+            registro_id = entry.registro_id.data
             registro = None
+
             if registro_id:
                 registro = Cursos.query.filter_by(
                     id=registro_id,
@@ -432,16 +491,18 @@ def curso():
                 ).first()
 
             if registro:
-                # editar existente
+                # Editar existente
                 registro.nombre = entry.nombre.data
                 registro.institucion = entry.institucion.data
                 registro.area = entry.area.data
                 registro.horas = entry.horas.data
                 registro.fecha_realizacion = entry.fecha_realizacion.data
                 registro.certificado = entry.certificado.data
+
                 ids_enviados.append(registro.id)
+
             else:
-                # crear nuevo
+                # Crear nuevo
                 nuevo = Cursos(
                     id_usuario=current_user.id,
                     nombre=entry.nombre.data,
@@ -451,28 +512,34 @@ def curso():
                     fecha_realizacion=entry.fecha_realizacion.data,
                     certificado=entry.certificado.data,
                 )
+
                 db.session.add(nuevo)
                 db.session.flush()
+
                 ids_enviados.append(nuevo.id)
 
-        # Elimina los cursos que ya no vinieron en el envío
-        Cursos.query.filter(
-            Cursos.id_usuario == current_user.id,
-            ~Cursos.id.in_(ids_enviados) if ids_enviados else True
-        ).delete(synchronize_session=False)
 
         db.session.commit()
-        return redirect(url_for("usuario.competencias"))
 
-    return render_template("usuario/cursos.html", form=form)
-                
+        return redirect(url_for("usuario.referencias"))
+
+    return render_template(
+        "usuario/cursos.html",
+        form=form,
+        paso_actual=5,
+        total_pasos=10,
+        paso_anterior="experiencia"
+    )
+
 
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
 @login_required
 def referencias():
+
     form = referenciasForm()
 
     if request.method == "GET":
+
         registros = Referencias.query.filter_by(
             id_usuario=current_user.id
         ).all()
@@ -490,10 +557,15 @@ def referencias():
             })
 
     if form.validate_on_submit():
+
+        ids_enviados = []
+
         for entry in form.Info_referencias:
+
             registro_id = entry.registro_id.data
 
             registro = None
+
             if registro_id:
                 registro = Referencias.query.filter_by(
                     id=registro_id,
@@ -501,7 +573,8 @@ def referencias():
                 ).first()
 
             if registro:
-                # editar existente
+
+                # Editar existente
                 registro.nombres = entry.nombres.data
                 registro.apellidos = entry.apellidos.data
                 registro.parentesco = entry.parentesco.data
@@ -509,8 +582,12 @@ def referencias():
                 registro.telefono = entry.telefono.data
                 registro.ciudad = entry.ciudad.data
                 registro.autoriza = entry.autoriza.data
+
+                ids_enviados.append(registro.id)
+
             else:
-                # crear nuevo
+
+                # Crear nuevo
                 nuevo = Referencias(
                     id_usuario=current_user.id,
                     nombres=entry.nombres.data,
@@ -520,18 +597,41 @@ def referencias():
                     telefono=entry.telefono.data,
                     ciudad=entry.ciudad.data,
                     autoriza=entry.autoriza.data,
-                    fecha_registro=datetime.utcnow(),
+                    fecha_registro=datetime.utcnow()
                 )
+
                 db.session.add(nuevo)
                 db.session.flush()
-                
+
+                ids_enviados.append(nuevo.id)
+
+        # Eliminar solamente las referencias que fueron quitadas del formulario
+        if ids_enviados:
+
+            Referencias.query.filter(
+                Referencias.id_usuario == current_user.id,
+                ~Referencias.id.in_(ids_enviados)
+            ).delete(synchronize_session=False)
+
+        else:
+
+            # Se eliminaron todas las referencias
+            Referencias.query.filter_by(
+                id_usuario=current_user.id
+            ).delete(synchronize_session=False)
+
         db.session.commit()
 
-        return redirect(url_for("usuario.referencias"))
+        return redirect(url_for("usuario.discapacidades"))
 
-    return render_template("usuario/referencias.html", form=form)
-
-@usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
+    return render_template(
+        "usuario/referencias.html",
+        form=form,
+        paso_actual=5,
+        total_pasos=10,
+        paso_anterior="cursos"
+    )
+usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
 @login_required
 def discapacidades():
     form = discapacidadesForm()
@@ -549,6 +649,8 @@ def discapacidades():
             })
 
     if form.validate_on_submit():
+        ids_enviados=[]
+
         for entry in form.Info_discapacidades:
             registro_id = entry.registro_id.data
 
@@ -569,19 +671,25 @@ def discapacidades():
                     id_usuario=current_user.id,
                     categoria=entry.categoria.data,
                     descripcion=entry.descripcion.data,
-                    fecha_registro=datetime.utcnow(),
+                    fecha_registro=datetime.now(),
                 )
                 db.session.add(nuevo)
+                db.session.flush()
+                ids_enviados.append(nuevo.id)
+
 
         db.session.commit()
 
-        return redirect(url_for("usuario.discapacidades"))
+        return redirect(url_for("usuario.documentos"))
 
-    return render_template("usuario/discapacidades.html", form=form)
+    return render_template("usuario/discapacidades.html", form=form, paso_anterior="referencias")
+
+
+#-----------#subir los documentos#--------------#
 @usuario_bp.route("/documentos", methods=["GET", "POST"])
 @login_required
 def documentos():
-    form = DocumentosForm()
+    form = documentoForm()
 
     if form.validate_on_submit():
         for entry in form.Info_docs:
@@ -616,8 +724,12 @@ def documentos():
         return redirect(url_for("usuario.registro_completo"))
 
     docs = Docs.query.filter_by(id_usuario=current_user.id).order_by(Docs.fecha_actualizacion.desc()).all()
-    return render_template("usuario/documentos.html", form=form, docs=docs)
+    return render_template("usuario/documentos.html", form=form, docs=docs, paso_anterior="discapacidades")
 
+
+
+
+### vacantes consultas sql filtros 
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
 def vacantes():

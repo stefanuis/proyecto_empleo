@@ -23,10 +23,6 @@
 
                     <div class="form-grid">
                         <div class="campo">
-                            {{ entry.tipo.label }}
-                            {{ entry.tipo(class="form-control") }}
-                        </div>
-                        <div class="campo">
                             {{ entry.nivel.label }}
                             {{ entry.nivel(class="form-control") }}
                         </div>
@@ -54,17 +50,8 @@
                             {{ entry.anno_finalizacion.label }}
                             {{ entry.anno_finalizacion(class="form-control") }}
                         </div>
-                         <div class="campo">
-                            {{ entry.ruta_soporte.label }}
-                            {{ entry.ruta_soporte(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.intensidad_horaria.label }}
-                            {{ entry.intensidad_horaria(class="form-control") }}
-                        </div>
                     </div>
                     
-
                  <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                 </div>
                 {% endfor %}
@@ -74,6 +61,7 @@
 
             <div class="form-botones">
                 <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
+                
                 {{ form.submit(class="btn-primary") }}
             </div>
         </form>
@@ -86,16 +74,28 @@
         <input type="hidden" name="Info_academica-__INDEX__-registro_id" value="">
         <div class="form-grid">
             <div class="campo">
-                <label>Tipo</label>
-                <input class="form-control" name="Info_academica-__INDEX__-tipo">
-            </div>
+              <label>Nivel</label>
+              <select class="form-control" name="Info_academica-__INDEX__-nivel">
+                  <option value="" disabled selected>Nivel de formacion academica</option>
+                  <option value="Bachillerato">Bachillerato</option>
+                  <option value="tecnico">Técnico</option>
+                  <option value="tecnologo">Tecnólogo</option>
+                  <option value="universitario">universitario</option>
+                  <option value="especializacion">especializacion</option>
+                  <option value="maestria">Maestría</option>
+                  <option value="doctorado">doctorado</option>
+              </select>
+            </div>  
             <div class="campo">
-                <label>Nivel</label>
-                <input class="form-control" name="Info_academica-__INDEX__-nivel">
-            </div>
-            <div class="campo">
-                <label>Estado</label>
-                <input class="form-control" name="Info_academica-__INDEX__-estado">
+            <label>Estado académico</label>
+               <select class="form-control" name="Info_academica-__INDEX__-estado">
+                   <option value="" disabled selected>Estado academico</option>
+                   <option value="en_curso">En curso</option>
+                   <option value="finalizado">Finalizado</option>
+                   <option value="incompleto">Incompleto</option>
+                   <option value="aplazado">Aplazado</option>
+                   <option value="cancelado">Cancelado</option>
+               </select>
             </div>
             <div class="campo">
                 <label>Área</label>
@@ -115,7 +115,7 @@
             </div>
             <div class="campo">
                 <label>Año finalización</label>
-                <input class="form-control" name="Info_academica-__INDEX__-anno_finalizacion">
+                <input type="number" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion">
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>

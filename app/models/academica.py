@@ -8,7 +8,6 @@ class Info_academica(db.Model):
     __tablename__ = "tbl_info_academica"
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)
-    tipo  = db.Column(db.String(30))
     nivel = db.Column(db.String(100))
     estado = db.Column(db.String(30))
     periodos_cursados = db.Column(db.Integer)

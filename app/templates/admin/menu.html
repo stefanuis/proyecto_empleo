@@ -1,7 +1,7 @@
 <aside class="sidebar">
     <ul>
         <li>
-            <a href="{{ url_for('usuario.inicial') }}">
+            <a href="{{ url_for('admin.inicial') }}">
                 <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/inicio.png') }}" alt="Logo">
                 <span class="sidebar-text">Dashboard</span>
             </a>
@@ -10,11 +10,6 @@
         <hr>
 
         <!-- Sección MI PERFIL con toggle -->
-        <li>
-            <a href="{{ url_for('usuario.personal') }}" class="sidebar-link">
-                <span class="sidebar-text">Dashboard</span>
-            </a>
-        </li>
 
         <hr> 
         <li class="sidebar-toggle-section">
@@ -32,7 +27,7 @@
                 <span class="toggle-arrow">▼</span>
             </div>
             <ul class="toggle-content">
-                <li><a href="">Todas las vacantes</a></li>
+                <li><a href="{{ url_for('admin.listar_vacantes')}}">Todas las vacantes</a></li>
                 <li><a href="{{ url_for('admin.crear_vacante')}}">Crear Vacantes</a></li>
             </ul>
         </li>

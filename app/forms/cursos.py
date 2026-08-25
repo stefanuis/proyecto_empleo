@@ -65,13 +65,13 @@ class cursoItemForm(Form):
         format="%Y-%m-%d",
         validators=[DataRequired()]
     )
-class experienciaForm(FlaskForm):
+class CursoForm(FlaskForm):
 
     Info_curso = FieldList(
     FormField(cursoItemForm),
         min_entries=0
     )
 
-submit = SubmitField("Guardar y continuar")
+    submit = SubmitField("Guardar y continuar")
 
 

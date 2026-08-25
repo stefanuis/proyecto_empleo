@@ -10,7 +10,7 @@ from flask_login import current_user, login_required
 from datetime import datetime
 from app.extensions import db
 from app.models.user import User
-from app.models import vacante
+from app.models.vacante import Vacante
 from app.forms.vacante import VacanteForm
 from app.forms.postulacion import PostulacionForm
 
@@ -27,9 +27,33 @@ def inicial():
 @admin_bp.route("/vacantes")
 @login_required
 def listar_vacantes():
-    vacantes = vacante.query.order_by(vacante.fecha_publicacion.desc()).all()
-    return render_template("admin/listar_vacantes.html", vacantes=vacantes)
+    vacantes = Vacante.query.order_by(Vacante.fecha_publicacion.desc()).all()
+    return render_template("admin/listar_vacante.html", vacantes=vacantes)
 
+@admin_bp.route("/vacantes/crear", methods=["GET", "POST"])
+@login_required
+def crear_vacante():
+
+    form = VacanteForm()
+
+    if form.validate_on_submit():
+        nueva_vacante = Vacante(
+            titulo=form.titulo.data,
+            area=form.area.data,
+            salario=form.salario.data,
+            estado=form.estado.data,
+            fecha_cierre=form.fecha_cierre.data,
+            descripcion=form.descripcion.data,
+            requisito=form.requisito.data,
+            id_usuario_creador=current_user.id
+        )
+        db.session.add(nueva_vacante)
+        db.session.commit()
+
+        flash("Vacante creada correctamente.", "success")
+        return redirect(url_for("admin.listar_vacantes"))
+
+    return render_template("admin/crear_vacantes.html", form=form)
 
 @admin_bp.route("/vacantes/<int:id>/editar", methods=["GET", "POST"])
 @login_required

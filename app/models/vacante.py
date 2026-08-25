@@ -4,9 +4,9 @@ from datetime import datetime
 
 class Vacante(db.Model):
     __tablename__ ="tbl_vacante"
-    id = db.Columna(db.Integer, primary_key=True)
-    titulo = db.Columna(db.String(150))
-    area = db.Columna(db.String(100))
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(150))
+    area = db.Column(db.String(100))
     descripcion = db.Column(db.Text)
     requisito = db.Column(db.Text)
     salario = db.Column(db.Text)
