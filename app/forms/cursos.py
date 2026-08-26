@@ -23,6 +23,9 @@ from wtforms.validators import (
 
 class cursoItemForm(Form):
 
+    registro_id = HiddenField()
+    eliminar = HiddenField(default="0")
+
     nombre = StringField(
         "nombre del curso",
         validators=[
@@ -53,13 +56,6 @@ class cursoItemForm(Form):
             DataRequired()
         ]
     )
-
-
-    certificado = BooleanField(
-        "tienen certificacion",
-        validators=[DataRequired()]
-    )
-
     fecha_realizacion = DateField(
         "fecha de realizacion de los cursos",
         format="%Y-%m-%d",

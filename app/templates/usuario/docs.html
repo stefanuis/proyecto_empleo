@@ -31,9 +31,9 @@ Documentos
                 {% for d in docs %}
                 <li>
                     <span>{{ d.nombre }} ({{ d.tipo }})</span>
-                    <a href="{{ url_for('static', filename=d.ruta) }}" target="_blank">Ver</a>
+                    <a href="{{ url_for('static', filename=d.ruta_soporte) }}" target="_blank">Ver</a>
                     <form method="POST" action="{{ url_for('usuario.eliminar_documento', id=d.id) }}"
-                          onsubmit="return confirm('¿Eliminar este documento?');">
+                          onsubmit="return confirm('¿Eliminar este documento?');" style="display:inline;">
                         <button type="submit" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                     </form>
                 </li>
@@ -42,6 +42,7 @@ Documentos
         </div>
         {% endif %}
  
+        <!-- Subir nuevos documentos -->
         <form method="POST" enctype="multipart/form-data" novalidate>
  
             {{ form.hidden_tag() }}
@@ -54,18 +55,29 @@ Documentos
                         <div class="campo">
                             {{ entry.nombre.label }}
                             {{ entry.nombre(class="form-control") }}
+                            {% for error in entry.nombre.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.tipo.label }}
                             {{ entry.tipo(class="form-control") }}
+                            {% for error in entry.tipo.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.ruta.label }}
                             {{ entry.ruta(class="form-control") }}
+                            {% for error in entry.ruta.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                     </div>
  
+                    {% if not loop.first %}
                     <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

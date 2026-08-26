@@ -1,7 +1,7 @@
 {% extends 'usuario/base.html' %}
 
 {% block titulo %}
-Principal Usuario
+Referencias
 {% endblock %}
 
 {% block contenido %}
@@ -31,86 +31,87 @@ Principal Usuario
 
             {{ form.hidden_tag() }}
 
-            <div class="form-grid">
+            <div id="referencias-container">
+                {% for entry in form.Info_referencias %}
+                <div class="referencia-fila" data-index="{{ loop.index0 }}">
 
-                <!-- Nombres -->
-                <div class="campo">
-                    {{ form.nombres.label }}
-                    {{ form.nombres(class="form-control") }}
+                    {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    {% for error in form.nombres.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
+                    <div class="form-grid">
+
+                        <!-- Nombres -->
+                        <div class="campo">
+                            {{ entry.nombres.label }}
+                            {{ entry.nombres(class="form-control") }}
+                            {% for error in entry.nombres.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Apellidos -->
+                        <div class="campo">
+                            {{ entry.apellidos.label }}
+                            {{ entry.apellidos(class="form-control") }}
+                            {% for error in entry.apellidos.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Parentesco -->
+                        <div class="campo">
+                            {{ entry.parentesco.label }}
+                            {{ entry.parentesco(class="form-control") }}
+                            {% for error in entry.parentesco.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Empresa -->
+                        <div class="campo">
+                            {{ entry.empresa.label }}
+                            {{ entry.empresa(class="form-control") }}
+                            {% for error in entry.empresa.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div class="campo">
+                            {{ entry.telefono.label }}
+                            {{ entry.telefono(class="form-control") }}
+                            {% for error in entry.telefono.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Ciudad -->
+                        <div class="campo">
+                            {{ entry.ciudad.label }}
+                            {{ entry.ciudad(class="form-control") }}
+                            {% for error in entry.ciudad.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Autoriza -->
+                        <div class="campo">
+                            {{ entry.autoriza.label }}
+                            {{ entry.autoriza(class="form-control") }}
+                            {% for error in entry.autoriza.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+
                 </div>
-
-
-                <!-- Apellidos -->
-                <div class="campo">
-                    {{ form.apellidos.label }}
-                    {{ form.apellidos(class="form-control") }}
-
-                    {% for error in form.apellidos.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Parentesco -->
-                <div class="campo">
-                    {{ form.parentesco.label }}
-                    {{ form.parentesco(class="form-control") }}
-
-                    {% for error in form.parentesco.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Empresa -->
-                <div class="campo">
-                    {{ form.empresa.label }}
-                    {{ form.empresa(class="form-control") }}
-
-                    {% for error in form.empresa.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Teléfono -->
-                <div class="campo">
-                    {{ form.telefono.label }}
-                    {{ form.telefono(class="form-control") }}
-
-                    {% for error in form.telefono.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Ciudad -->
-                <div class="campo">
-                    {{ form.ciudad.label }}
-                    {{ form.ciudad(class="form-control") }}
-
-                    {% for error in form.ciudad.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Autoriza -->
-                <div class="campo">
-                    {{ form.autoriza.label }}
-                    {{ form.autoriza(class="form-control") }}
-
-                    {% for error in form.autoriza.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
+                {% endfor %}
             </div>
 
+            <button type="button" class="btn-secondary" id="btn-agregar-referencia">+ Agregar referencia</button>
 
             <div class="form-botones">
 
@@ -126,10 +127,7 @@ Principal Usuario
                     </a>
                 {% endif %}
 
-
-                <button type="submit" class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
 
             </div>
 
@@ -137,5 +135,80 @@ Principal Usuario
 
     </div>
 </div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-referencia-vacia">
+    <div class="referencia-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_referencias-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_referencias-__INDEX__-eliminar" value="0">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Nombres</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-nombres">
+            </div>
+            <div class="campo">
+                <label>Apellidos</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-apellidos">
+            </div>
+            <div class="campo">
+                <label>Parentesco/Relación laboral</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-parentesco">
+            </div>
+            <div class="campo">
+                <label>Empresa/Institución</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-empresa">
+            </div>
+            <div class="campo">
+                <label>Teléfono</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-telefono">
+            </div>
+            <div class="campo">
+                <label>Ciudad</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-ciudad">
+            </div>
+            <div class="campo">
+                <label>¿Autoriza contacto?</label>
+                <select class="form-control" name="Info_referencias-__INDEX__-autoriza">
+                    <option value="" disabled selected>Selecciona</option>
+                    <option value="Si">Sí</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("referencias-container");
+    const plantilla = document.getElementById("plantilla-referencia-vacia");
+    const btnAgregar = document.getElementById("btn-agregar-referencia");
+
+    let contador = container.querySelectorAll(".referencia-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            const fila = e.target.closest(".referencia-fila");
+            const campoEliminar = fila.querySelector(".campo-eliminar");
+
+            if (campoEliminar) {
+                campoEliminar.value = "1";
+                fila.style.display = "none";
+            } else {
+                fila.remove();
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}

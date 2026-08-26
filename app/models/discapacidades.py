@@ -5,7 +5,7 @@ from datetime import datetime
 #  MODELO: User
 # ─────────────────────────────────────────────
 class Discapacidades(db.Model):
-    __tablename__ = "tbl_discapacidades"
+    __tablename__ = "tbl_info_discapacidades"
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)
     categoria  = db.Column(db.String(50))

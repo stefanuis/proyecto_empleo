@@ -27,14 +27,14 @@ from app.models.experiencia import Experiencia
 from app.forms.experiencia import experienciaForm
 from app.models.cursos import Cursos
 from app.forms.cursos import CursoForm
-from app.forms.competencias import competenciasForm
+from app.forms.competencias import CompetenciasForm
 from app.models.competencias import  Competencias 
 from app.forms.referencias import referenciasForm
 from app.models.referencias import Referencias
 from app.forms.discapacidades import discapacidadesForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
-from app.models.docs import Docs
+from app.models.docs import OtrosDocumentos
 from app.models import vacante
 from app.models.postulacion import postulacion
 
@@ -271,15 +271,16 @@ def academica():
                 "anno_finalizacion": registro.anno_finalizacion,
                 "ruta_soporte": registro.ruta_soporte,
                 "intensidad_horaria": registro.intensidad_horaria,
+                "eliminar": "0",
             })
 
     if form.validate_on_submit():
 
-        ids_enviados = []
-
         for entry in form.Info_academica:
 
             registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
+
             registro = None
 
             if registro_id:
@@ -288,8 +289,15 @@ def academica():
                     id_usuario=current_user.id
                 ).first()
 
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
+
             if registro:
 
+                # Editar existente
                 registro.nivel = entry.nivel.data
                 registro.estado = entry.estado.data
                 registro.periodos_cursados = entry.periodos_cursados.data
@@ -302,10 +310,9 @@ def academica():
                 registro.anno_finalizacion = entry.anno_finalizacion.data
                 registro.intensidad_horaria = entry.intensidad_horaria.data
 
-                ids_enviados.append(registro.id)
-
             else:
 
+                # Crear nuevo
                 nuevo = Info_academica(
                     id_usuario=current_user.id,
                     nivel=entry.nivel.data,
@@ -324,31 +331,13 @@ def academica():
                 db.session.add(nuevo)
                 db.session.flush()
 
-                ids_enviados.append(nuevo.id)
-
-        # Eliminar solo los que ya no están en el formulario
-        if ids_enviados:
-            Info_academica.query.filter(
-                Info_academica.id_usuario == current_user.id,
-                ~Info_academica.id.in_(ids_enviados)
-            ).delete(synchronize_session=False)
-
-        else:
-            Info_academica.query.filter_by(
-                id_usuario=current_user.id
-            ).delete(synchronize_session=False)
-
         db.session.commit()
 
         return redirect(url_for("usuario.experiencia"))
 
     return render_template(
-        "usuario/academica.html", form=form,paso_actual=4, total_pasos=10,paso_anterior="contacto"
+        "usuario/academica.html", form=form, paso_actual=4, total_pasos=10, paso_anterior="contacto"
     )
-
-
-
-
 @usuario_bp.route("/experiencia", methods=["GET", "POST"])
 @login_required
 def experiencia():
@@ -375,16 +364,16 @@ def experiencia():
                 "pais": registro.pais,
                 "departamento": registro.departamento,
                 "municipio": registro.municipio,
-                "funciones_realizadas": registro.funciones_realizadas
+                "funciones_realizadas": registro.funciones_realizadas,
+                "eliminar": "0",
             })
 
     if form.validate_on_submit():
 
-        ids_enviados = []
-
         for entry in form.Info_experiencia:
 
             registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
 
             registro = None
 
@@ -394,8 +383,15 @@ def experiencia():
                     id_usuario=current_user.id
                 ).first()
 
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
+
             if registro:
 
+                # Editar existente
                 registro.entidad = entry.entidad.data
                 registro.area = entry.area.data
                 registro.cargo = entry.cargo.data
@@ -409,10 +405,9 @@ def experiencia():
                 registro.municipio = entry.municipio.data
                 registro.funciones_realizadas = entry.funciones_realizadas.data
 
-                ids_enviados.append(registro.id)
-
             else:
 
+                # Crear nuevo
                 nuevo = Experiencia(
                     id_usuario=current_user.id,
                     entidad=entry.entidad.data,
@@ -433,37 +428,24 @@ def experiencia():
                 db.session.add(nuevo)
                 db.session.flush()
 
-                ids_enviados.append(nuevo.id)
-
-        # Eliminar solamente los registros que ya no están en el formulario
-    
-
         db.session.commit()
 
         return redirect(url_for("usuario.curso"))
 
     return render_template(
         "usuario/experiencia.html",
-        form=form,paso_actual=5, total_pasos=10, paso_anterior="academica"
+        form=form, paso_actual=5, total_pasos=10, paso_anterior="academica"
     )
-
 @usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
 def curso():
 
-    form = CursoForm()  
-
-
+    form = CursoForm()
 
     if request.method == "GET":
         registros = Cursos.query.filter_by(
             id_usuario=current_user.id
         ).all()
-
-        if request.method == " POST":
-            print("POST recibido")
-            print("VALIDA:", form.validate())
-            print("ERRORES:", form.errors)
 
         for registro in registros:
             form.Info_curso.append_entry({
@@ -473,15 +455,16 @@ def curso():
                 "area": registro.area,
                 "horas": registro.horas,
                 "fecha_realizacion": registro.fecha_realizacion,
-                "certificado": registro.certificado
+                "eliminar": "0",
             })
 
     if form.validate_on_submit():
-        ids_enviados = []
 
         for entry in form.Info_curso:
 
             registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
+
             registro = None
 
             if registro_id:
@@ -490,6 +473,12 @@ def curso():
                     id_usuario=current_user.id
                 ).first()
 
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
+
             if registro:
                 # Editar existente
                 registro.nombre = entry.nombre.data
@@ -497,9 +486,7 @@ def curso():
                 registro.area = entry.area.data
                 registro.horas = entry.horas.data
                 registro.fecha_realizacion = entry.fecha_realizacion.data
-                registro.certificado = entry.certificado.data
-
-                ids_enviados.append(registro.id)
+                # certificado ya no se toca al editar
 
             else:
                 # Crear nuevo
@@ -510,18 +497,15 @@ def curso():
                     area=entry.area.data,
                     horas=entry.horas.data,
                     fecha_realizacion=entry.fecha_realizacion.data,
-                    certificado=entry.certificado.data,
+                    certificado=False,  # valor por defecto, el usuario ya no lo llena
                 )
 
                 db.session.add(nuevo)
                 db.session.flush()
 
-                ids_enviados.append(nuevo.id)
-
-
         db.session.commit()
 
-        return redirect(url_for("usuario.referencias"))
+        return redirect(url_for("usuario.competencias"))
 
     return render_template(
         "usuario/cursos.html",
@@ -530,8 +514,81 @@ def curso():
         total_pasos=10,
         paso_anterior="experiencia"
     )
+@usuario_bp.route('/competencias', methods=['GET', 'POST'])
+@login_required
+def competencias():
 
+    form = CompetenciasForm()
 
+    if request.method == "GET":
+
+        registros = Competencias.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
+
+        for registro in registros:
+            form.Info_competencias.append_entry({
+                "registro_id": registro.id,
+                "competencia": registro.competencia,
+                "nivel": registro.nivel,
+                "experiencia": registro.experiencia,
+                "eliminar": "0",
+            })
+
+    if form.validate_on_submit():
+
+        for entry in form.Info_competencias:
+
+            registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
+
+            registro = None
+
+            if registro_id:
+                registro = Competencias.query.filter_by(
+                    id=registro_id,
+                    id_usuario=current_user.id
+                ).first()
+
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
+
+            if registro:
+
+                # Editar existente
+                registro.competencia = entry.competencia.data
+                registro.nivel = entry.nivel.data
+                registro.experiencia = entry.experiencia.data
+                registro.fecha_actualizacion = datetime.now()
+
+            else:
+
+                # Crear nuevo
+                nuevo = Competencias(
+                    id_usuario=current_user.id,
+                    competencia=entry.competencia.data,
+                    nivel=entry.nivel.data,
+                    experiencia=entry.experiencia.data,
+                    fecha_actualizacion=datetime.now(),
+                )
+
+                db.session.add(nuevo)
+                db.session.flush()
+
+        db.session.commit()
+
+        return redirect(url_for("usuario.referencias"))  # ajusta al siguiente paso real
+
+    return render_template(
+        "usuario/competencias.html",
+        form=form,
+        paso_actual=7,
+        total_pasos=10,
+        paso_anterior="curso"
+    )
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
 @login_required
 def referencias():
@@ -554,15 +611,15 @@ def referencias():
                 "telefono": registro.telefono,
                 "ciudad": registro.ciudad,
                 "autoriza": registro.autoriza,
+                "eliminar": "0",
             })
 
     if form.validate_on_submit():
 
-        ids_enviados = []
-
         for entry in form.Info_referencias:
 
             registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
 
             registro = None
 
@@ -571,6 +628,12 @@ def referencias():
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
+
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
 
             if registro:
 
@@ -582,8 +645,6 @@ def referencias():
                 registro.telefono = entry.telefono.data
                 registro.ciudad = entry.ciudad.data
                 registro.autoriza = entry.autoriza.data
-
-                ids_enviados.append(registro.id)
 
             else:
 
@@ -597,28 +658,11 @@ def referencias():
                     telefono=entry.telefono.data,
                     ciudad=entry.ciudad.data,
                     autoriza=entry.autoriza.data,
-                    fecha_registro=datetime.utcnow()
+                    fecha_registro=datetime.now()
                 )
 
                 db.session.add(nuevo)
                 db.session.flush()
-
-                ids_enviados.append(nuevo.id)
-
-        # Eliminar solamente las referencias que fueron quitadas del formulario
-        if ids_enviados:
-
-            Referencias.query.filter(
-                Referencias.id_usuario == current_user.id,
-                ~Referencias.id.in_(ids_enviados)
-            ).delete(synchronize_session=False)
-
-        else:
-
-            # Se eliminaron todas las referencias
-            Referencias.query.filter_by(
-                id_usuario=current_user.id
-            ).delete(synchronize_session=False)
 
         db.session.commit()
 
@@ -627,11 +671,11 @@ def referencias():
     return render_template(
         "usuario/referencias.html",
         form=form,
-        paso_actual=5,
+        paso_actual=8,
         total_pasos=10,
-        paso_anterior="cursos"
+        paso_anterior="competencias"
     )
-usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
+@usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
 @login_required
 def discapacidades():
     form = discapacidadesForm()
@@ -646,13 +690,15 @@ def discapacidades():
                 "registro_id": registro.id,
                 "categoria": registro.categoria,
                 "descripcion": registro.descripcion,
+                "eliminar": "0",
             })
 
     if form.validate_on_submit():
-        ids_enviados=[]
 
         for entry in form.Info_discapacidades:
+
             registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
 
             registro = None
             if registro_id:
@@ -661,12 +707,18 @@ def discapacidades():
                     id_usuario=current_user.id
                 ).first()
 
+            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
+            if marcado_para_eliminar:
+                if registro:
+                    db.session.delete(registro)
+                continue
+
             if registro:
-                # editar existente
+                # Editar existente
                 registro.categoria = entry.categoria.data
                 registro.descripcion = entry.descripcion.data
             else:
-                # crear nuevo
+                # Crear nuevo
                 nuevo = Discapacidades(
                     id_usuario=current_user.id,
                     categoria=entry.categoria.data,
@@ -675,8 +727,6 @@ def discapacidades():
                 )
                 db.session.add(nuevo)
                 db.session.flush()
-                ids_enviados.append(nuevo.id)
-
 
         db.session.commit()
 
@@ -684,16 +734,18 @@ def discapacidades():
 
     return render_template("usuario/discapacidades.html", form=form, paso_anterior="referencias")
 
-
 #-----------#subir los documentos#--------------#
 @usuario_bp.route("/documentos", methods=["GET", "POST"])
 @login_required
 def documentos():
     form = documentoForm()
+    if request.method == "POST":
+        print("¿Formulario válido?:", form.validate())
+        print("Errores del formulario:", form.errors)
 
     if form.validate_on_submit():
         for entry in form.Info_docs:
-            archivo = entry.ruta.data
+            archivo = entry.ruta_soporte.data
 
             # Si esta fila no trae archivo (quedó vacía), se ignora
             if not archivo or archivo.filename == "":
@@ -710,12 +762,12 @@ def documentos():
 
             ruta_relativa = f"uploads/docs/{nombre_unico}"
 
-            nuevo_doc = Docs(
+            nuevo_doc = OtrosDocumentos(
                 id_usuario=current_user.id,
                 nombre=entry.nombre.data,
-                ruta=ruta_relativa,
                 tipo=entry.tipo.data,
-                fecha_actualizacion=datetime.now()
+                ruta_soporte=ruta_relativa,
+                fecha_registro=datetime.now()
             )
             db.session.add(nuevo_doc)
 
@@ -723,12 +775,39 @@ def documentos():
         flash("Documentos guardados exitosamente.", "success")
         return redirect(url_for("usuario.registro_completo"))
 
-    docs = Docs.query.filter_by(id_usuario=current_user.id).order_by(Docs.fecha_actualizacion.desc()).all()
-    return render_template("usuario/documentos.html", form=form, docs=docs, paso_anterior="discapacidades")
+    docs = OtrosDocumentos.query.filter_by(
+        id_usuario=current_user.id
+    ).order_by(OtrosDocumentos.fecha_registro.desc()).all()
+
+    return render_template("usuario/docs.html", form=form, docs=docs, paso_anterior="discapacidades")
 
 
+@usuario_bp.route("/documentos/eliminar/<int:id>", methods=["POST"])
+@login_required
+def eliminar_documento(id):
 
+    documento = OtrosDocumentos.query.filter_by(
+        id=id,
+        id_usuario=current_user.id
+    ).first()
 
+    if documento:
+        ruta_absoluta = os.path.join(current_app.root_path, "static", documento.ruta_soporte)
+        if os.path.exists(ruta_absoluta):
+            os.remove(ruta_absoluta)
+
+        db.session.delete(documento)
+        db.session.commit()
+        flash("Documento eliminado correctamente.", "success")
+    else:
+        flash("No se encontró el documento o no tienes permiso para eliminarlo.", "danger")
+
+    return redirect(url_for("usuario.documentos"))
+
+@usuario_bp.route("/registro-completo")
+@login_required
+def registro_completo():
+    return render_template("usuario/registro_completo.html")
 ### vacantes consultas sql filtros 
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
@@ -748,6 +827,7 @@ def vacantes():
     vacantes = query.order_by(vacante.fecha_publicacion.desc()).all()
 
     return render_template("usuario/vacantes.html", vacantes=vacantes)
+
 
 @usuario_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
 @login_required

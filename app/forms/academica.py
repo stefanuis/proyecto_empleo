@@ -24,7 +24,8 @@ from wtforms.validators import (
 class InforAcademicaItemForm(Form):
     """Formulario para información académica del usuario"""
     registro_id = HiddenField()
-    
+    eliminar = HiddenField(default="0")
+
 
     nivel = SelectField(
     "Tipo de formación académica",
@@ -142,6 +143,3 @@ class InforAcademicaForm(FlaskForm):
     )
 
     submit = SubmitField("Guardar y continuar")
-
-    
-

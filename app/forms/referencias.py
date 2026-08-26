@@ -18,6 +18,9 @@ from wtforms.validators import (
 class referenciasItemForm(Form):
     """Formulario para registro de referencias profesionales"""
 
+    registro_id = HiddenField()
+    eliminar = HiddenField(default="0")
+
     nombres = StringField(
         "Nombres",
         validators=[
@@ -75,11 +78,13 @@ class referenciasItemForm(Form):
         ],
         validators=[DataRequired()]
     )
+
+
 class referenciasForm(FlaskForm):
 
     Info_referencias = FieldList(
-    FormField(referenciasItemForm),
+        FormField(referenciasItemForm),
         min_entries=0
     )
 
-submit = SubmitField("Guardar y continuar")
+    submit = SubmitField("Guardar y continuar")

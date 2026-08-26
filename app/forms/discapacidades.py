@@ -17,8 +17,11 @@ from wtforms.validators import (
 )
 
 
-class discapacidadItemForm(FlaskForm):
+class discapacidadItemForm(Form):
     """Formulario para registro de discapacidades"""
+
+    registro_id = HiddenField()
+    eliminar = HiddenField(default="0")
 
     categoria = SelectField(
         "Categoría de discapacidad",
@@ -51,11 +54,12 @@ class discapacidadItemForm(FlaskForm):
         ]
     )
 
+
 class discapacidadesForm(FlaskForm):
 
     Info_discapacidades = FieldList(
-    FormField(discapacidadItemForm),
+        FormField(discapacidadItemForm),
         min_entries=0
     )
 
-submit = SubmitField("Guardar y continuar")
+    submit = SubmitField("Guardar y continuar")

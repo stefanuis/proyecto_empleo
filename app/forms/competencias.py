@@ -1,20 +1,30 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
-    SelectField,
     IntegerField,
-    SubmitField
+    SelectField,
+    DateField,
+    TextAreaField,
+    BooleanField,
+    SubmitField,
+    FieldList,
+    FormField,
+    HiddenField
 )
 from wtforms.validators import (
     DataRequired,
     Optional,
-    Length,
-    NumberRange
+    NumberRange,
+    Length
 )
 
-
-class competenciasForm(FlaskForm):
+class competenciasItemForm(Form):
     """Formulario para registro de competencias profesionales"""
+
+    registro_id = HiddenField()
+    eliminar = HiddenField(default="0")
 
     competencia = StringField(
         "Competencia",
@@ -22,7 +32,6 @@ class competenciasForm(FlaskForm):
             DataRequired(),
             Length(min=3, max=150)
         ],
-
     )
 
     nivel = SelectField(
@@ -46,4 +55,11 @@ class competenciasForm(FlaskForm):
         render_kw={"placeholder": "Ej: 5"}
     )
 
-    submit = SubmitField("Guardar competencia")
+
+class CompetenciasForm(FlaskForm):
+    Info_competencias = FieldList(
+        FormField(competenciasItemForm),
+        min_entries=0
+    )
+
+    submit = SubmitField("Guardar y continuar")

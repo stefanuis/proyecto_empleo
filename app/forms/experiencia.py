@@ -3,6 +3,7 @@ from wtforms import Form
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
+    IntegerField,
     SelectField,
     DateField,
     TextAreaField,
@@ -23,6 +24,7 @@ class experienciaItemForm(Form):
     """Formulario para registro de experiencia laboral"""
 
     registro_id = HiddenField()
+    eliminar = HiddenField(default="0")
 
     entidad = StringField(
         "Nombre de la entidad/empresa",

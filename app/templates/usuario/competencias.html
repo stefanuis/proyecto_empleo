@@ -1,7 +1,7 @@
 {% extends 'usuario/base.html' %}
 
 {% block titulo %}
-Principal Usuario
+Competencias Profesionales
 {% endblock %}
 
 {% block contenido %}
@@ -27,72 +27,65 @@ Principal Usuario
 
             {{ form.hidden_tag() }}
 
-            <div class="form-grid">
+            <div id="competencias-container">
+                {% for entry in form.Info_competencias %}
+                <div class="competencia-fila" data-index="{{ loop.index0 }}">
 
-                <!-- Competencia -->
-                <div class="campo">
-                    {{ form.competencia.label }}
-                    {{ form.competencia(class="form-control") }}
+                    {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    {% for error in form.competencia.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
+                    <div class="form-grid">
+
+                        <!-- Competencia -->
+                        <div class="campo">
+                            {{ entry.competencia.label }}
+                            {{ entry.competencia(class="form-control") }}
+                            {% for error in entry.competencia.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Nivel -->
+                        <div class="campo">
+                            {{ entry.nivel.label }}
+                            {{ entry.nivel(class="form-control") }}
+                            {% for error in entry.nivel.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Experiencia -->
+                        <div class="campo">
+                            {{ entry.experiencia.label }}
+                            {{ entry.experiencia(class="form-control") }}
+                            {% for error in entry.experiencia.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+
                 </div>
-
-
-                <!-- Nivel -->
-                <div class="campo">
-                    {{ form.nivel.label }}
-                    {{ form.nivel(class="form-control") }}
-
-                    {% for error in form.nivel.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Experiencia -->
-                <div class="campo">
-                    {{ form.experiencia.label }}
-                    {{ form.experiencia(class="form-control") }}
-
-                    {% for error in form.experiencia.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Fecha de actualización -->
-                <div class="campo">
-                    {{ form.fecha_actualizacion.label }}
-                    {{ form.fecha_actualizacion(class="form-control") }}
-
-                    {% for error in form.fecha_actualizacion.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
+                {% endfor %}
             </div>
 
+            <button type="button" class="btn-secondary" id="btn-agregar-competencia">+ Agregar competencia</button>
 
             <div class="form-botones">
 
                 {% if paso_anterior %}
-                    <a href="{{ url_for('usuario.' + paso_anterior) }}"
-                       class="btn-secondary">
+                    <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
                         Anterior
                     </a>
                 {% else %}
-                    <a href="{{ url_for('usuario.inicial') }}"
-                       class="btn-secondary">
+                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
                         Anterior
                     </a>
                 {% endif %}
 
-
-                <button type="submit" class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
 
             </div>
 
@@ -100,5 +93,66 @@ Principal Usuario
 
     </div>
 </div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-competencia-vacia">
+    <div class="competencia-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_competencias-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_competencias-__INDEX__-eliminar" value="0">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Competencia</label>
+                <input class="form-control" name="Info_competencias-__INDEX__-competencia">
+            </div>
+            <div class="campo">
+                <label>Nivel de dominio</label>
+                <select class="form-control" name="Info_competencias-__INDEX__-nivel">
+                    <option value="" disabled selected>Selecciona un nivel</option>
+                    <option value="Básico">Básico</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                    <option value="Experto">Experto</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Años de experiencia</label>
+                <input type="number" class="form-control" placeholder="Ej: 5" name="Info_competencias-__INDEX__-experiencia">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("competencias-container");
+    const plantilla = document.getElementById("plantilla-competencia-vacia");
+    const btnAgregar = document.getElementById("btn-agregar-competencia");
+
+    let contador = container.querySelectorAll(".competencia-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            const fila = e.target.closest(".competencia-fila");
+            const campoEliminar = fila.querySelector(".campo-eliminar");
+
+            if (campoEliminar) {
+                campoEliminar.value = "1";
+                fila.style.display = "none";
+            } else {
+                fila.remove();
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}

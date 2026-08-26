@@ -1,7 +1,7 @@
 {% extends 'usuario/base.html' %}
 
 {% block titulo %}
-Principal Usuario
+Discapacidades
 {% endblock %}
 
 {% block contenido %}
@@ -30,42 +30,51 @@ Principal Usuario
 
             {{ form.hidden_tag() }}
 
-            <div class="form-grid">
+            <div id="discapacidades-container">
+                {% for entry in form.Info_discapacidades %}
+                <div class="discapacidad-fila" data-index="{{ loop.index0 }}">
 
-                <!-- Categoría -->
-                <div class="campo">
-                    {{ form.categoria.label }}
-                    {{ form.categoria(class="form-control") }}
+                    {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    {% for error in form.categoria.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
+                    <div class="form-grid">
+
+                        <!-- Categoría -->
+                        <div class="campo">
+                            {{ entry.categoria.label }}
+                            {{ entry.categoria(class="form-control") }}
+                            {% for error in entry.categoria.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Descripción -->
+                        <div class="campo">
+                            {{ entry.descripcion.label }}
+                            {{ entry.descripcion(class="form-control") }}
+                            {% for error in entry.descripcion.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Certificado -->
+                        <div class="campo">
+                            {{ entry.ruta_certificado.label }}
+                            {{ entry.ruta_certificado(class="form-control") }}
+                            {% for error in entry.ruta_certificado.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+
                 </div>
-
-
-                <!-- Descripción -->
-                <div class="campo">
-                    {{ form.descripcion.label }}
-                    {{ form.descripcion(class="form-control") }}
-
-                    {% for error in form.descripcion.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
-
-                <!-- Certificado -->
-                <div class="campo">
-                    {{ form.ruta_certificado.label }}
-                    {{ form.ruta_certificado(class="form-control") }}
-
-                    {% for error in form.ruta_certificado.errors %}
-                        <span class="error">{{ error }}</span>
-                    {% endfor %}
-                </div>
-
+                {% endfor %}
             </div>
 
+            <button type="button" class="btn-secondary" id="btn-agregar-discapacidad">+ Agregar</button>
 
             <div class="form-botones">
 
@@ -81,9 +90,7 @@ Principal Usuario
                     </a>
                 {% endif %}
 
-                <button type="submit" class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
 
             </div>
 
@@ -91,5 +98,68 @@ Principal Usuario
 
     </div>
 </div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-discapacidad-vacia">
+    <div class="discapacidad-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_discapacidades-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_discapacidades-__INDEX__-eliminar" value="0">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Categoría de discapacidad</label>
+                <select class="form-control" name="Info_discapacidades-__INDEX__-categoria">
+                    <option value="" disabled selected>Selecciona una categoría</option>
+                    <option value="Física">Física</option>
+                    <option value="Sensorial">Sensorial</option>
+                    <option value="Cognitiva">Cognitiva</option>
+                    <option value="Psicosocial">Psicosocial</option>
+                    <option value="Múltiple">Múltiple</option>
+                    <option value="Otra">Otra</option>
+                </select>
+            </div>
+            <div class="campo">
+                <label>Descripción de la discapacidad</label>
+                <textarea class="form-control" name="Info_discapacidades-__INDEX__-descripcion"></textarea>
+            </div>
+            <div class="campo">
+                <label>Certificado de discapacidad</label>
+                <input type="file" class="form-control" name="Info_discapacidades-__INDEX__-ruta_certificado">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("discapacidades-container");
+    const plantilla = document.getElementById("plantilla-discapacidad-vacia");
+    const btnAgregar = document.getElementById("btn-agregar-discapacidad");
+
+    let contador = container.querySelectorAll(".discapacidad-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (e.target.classList.contains("btn-eliminar-fila")) {
+            const fila = e.target.closest(".discapacidad-fila");
+            const campoEliminar = fila.querySelector(".campo-eliminar");
+
+            if (campoEliminar) {
+                campoEliminar.value = "1";
+                fila.style.display = "none";
+            } else {
+                fila.remove();
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}

@@ -20,6 +20,7 @@
                 {% for entry in form.Info_academica %}
                 <div class="curso-fila" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
                     <div class="form-grid">
                         <div class="campo">
@@ -72,6 +73,7 @@
 <template id="plantilla-curso-vacio">
     <div class="curso-fila" data-index="__INDEX__">
         <input type="hidden" name="Info_academica-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_academica-__INDEX__-eliminar" value="0">
         <div class="form-grid">
             <div class="campo">
               <label>Nivel</label>
@@ -140,7 +142,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     container.addEventListener("click", function (e) {
         if (e.target.classList.contains("btn-eliminar-fila")) {
-            e.target.closest(".curso-fila").remove();
+            const fila = e.target.closest(".curso-fila");
+            const campoEliminar = fila.querySelector(".campo-eliminar");
+
+            if (campoEliminar) {
+                // Fila ya existente en la BD: la marcamos y ocultamos, no la borramos del DOM
+                campoEliminar.value = "1";
+                fila.style.display = "none";
+            } else {
+                // Fila nueva (aún no guardada): sí se puede quitar del DOM sin problema
+                fila.remove();
+            }
         }
     });
 });

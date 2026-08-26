@@ -1,20 +1,21 @@
 from flask_wtf import FlaskForm
+from wtforms import Form
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField,
     SelectField,
-    DateField,
-    SubmitField
+    SubmitField,
+    FieldList,
+    FormField
 )
 from wtforms.validators import (
     DataRequired,
-    Optional,
     Length
 )
 
 
-class documentoForm(FlaskForm):
-    """Formulario para registro de documentos"""
+class documentoItemForm(Form):
+    """Formulario para un documento individual"""
 
     nombre = StringField(
         "Nombre del documento",
@@ -24,15 +25,13 @@ class documentoForm(FlaskForm):
         ]
     )
 
-
-    ruta = FileField(
-            "Cargar documento",
-            validators=[
-                DataRequired(),
-                FileAllowed(['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'], 
-                        'Solo se permiten archivos: PDF, JPG, PNG, DOC, DOCX')
-            ]
-        )
+    ruta_soporte = FileField(
+        "Cargar documento",
+        validators=[
+            FileAllowed(['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'],
+                       'Solo se permiten archivos: PDF, JPG, PNG, DOC, DOCX')
+        ]
+    )
 
     tipo = SelectField(
         "Tipo de documento",
@@ -49,5 +48,13 @@ class documentoForm(FlaskForm):
         validators=[DataRequired()]
     )
 
+
+class documentoForm(FlaskForm):
+    """Formulario contenedor para subir varios documentos a la vez"""
+
+    Info_docs = FieldList(
+        FormField(documentoItemForm),
+        min_entries=1
+    )
 
     submit = SubmitField("Guardar documento")
