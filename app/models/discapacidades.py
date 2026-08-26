@@ -11,7 +11,7 @@ class Discapacidades(db.Model):
     categoria  = db.Column(db.String(50))
     descripcion = db.Column(db.String(250))
     ruta_certificado = db.Column(db.String(240))
-    fecha_registro = db.Column(db.DateTime)
+    fecha_registro = db.Column(db.DateTime, default=datetime.now)
 
 
     # ─────────────────────────────────────────

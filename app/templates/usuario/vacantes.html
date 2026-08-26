@@ -321,13 +321,13 @@
  
             <select name="categoria" onchange="this.form.submit()">
                 <option value="">Todas las categorías</option>
-                <option value="Administrativo" {% if request.args.get('categoria') == 'Administrativo' %}selected{% endif %}>Administrativo</option>
                 <option value="Asistencial" {% if request.args.get('categoria') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
+                <option value="Administrativa" {% if request.args.get('categoria') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
             </select>
  
             <select name="estado" onchange="this.form.submit()">
-                <option value="abierto" {% if request.args.get('estado', 'abierto') == 'abierto' %}selected{% endif %}>Abierto</option>
-                <option value="cerrado" {% if request.args.get('estado') == 'cerrado' %}selected{% endif %}>Cerrado</option>
+                <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
+                <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
             </select>
         </form>
  

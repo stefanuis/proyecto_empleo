@@ -2,7 +2,7 @@ from app.extensions import db
 from datetime import datetime
 
 
-class postulacion(db.Model):
+class Postulacion(db.Model):
     __tablename__ = "tbl_postulacion"
     id = db.Column(db.Integer, primary_key = True )
     id_usuario = db.Column(db.Integer)

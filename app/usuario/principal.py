@@ -35,8 +35,8 @@ from app.forms.discapacidades import discapacidadesForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
 from app.models.docs import OtrosDocumentos
-from app.models import vacante
-from app.models.postulacion import postulacion
+from app.models.vacante import Vacante
+from app.models.postulacion import Postulacion
 
 
 from . import usuario_bp
@@ -231,6 +231,7 @@ def familiar():
 
         registro.personas_casa = form.personas_casa.data
         registro.dependen_eco = form.dependen_eco.data
+        registro.fecha_realizacion = datetime.now()
 
         db.session.commit()
 
@@ -735,7 +736,7 @@ def discapacidades():
     return render_template("usuario/discapacidades.html", form=form, paso_anterior="referencias")
 
 #-----------#subir los documentos#--------------#
-@usuario_bp.route("/documentos", methods=["GET", "POST"])
+
 @login_required
 def documentos():
     form = documentoForm()
@@ -804,6 +805,8 @@ def eliminar_documento(id):
 
     return redirect(url_for("usuario.documentos"))
 
+
+
 @usuario_bp.route("/registro-completo")
 @login_required
 def registro_completo():
@@ -813,18 +816,18 @@ def registro_completo():
 @login_required
 def vacantes():
     categoria = request.args.get("categoria", "")
-    estado = request.args.get("estado", "abierto")   # por defecto solo muestra abiertas
+    estado = request.args.get("estado", "Activa")   # por defecto solo muestra abiertas
     busqueda = request.args.get("q", "")
 
-    query = vacante.query.filter_by(estado=estado)
+    query = Vacante.query.filter_by(estado=estado)
 
     if categoria:
         query = query.filter_by(area=categoria)
 
     if busqueda:
-        query = query.filter(vacante.titulo.ilike(f"%{busqueda}%"))
+        query = query.filter(Vacante.titulo.ilike(f"%{busqueda}%"))
 
-    vacantes = query.order_by(vacante.fecha_publicacion.desc()).all()
+    vacantes = query.order_by(Vacante.fecha_publicacion.desc()).all()
 
     return render_template("usuario/vacantes.html", vacantes=vacantes)
 
@@ -832,7 +835,7 @@ def vacantes():
 @usuario_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
 @login_required
 def postular(id):
-    vac = vacante.query.get_or_404(id)
+    vac = Vacante.query.get_or_404(id)
 
     # Evitar que el usuario se postule dos veces a la misma vacante
     ya_postulado = postulacion.query.filter_by(
@@ -859,9 +862,13 @@ def postular(id):
 
     flash("¡Te has postulado correctamente!", "success")
     return redirect(url_for("usuario.vacantes"))
+
+
     
 
+##------ mis postulaciones----------
 
-
-
-
+@usuario_bp.route("/postulaciones", methods=["GET", "POST"])
+@login_required
+def postulaciones():
+    return render_template("usuario/postulaciones.html")

@@ -67,9 +67,9 @@ Documentos
                             {% endfor %}
                         </div>
                         <div class="campo">
-                            {{ entry.ruta.label }}
-                            {{ entry.ruta(class="form-control") }}
-                            {% for error in entry.ruta.errors %}
+                            {{ entry.ruta_soporte.label }}
+                            {{ entry.ruta_soporte(class="form-control") }}
+                            {% for error in entry.ruta_soporte.errors %}
                                 <span class="error">{{ error }}</span>
                             {% endfor %}
                         </div>

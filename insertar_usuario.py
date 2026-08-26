@@ -26,23 +26,10 @@ USUARIOS_PRUEBA = [
     {
         "nombres":   "stefany",
         "apellidos": "lopez",
-        "correo":    "victor.gomez@ejemplo.com",
-        "clave":     "stefy123",    # ← se cifrará automáticamente
+        "correo":    "kevinjose@gmail.com",
+        "clave":     "kevin123",    # ← se cifrará automáticamente
         "telefono":  "3009876543",
-        "rol":       "admin",
-        "esta_activa":     True,
-        "esta_verificada": True,
-    },
-]
-
-USUARIOS_PRUEBA = [
-    {
-        "nombres":   "stefany",
-        "apellidos": "lopez",
-        "correo":    "aleja@gmail.com",
-        "clave":     "aleja123",    # ← se cifrará automáticamente
-        "telefono":  "3009876543",
-        "rol":       "admin",
+        "rol":       "usuario",
         "esta_activa":     True,
         "esta_verificada": True,
     },

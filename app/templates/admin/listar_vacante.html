@@ -61,7 +61,7 @@ Vacantes
                         <td>{{ v.fecha_cierre.strftime('%d %b %Y') if v.fecha_cierre else '—' }}</td>
                         <td>
                             <div style="display:flex; gap:6px;">
-                                <a href="#"
+                                <a href="{{ url_for('admin.postular', id=v.id')}}"
                                    class="btn-secondary btn-sm" title="Ver postulantes">
                                     Postulantes
                                 </a>

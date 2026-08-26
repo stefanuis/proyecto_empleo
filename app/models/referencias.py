@@ -15,7 +15,7 @@ class Referencias(db.Model):
     telefono = db.Column(db.String(20))
     ciudad = db.Column(db.String(30))
     autoriza = db.Column(db.String(10))
-    fecha_registro = db.Column(db.DateTime)
+    fecha_registro = db.Column(db.DateTime, default=datetime.now)
 
 
     # ─────────────────────────────────────────

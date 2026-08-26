@@ -9,7 +9,7 @@ class Vacante(db.Model):
     area = db.Column(db.String(100))
     descripcion = db.Column(db.Text)
     requisito = db.Column(db.Text)
-    salario = db.Column(db.Text)
+    salario = db.Column(db.String())
     estado = db.Column(db.String(20)) 
     fecha_publicacion = db.Column(db.DateTime, default=datetime.now )
     fecha_cierre = db.Column(db.DateTime, default=datetime.now)

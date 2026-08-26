@@ -11,7 +11,7 @@ class Competencias(db.Model):
     competencia  = db.Column(db.String(150))
     nivel = db.Column(db.String(50))
     experiencia = db.Column(db.Integer)
-    fecha_actualizacion = db.Column(db.DateTime)
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now)
     
 
 

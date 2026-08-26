@@ -12,6 +12,8 @@ from app.extensions import db
 from app.models.user import User
 from app.models.vacante import Vacante
 from app.forms.vacante import VacanteForm
+from app.models.postulacion import Postulacion
+from app.models.personal import Personal
 from app.forms.postulacion import PostulacionForm
 
 from . import admin_bp
@@ -81,3 +83,12 @@ def eliminar_vacante(id):
 
     
 
+@admin_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
+@login_required
+def postular(id):
+
+    vacante = Vacante.query.get_or_404(id)   # la vacante específica
+
+    postulantes = db.session.query(Personal.id, Postulacion).join(Postulacion, Personal.id == Postulacion.id_usuario).filter(Postulacion.id_vacante == id).all()
+
+    return render_template("admin/postulantes.html", vacante=vacante, postulantes=postulantes)

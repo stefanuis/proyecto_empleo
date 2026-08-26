@@ -20,7 +20,7 @@ class Info_academica(db.Model):
     anno_finalizacion = db.Column(db.Integer)
     ruta_soporte = db.Column(db.String(240))
     intensidad_horaria = db.Column(db.Integer)
-    fecha_registro = db.Column(db.DateTime)
+    fecha_registro = db.Column(db.DateTime,  default=datetime.now)
 
 
     # ─────────────────────────────────────────

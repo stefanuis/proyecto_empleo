@@ -21,7 +21,7 @@ class Experiencia(db.Model):
     municipio = db.Column(db.String(50))
     funciones_realizadas = db.Column(db.String(500)) #Cambiar esto a Texto.
     ruta_soporte = db.Column(db.String(240))
-    fecha_registro = db.Column(db.DateTime)
+    fecha_registro = db.Column(db.DateTime, default=datetime.now)
 
 
     # ─────────────────────────────────────────

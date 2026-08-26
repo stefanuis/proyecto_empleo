@@ -56,7 +56,7 @@ class VacanteForm(FlaskForm):
         "Información de salario",
         validators=[
             Optional(),
-            Length(max=100)
+            Length(max=50)
         ]
     )
 

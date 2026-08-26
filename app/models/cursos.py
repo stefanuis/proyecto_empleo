@@ -12,7 +12,7 @@ class Cursos(db.Model):
     institucion = db.Column(db.String(150), nullable=False)
     area = db.Column(db.String(150))
     horas = db.Column(db.Integer)
-    fecha_realizacion = db.Column(db.DateTime)
+    fecha_realizacion = db.Column(db.DateTime, default=datetime.now)
     certificado = db.Column(db.Boolean)
 
 
