@@ -81,14 +81,40 @@ def eliminar_vacante(id):
     flash("Vacante eliminada.", "success")
     return redirect(url_for("admin.listar_vacantes"))
 
-    
 
-@admin_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
+@admin_bp.route("/vacantes/<int:id>/postulantes", methods=["GET"])
 @login_required
-def postular(id):
+def listar_postulantes(id):
 
-    vacante = Vacante.query.get_or_404(id)   # la vacante específica
 
-    postulantes = db.session.query(Personal.id, Postulacion).join(Postulacion, Personal.id == Postulacion.id_usuario).filter(Postulacion.id_vacante == id).all()
+    vacante = Vacante.query.get_or_404(id)
 
-    return render_template("admin/postulantes.html", vacante=vacante, postulantes=postulantes)
+    postulaciones = db.session.query(
+        Postulacion,
+        Personal
+    ).join(
+        Personal,
+        Personal.id_usuario == Postulacion.id_usuario
+    ).filter(
+        Postulacion.id_vacante == id
+    ).all()
+
+    return render_template(
+        "admin/postulantes_vacantes.html",
+        vacante=vacante,
+        postulaciones=postulaciones
+    )
+
+@admin_bp.route("/postulacion/<int:id>/actualizar", methods=["POST"])
+@login_required
+def actualizar_postulacion(id):
+
+    postulacion = Postulacion.query.get_or_404(id)
+
+    postulacion.estado = request.form["estado"]
+    postulacion.notas_reclutador = request.form["notas_reclutador"]
+    postulacion.fecha_actualizacion = datetime.now()
+
+    db.session.commit()
+
+    return redirect()

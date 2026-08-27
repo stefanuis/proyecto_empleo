@@ -8,7 +8,4 @@ admin_bp = Blueprint(
     static_folder="../static"
 )
 
-
 from . import principal
-#from . import inicial
-#from . import registro

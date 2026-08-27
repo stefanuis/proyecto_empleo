@@ -811,6 +811,8 @@ def eliminar_documento(id):
 @login_required
 def registro_completo():
     return render_template("usuario/registro_completo.html")
+
+
 ### vacantes consultas sql filtros 
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
@@ -838,7 +840,7 @@ def postular(id):
     vac = Vacante.query.get_or_404(id)
 
     # Evitar que el usuario se postule dos veces a la misma vacante
-    ya_postulado = postulacion.query.filter_by(
+    ya_postulado = Postulacion.query.filter_by(
         id_usuario=current_user.id,
         id_vacante=id
     ).first()
@@ -851,7 +853,7 @@ def postular(id):
         flash("Esta vacante ya no está disponible.", "danger")
         return redirect(url_for("usuario.vacantes"))
 
-    nueva_postulacion = postulacion(
+    nueva_postulacion = Postulacion(
         id_usuario=current_user.id,
         id_vacante=id,
         estado="postulado"

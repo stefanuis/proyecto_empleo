@@ -51,20 +51,20 @@ Vacantes
                         <td>{{ v.area }}</td>
                         <td>{{ v.salario or '—' }}</td>
                         <td>
-                            {% if v.estado == 'abierto' %}
-                                <span class="badge badge-green">Abierto</span>
+                            {% if v.estado == 'Activa' %}
+                                <span class="badge badge-green">Activa</span>
                             {% else %}
-                                <span class="badge badge-red">Cerrado</span>
+                                <span class="badge badge-red">Cerrada</span>
                             {% endif %}
                         </td>
                         <td>{{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '—' }}</td>
                         <td>{{ v.fecha_cierre.strftime('%d %b %Y') if v.fecha_cierre else '—' }}</td>
                         <td>
                             <div style="display:flex; gap:6px;">
-                                <a href="{{ url_for('admin.postular', id=v.id')}}"
-                                   class="btn-secondary btn-sm" title="Ver postulantes">
-                                    Postulantes
-                                </a>
+                                    <a href="{{ url_for('admin.listar_postulantes', id=v.id) }}"
+                                    class="btn-secondary btn-sm" title="Ver postulantes">
+                                        Postulantes
+                                    </a>
                                 <a href="{{ url_for('admin.editar_vacante', id=v.id) }}"
                                    class="btn-secondary btn-sm" title="Editar">
                                     Editar

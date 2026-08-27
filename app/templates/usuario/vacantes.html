@@ -1,338 +1,38 @@
 {% extends 'usuario/base.html' %}
- 
-{% block titulo %}
-    Vacantes
-{% endblock %}
- 
 {% block contenido %}
-<style>
- 
- 
-.topbar {
- 
-    align-items: center;
-    justify-content: space-between;
-    background: #ffffff;
-    padding: 18px 25px;
-    border-bottom: 1px solid #e5e7eb;
-    margin-bottom: 25px;
-}
- 
-.topbar-title {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1f2937;
-}
- 
-.topbar-actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
- 
-.topbar-actions i {
-    font-size: 23px;
-    color: #6b7280;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
- 
-.topbar-actions i:hover {
-    color: #2563eb;
-}
- 
- 
-/* =========================
-   CONTENIDO
-========================= */
- 
-.page-content {
-    padding: 0 25px 30px;
-}
- 
- 
-/* =========================
-   FILTROS
-========================= */
- 
-.filtros {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
- 
- 
-/* =========================
-   BUSCADOR
-========================= */
- 
-.input-buscar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
- 
-    width: 320px;
-    height: 44px;
- 
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
- 
-    padding: 0 14px;
- 
-    transition: 0.2s ease;
-}
- 
-.input-buscar i {
-    font-size: 19px;
-    color: #9ca3af;
-}
- 
-.input-buscar input {
-    width: 100%;
-    border: none;
-    outline: none;
- 
-    font-size: 14px;
-    color: #374151;
-    background: transparent;
-}
- 
-.input-buscar input::placeholder {
-    color: #9ca3af;
-}
- 
-.input-buscar:focus-within {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
-}
- 
- 
- 
- 
-.filtros select {
-    height: 44px;
-    min-width: 190px;
- 
-    padding: 0 35px 0 13px;
- 
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
- 
-    color: #374151;
-    font-size: 14px;
- 
-    outline: none;
-    cursor: pointer;
- 
-    transition: 0.2s ease;
-}
- 
-.filtros select:hover {
-    border-color: #9ca3af;
-}
- 
-.filtros select:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
-}
- 
-.grid-vacantes {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 20px;
-}
- 
- 
-/* TARJETA */
-.card-vacante {
-    background: var(--primary-light);
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: 0.2s ease;
-    
-}
- 
-/* EFECTO AL PASAR EL MOUSE */
-.card-vacante:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10);
-}
- 
-/* PARTE SUPERIOR */
-.card-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
- 
-/* ICONO */
-.icono {
-    width: 45px;
-    height: 45px;
-    border-radius: 10px;
- 
-    display: flex;
-    align-items: center;
-    justify-content: center;
- 
-    font-size: 22px;
-}
- 
-/* COLORES DEL ICONO */
-.icono-azul {
-    background: #e8f0ff;
-    color: var(--primary);
-}
- 
-.icono-teal {
-    background: #e6f7f5;
-    color: var(--primary);
-}
- 
-/* TÍTULOS */
-.card-titulos {
-    flex: 1;
-}
- 
-.card-cargo {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--primary);
-}
- 
-.card-categoria {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: #6b7280;
-}
- 
-/* ETIQUETAS */
-.card-tags {
-    display: flex;
-    gap: 8px;
-    margin: 18px 0;
-}
- 
-.tag {
-    background: #f3f4f6;
-    color: #4b5563;
-    font-size: 12px;
-    padding: 5px 10px;
-    border-radius: 6px;
-}
- 
-/* PARTE INFERIOR */
-.card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 15px;
-}
- 
-/* SALARIO */
-.card-salario {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #111827;
-}
- 
-.card-fecha {
-    margin: 4px 0 0;
-    font-size: 12px;
-    color: #9ca3af;
-}
- 
-/* BOTÓN */
-.btn-postular {
-    border: none;
-    background: #2563eb;
-    color: white;
- 
-    padding: 9px 14px;
-    border-radius: 7px;
- 
-    font-size: 13px;
-    font-weight: 600;
- 
-    cursor: pointer;
-    transition: 0.2s ease;
-}
- 
-.btn-postular:hover {
-    background: #1d4ed8;
-}
- 
-@media (max-width: 768px) {
- 
-    .topbar {
-        padding: 15px 18px;
-    }
- 
-    .topbar-title {
-        font-size: 19px;
-    }
- 
-    .page-content {
-        padding: 0 18px 25px;
-    }
- 
-    .filtros {
-        flex-direction: column;
-        align-items: stretch;
-    }
- 
-    .input-buscar {
-        width: 100%;
-    }
- 
-    .filtros select {
-        width: 100%;
-    }
-}
-</style>
- 
+
 <div class="main-area">
- 
+
     <header class="topbar">
         <p class="topbar-title">Vacantes activas</p>
         <div class="topbar-actions">
             <i class="ti ti-bell"></i>
         </div>
     </header>
- 
- 
+
+
     <main class="page-content">
- 
+
         <form method="GET" class="filtros">
             <div class="input-buscar">
                 <i class="ti ti-search"></i>
                 <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
             </div>
- 
+
             <select name="categoria" onchange="this.form.submit()">
                 <option value="">Todas las categorías</option>
                 <option value="Asistencial" {% if request.args.get('categoria') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
                 <option value="Administrativa" {% if request.args.get('categoria') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
             </select>
- 
+
             <select name="estado" onchange="this.form.submit()">
                 <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
                 <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
             </select>
         </form>
- 
+
         <div class="grid-vacantes" id="lista-vacantes">
- 
+
             {% for v in vacantes %}
             <div class="card-vacante">
                 <div class="card-header">
@@ -355,9 +55,17 @@
                             Publicada el {{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}
                         </p>
                     </div>
-                    <a href="{{ url_for('usuario.postular', id=v.id) }}" class="btn-postular">
-                        Postularme
-                    </a>
+                    <button type="button" class="btn-postular" onclick="abrirModal(this)"
+                        data-titulo="{{ v.titulo }}"
+                        data-area="{{ v.area }}"
+                        data-salario="{{ v.salario or 'A convenir' }}"
+                        data-fecha="{{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}"
+                        data-descripcion="{{ v.descripcion or 'Sin descripción disponible.' }}"
+                        data-requisito="{{ v.requisito or 'sin requisito disponible' }}"
+                        data-estado="{{ v.estado }}"
+                        data-id="{{ v.id }}">
+                        Ver detalle
+                    </button>
                 </div>
             </div>
             {% else %}
@@ -367,10 +75,155 @@
                 <p>Vuelve a intentarlo más tarde o ajusta los filtros.</p>
             </div>
             {% endfor %}
- 
+
         </div>
- 
+
+        <!-- Modal de detalle de vacante -->
+        <div id="modal-vacante" class="vacante-modal-overlay" style="display:none;">
+            <div class="vacante-modal-caja">
+                <button class="modal-cerrar" onclick="cerrarModal()" type="button">&times;</button>
+
+                <h2 id="modal-titulo"></h2>
+                <p class="modal-meta">
+                    <span id="modal-area"></span> · <span id="modal-fecha"></span>
+                </p>
+                <p class="modal-salario" id="modal-salario"></p>
+
+                <div class="modal-descripcion">
+                    <h4>Descripción</h4>
+                    <p id="modal-descripcion-texto"></p>
+                </div>
+
+                <div class="modal-requisito">
+                    <h4>Requisito</h4>
+                    <p id="modal-requisito-texto"></p>
+                </div>
+
+                <form id="modal-form-postular" method="POST">
+                    <button type="submit" class="btn-postular btn-full" id="modal-btn-postular">
+                        Postularme
+                    </button>
+                    <p id="modal-cerrada-aviso" class="aviso-cerrada" style="display:none;">
+                        Esta vacante ya no está disponible.
+                    </p>
+                </form>
+            </div>
+        </div>
+
     </main>
 </div>
- 
+
+<style>
+.vacante-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.vacante-modal-caja {
+    background: white;
+    border-radius: 10px;
+    padding: 24px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+}
+.modal-cerrar {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+}
+
+.modal-meta {
+    color: #777;
+    font-size: 14px;
+    margin: 4px 0 12px;
+}
+
+.modal-salario {
+    font-weight: bold;
+    color: #d81b60;
+    margin-bottom: 16px;
+}
+
+.modal-descripcion h4 {
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.btn-full {
+    width: 100%;
+    margin-top: 20px;
+    text-align: center;
+    display: block;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-full:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.aviso-cerrada {
+    text-align: center;
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 8px;
+}
+</style>
+
+<script>
+function abrirModal(boton) {
+    document.getElementById('modal-titulo').textContent = boton.dataset.titulo;
+    document.getElementById('modal-area').textContent = boton.dataset.area;
+    document.getElementById('modal-fecha').textContent = 'Publicada el ' + boton.dataset.fecha;
+    document.getElementById('modal-salario').textContent = boton.dataset.salario;
+    document.getElementById('modal-descripcion-texto').textContent = boton.dataset.descripcion;
+    document.getElementById('modal-requisito-texto').textContent = boton.dataset.requisito;  // <-- esta línea faltaba
+
+    const form = document.getElementById('modal-form-postular');
+    const btnPostular = document.getElementById('modal-btn-postular');
+    const avisoCerrada = document.getElementById('modal-cerrada-aviso');
+
+    // Ajusta esta URL si tu blueprint 'usuario' tiene un url_prefix distinto
+    form.action = "/vacantes/" + boton.dataset.id + "/postular";
+
+    if (boton.dataset.estado === 'Activa') {
+        btnPostular.style.display = 'block';
+        btnPostular.disabled = false;
+        avisoCerrada.style.display = 'none';
+    } else {
+        btnPostular.style.display = 'none';
+        avisoCerrada.style.display = 'block';
+    }
+
+    document.getElementById('modal-vacante').style.display = 'flex';
+}
+
+function cerrarModal() {
+    document.getElementById('modal-vacante').style.display = 'none';
+}
+
+document.getElementById('modal-vacante').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarModal();
+});
+</script>
+
 {% endblock %}
