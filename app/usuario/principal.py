@@ -91,19 +91,44 @@ def inject_progreso():
             paso_anterior=PASOS_seguimiento[idx - 1] if idx > 0 else None
         )
     return {}
+@usuario_bp.route("/")
+@login_required
+def principal():
 
+    print("----hOL ")
+    total_postulaciones = Postulacion.query.filter_by(
+        estado="Activa",
+        id_usuario=current_user.id
+    ).count()
 
+    total_vacantes = Vacante.query.filter_by(
+        estado="Activa"
+    ).count()
 
-
+    return render_template(
+        "usuario/principal.html",
+        total_postulaciones=total_postulaciones,
+        total_vacantes=total_vacantes
+    )
 @usuario_bp.route("/", methods=["GET"])
 @login_required
 def inicial():
-    misDatos = {
-        "anio": 2026,
-        "version": "0.01",
-        "titulo": "Principal mi Usuario"
-    }
-    return render_template("usuario/principal.html",datos=misDatos)
+        hoy = datetime.now()
+        
+        dias = [
+                "Lunes", "Martes", "Miércoles", "Jueves",
+                "Viernes", "Sábado", "Domingo"
+            ]
+        
+        meses = [
+                "enero", "febrero", "marzo", "abril",
+                "mayo", "junio", "julio", "agosto",
+                "septiembre", "octubre", "noviembre", "diciembre"
+            ]
+        
+        fecha_hoy = f"{dias[hoy.weekday()]}, {hoy.day} de {meses[hoy.month - 1]}"
+    
+        return render_template("usuario/principal.html", fecha_hoy=fecha_hoy)
 
 ##----configuracion
 

@@ -53,10 +53,10 @@ def login_post():
 
     login_user(usuario)
 
-
-
-    if(usuario.rol == "admin"):
-        print("Este es admin")
+    if(usuario.rol == "admin_maestro"):
+        print("Este es el admin maestro")
+        return redirect(url_for("admin_maestro.inicial"))
+    elif(usuario.rol == "admin"):
         return redirect(url_for("admin.inicial"))
     else:
         print("Este no es admin")

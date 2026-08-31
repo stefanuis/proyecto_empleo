@@ -87,8 +87,7 @@ Vacantes
                                     Editar
                                 </a>
                                 <form method="POST"
-                                      action="{{ url_for('admin.eliminar_vacante', id=v.id) }}"
-                                      onsubmit="return confirm('¿Seguro que quieres eliminar esta vacante?');">
+                                      action="{{ url_for('admin.eliminar_vacante', id=v.id) }}">
                                     <button type="submit" class="btn-outline btn-sm" style="border-color:#C62828; color:#C62828;">
                                         Eliminar
                                     </button>

@@ -1,0 +1,15 @@
+{% extends 'admin/base.html' %}
+{% block contenido %}
+
+<div class="main-area">
+  
+   <main class="page-content">
+
+    <p class="dashboard-fecha">{{ fecha_hoy }}</p>
+    <h1 class="dashboard-saludo">Hola, {{ current_user.nombre or 'Admin Maestro' }}☺️</h1>
+
+    </main>
+</div>
+
+
+{% endblock %}

@@ -5,31 +5,32 @@ Principal Usuario
 {% endblock %}
 
 {% block  contenido %}
+
 <div class="content">
  
     <!-- Encabezado de bienvenida -->
     <div class="encabezado">
       <div>
-        <p class="fecha">Miércoles, 12 de agosto</p>
-        <h1>Hola, Stefany</h1>
+        <p class="fecha">{{ fecha_hoy }}</p>
+        <h1>Hola, {{ current_user.nombres }} {{ current_user.apellidos }}</h1>
         <p class="subtitulo">Tienes 2 vacantes nuevas que coinciden con tu perfil.</p>
       </div>
       <div class="badge-perfil">Perfil al 70%</div>
     </div>
- 
+
     <!-- Tarjetas de resumen -->
     <div class="kpis">
       <div class="kpi-card">
         <div class="kpi-icono"></div>
         <div>
-          <div class="kpi-valor">18</div>
+          <div class="kpi-valor">{{ total_vacantes }}</div>
           <div class="kpi-label">Vacantes disponibles</div>
         </div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icono"></div>
         <div>
-          <div class="kpi-valor">5</div>
+          <div class="kpi-valor">{{ total_postulaciones }}</div>
           <div class="kpi-label">Mis postulaciones</div>
         </div>
       </div>
@@ -63,7 +64,6 @@ Principal Usuario
     <div class="vacantes">
       <div class="vacante-card">
         <div>
-          <div class="vacante-match">94% afinidad</div>
           <div class="vacante-titulo">Enfermera Jefe – Urgencias</div>
           <div class="vacante-detalle">Sede Norte · Tiempo completo</div>
         </div>
@@ -72,7 +72,6 @@ Principal Usuario
  
       <div class="vacante-card">
         <div>
-          <div class="vacante-match">87% afinidad</div>
           <div class="vacante-titulo">Auxiliar de Facturación</div>
           <div class="vacante-detalle">Sede Centro · Tiempo completo</div>
         </div>
@@ -81,7 +80,6 @@ Principal Usuario
  
       <div class="vacante-card">
         <div>
-          <div class="vacante-match">81% afinidad</div>
           <div class="vacante-titulo">Técnico en Laboratorio Clínico</div>
           <div class="vacante-detalle">Sede Norte · Medio tiempo</div>
         </div>

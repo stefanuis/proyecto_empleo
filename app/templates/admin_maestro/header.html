@@ -1,0 +1,42 @@
+<nav class="floating-navbar">
+
+    <div class="navbar-container">
+
+        <!-- IZQUIERDA -->
+        <div class="navbar-start">
+
+            <button class="navbar-hamburger"
+                    id="sidebarToggleBtn"
+                    aria-label="Abrir menú">
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="navbar-logo">
+                <img src="{{ url_for('static', filename='img/logo_color.png') }}"
+                     alt="Logo">
+            </div>
+
+            <h1 class="navbar-titulo">Portal de Empleo</h1>
+
+        </div>
+
+        <!-- DERECHA -->
+        <div class="navbar-end">
+
+            <button class="navbar-notificacion" type="button" aria-label="Notificaciones">
+                🔔
+            </button>
+
+            <div class="navbar-usuario">
+                <span class="usuario-iniciales">
+                    {{ current_user.nombres[0] }}{{ current_user.apellidos[0] }}
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</nav>

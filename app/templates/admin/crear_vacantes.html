@@ -128,19 +128,21 @@ Principal Usuario
 
 <script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
 <script>
+   document.addEventListener("DOMContentLoaded", function () {
+
     flatpickr("#fecha_publicacion", {
         dateFormat: "Y-m-d",
-        altInput: true, 
-        altFormat: "d/m/Y",  
-        maxDate: "today"
+        altInput: true,
+        altFormat: "d/m/Y"
     });
 
     flatpickr("#fecha_cierre", {
         dateFormat: "Y-m-d",
-        altInput: true, 
-        altFormat: "d/m/Y",  
-        maxDate: "today"
+        altInput: true,
+        altFormat: "d/m/Y"
     });
+
+});
 </script>
 
 {% endblock %}

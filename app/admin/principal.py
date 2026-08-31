@@ -30,6 +30,20 @@ from . import admin_bp
 def inicial():
     vacantes_labels = ['Analista de Datos', 'Coord. Logística', 'Contador Junior', 'Ejecutivo Comercial']
     vacantes_data = [22, 18, 15, 9]
+    hoy = datetime.now()
+
+    dias = [
+        "Lunes", "Martes", "Miércoles", "Jueves",
+        "Viernes", "Sábado", "Domingo"
+    ]
+
+    meses = [
+        "enero", "febrero", "marzo", "abril",
+        "mayo", "junio", "julio", "agosto",
+        "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+
+    fecha_hoy = f"{dias[hoy.weekday()]}, {hoy.day} de {meses[hoy.month - 1]}"
 
     return render_template(
         'admin/principal.html',
@@ -39,7 +53,7 @@ def inicial():
         total_hojas=241,
         total_entrevistas=12,
         total_por_cerrar=4,
-        fecha_hoy='domingo, 30 de agosto de 2026'
+        fecha_hoy=fecha_hoy
     )
 
     #return render_template("Hola mundo desde el bp usuario")
@@ -61,6 +75,8 @@ def listar_vacantes():
         query = query.filter_by(estado=estado)
 
     vacantes = query.order_by(Vacante.fecha_publicacion.desc()).all()
+
+
     return render_template("admin/listar_vacante.html", vacantes=vacantes)
 
 @admin_bp.route("/vacantes/crear", methods=["GET", "POST"])
@@ -73,11 +89,12 @@ def crear_vacante():
         nueva_vacante = Vacante(
             titulo=form.titulo.data,
             area=form.area.data,
-            salario=form.salario.data,
-            estado=form.estado.data,
-            fecha_cierre=form.fecha_cierre.data,
             descripcion=form.descripcion.data,
             requisito=form.requisito.data,
+            salario=form.salario.data,
+            estado=form.estado.data,
+            fecha_publicacion=form.fecha_publicacion.data,
+            fecha_cierre=form.fecha_cierre.data,    
             id_usuario_creador=current_user.id
         )
         db.session.add(nueva_vacante)
@@ -91,7 +108,7 @@ def crear_vacante():
 @admin_bp.route("/vacantes/<int:id>/editar", methods=["GET", "POST"])
 @login_required
 def editar_vacante(id):
-    vacante = vacante.query.get_or_404(id)
+    vacante = Vacante.query.get_or_404(id)
     form = VacanteForm(obj=vacante)
 
     if form.validate_on_submit():
@@ -100,7 +117,7 @@ def editar_vacante(id):
         flash("Vacante actualizada correctamente.", "success")
         return redirect(url_for("admin.listar_vacantes"))
 
-    return render_template("admin/crear_vacante.html", form=form)  # reutiliza el mismo template
+    return render_template("admin/crear_vacantes.html", form=form)  # reutiliza el mismo template
 
 
 @admin_bp.route("/vacantes/<int:id>/eliminar", methods=["POST"])

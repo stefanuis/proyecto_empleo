@@ -50,7 +50,7 @@
                 </div>
                 <div class="card-footer">
                     <div>
-                        <p class="card-salario">{{ v.salario or 'A convenir' }}</p>
+                       
                         <p class="card-fecha">
                             Publicada el {{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}
                         </p>
@@ -139,6 +139,10 @@ function abrirModal(boton) {
     }
 
     document.getElementById('modal-vacante').style.display = 'flex';
+}
+
+function cerrarModal(){
+      document.getElementById("modal-vacante").style.display = "none";
 }
 </script>
 
