@@ -2,7 +2,7 @@
     <ul>
         <li>
             <a href="{{ url_for('usuario.inicial') }}">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/inicio.png') }}" alt="Logo">
+                <span class="icon icon-home"></span>
                 <span class="sidebar-text">Inicio</span>
             </a>
         </li>
@@ -11,8 +11,8 @@
 
         <!-- Sección MI PERFIL con toggle -->
         <li>
-            <a href="{{ url_for('usuario.personal') }}" class="sidebar-link">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/perfil.png') }}" alt="Logo">
+            <a href="{{ url_for('usuario.personal') }}" >
+                <span class="icon icon-user"></span>
                 <span class="sidebar-text">Mi Perfil</span>
             </a>
         </li>
@@ -21,13 +21,13 @@
 
         <li>
             <a href="{{ url_for('usuario.vacantes') }}">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/misCosas.png') }}" alt="Logo">
+                <span class="icon icon-briefcase"></span>
                 <span class="sidebar-text">Vacantes</span>
             </a>
         </li>
         <li>
-            <a href="{{ url_for('usuario.postulaciones')  }}">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/tareas.png') }}" alt="Logo">
+            <a href="{{ url_for('usuario.mis_postulaciones')  }}">
+                <span class="icon icon-clipboard-check"></span>
                 <span class="sidebar-text">Mis postulaciones</span>
             </a>
         </li>
@@ -35,14 +35,14 @@
         <hr>
 
         <li>
-            <a href="#">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/configuracion.png') }}" alt="Logo">
+            <a href="{{ url_for('usuario.configuracion')}}">
+                <span class="icon icon-settings"></span>
                 <span class="sidebar-text">Configuración</span>
             </a>
         </li>
         <li>
             <a href="{{ url_for('usuario.inicial') }}">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/salir.png') }}" alt="Logo">
+                <span class="icon icon-logout"></span>
                 <span class="sidebar-text">Cerrar sesión</span>
             </a>
         </li>

@@ -104,8 +104,6 @@ Documentos
  
     </div>
 </div>
- 
-<!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-doc-vacio">
     <div class="curso-fila" data-index="__INDEX__">
         <div class="form-grid">
@@ -128,13 +126,13 @@ Documentos
             </div>
             <div class="campo">
                 <label>Archivo</label>
-                <input type="file" class="form-control" name="Info_docs-__INDEX__-ruta">
+                <input type="file" class="form-control" name="Info_docs-__INDEX__-ruta_soporte">
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
     </div>
 </template>
- 
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const container = document.getElementById("docs-container");

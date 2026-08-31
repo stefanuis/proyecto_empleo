@@ -10,9 +10,19 @@ Postulantes
 
 <div class="contenedor-padre">
 
-    <div class="contenedor-formulario" style="max-width: 1100px;">
+    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
 
         <div class="card-header">
+            <form method="GET" class="filtros-postulantes">
+                <select name="estado" onchange="this.form.submit()">
+                    <option value="" {% if not request.args.get('estado') %}selected{% endif %}>Todos los estados</option>
+                    <option value="postulado" {% if request.args.get('estado') == 'postulado' %}selected{% endif %}>Postulado</option>
+                    <option value="revision" {% if request.args.get('estado') == 'revision' %}selected{% endif %}>En revisión</option>
+                    <option value="entrevista" {% if request.args.get('estado') == 'entrevista' %}selected{% endif %}>Entrevista</option>
+                    <option value="contratado" {% if request.args.get('estado') == 'contratado' %}selected{% endif %}>Contratado</option>
+                    <option value="rechazado" {% if request.args.get('estado') == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                </select>
+            </form>
 
             <span class="card-title">
                 Postulantes — {{ vacante.titulo }}
@@ -217,10 +227,23 @@ Postulantes
                                             {% endif %}>
                                             Rechazado
                                         </option>
-
                                     </select>
-
                                 </form>
+                                {% if post.notas_reclutador %} 
+                                    <span data-tooltip="{{ post.notas_reclutador }}"
+                                    style=" cursor: help; color: #D81B60; 
+                                    font-size: 20px; display: inline-flex; 
+                                    align-items: center; 
+                                    justify-content: center; 
+                                    width: 34px; height: 34px; " >
+                                    <i class="ti ti-note"></i> </span>
+                                {% endif %}
+
+                                 <a href="{{ url_for('admin.ver_expediente', id=post.id) }}"
+                                    class="btn-secondary btn-sm"
+                                    style="height:34px; display:inline-flex; align-items:center;">
+                                        Ver expediente
+                                </a>
 
                             </div>
 
@@ -241,7 +264,7 @@ Postulantes
 
         <div class="empty-state">
 
-            <span class="empty-icon">👥</span>
+            <span class="empty-icon"></span>
 
             <h3>Aún no hay postulantes</h3>
 
@@ -249,13 +272,6 @@ Postulantes
                 Cuando un usuario se postule a esta vacante,
                 aparecerá aquí.
             </p>
-
-            <a href="{{ url_for('admin.listar_vacantes') }}"
-               class="btn-primary">
-
-                Volver a vacantes
-
-            </a>
 
         </div>
 

@@ -10,7 +10,7 @@
   --primary-hover: #AD1457;
   --primary-light: #F06292;
   --primary-ultra-light: #FCE4EC;
-  --bg-main: #FFFFFF;
+  --bg-main: #54545A;
   --bg-soft: #F5F5F5;
   --border: #E0E0E0;
   --text-main: #212121;
@@ -176,8 +176,7 @@ body {
 /* ── SIDEBAR ── */
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--bg-main);
-  border-right: 1px solid var(--border);
+  background: var(--b);
   position: fixed;
   top: var(--navbar-height);
   left: 0;
@@ -1824,5 +1823,6 @@ body{
 }
 
 /*-----------dashoabrd------*/
+
 
 

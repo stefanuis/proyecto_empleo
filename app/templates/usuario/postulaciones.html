@@ -1,390 +1,71 @@
 {% extends 'usuario/base.html' %}
-
-{% block titulo %}
-    Vacantes
-{% endblock %}
-
 {% block contenido %}
 
-<style>
+<div class="main-area">
 
-     /* ── Encabezado ── */
-  .encabezado-postulaciones {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--bg-main);
-    border-radius: 14px;
-    padding: 24px 28px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  }
- 
-  .encabezado-postulaciones h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-main);
-  }
- 
-  .encabezado-postulaciones p {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-  }
- 
-  .avatar-usuario {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--primary-ultra-light);
-    color: var(--primary-hover);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 14px;
-  }
- 
-  /* ── Tarjetas de resumen ── */
-  .resumen-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-  }
- 
-  .resumen-card {
-    background: var(--bg-main);
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    position: relative;
-    overflow: hidden;
-  }
- 
-  .resumen-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--barra-color, var(--primary));
-  }
- 
-  .resumen-card .valor {
-    font-size: 30px;
-    font-weight: 700;
-    color: var(--text-main);
-    line-height: 1;
-    margin-bottom: 6px;
-  }
- 
-  .resumen-card .etiqueta {
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
- 
-  .resumen-card.postuladas { --barra-color: var(--primary); }
-  .resumen-card.revision   { --barra-color: var(--azul); }
-  .resumen-card.entrevista { --barra-color: var(--morado); }
-  .resumen-card.contratado { --barra-color: var(--verde); }
- 
-  /* ── Filtros ── */
-  .filtros-postulaciones {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 22px;
-  }
- 
-  .buscador-postulaciones {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0 16px;
-    height: 46px;
-  }
- 
-  .buscador-postulaciones input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 14px;
-    width: 100%;
-    color: var(--text-main);
-  }
- 
-  .buscador-postulaciones input::placeholder { color: #B0B0B0; }
- 
-  .select-estado {
-    height: 46px;
-    padding: 0 16px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-main);
-    font-size: 14px;
-    color: var(--text-main);
-    cursor: pointer;
-  }
- 
-  /* ── Tarjeta de postulación ── */
-  .postulacion-card {
-    background: var(--bg-main);
-    border-radius: 14px;
-    padding: 24px 28px;
-    margin-bottom: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-    border: 1px solid transparent;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  }
- 
-  .postulacion-card:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    border-color: var(--primary-ultra-light);
-  }
- 
-  .postulacion-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 22px;
-  }
- 
-  .postulacion-cargo {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 4px;
-  }
- 
-  .postulacion-meta {
-    font-size: 13px;
-    color: var(--text-secondary);
-  }
- 
-  /* Badges de estado */
-  .estado-badge {
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 999px;
-    white-space: nowrap;
-  }
- 
-  .estado-badge.postulado  { background: var(--primary-ultra-light); color: var(--primary-hover); }
-  .estado-badge.revision   { background: var(--azul-bg); color: var(--azul); }
-  .estado-badge.entrevista { background: var(--morado-bg); color: var(--morado); }
-  .estado-badge.contratado { background: var(--verde-bg); color: var(--verde); }
-  .estado-badge.rechazado  { background: #FCE4EC; color: #C62828; }
- 
-  /* ── Timeline de progreso ── */
-  .timeline {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    position: relative;
-  }
- 
-  .timeline-linea-fondo {
-    position: absolute;
-    top: 11px;
-    left: 5.5%;
-    right: 5.5%;
-    height: 3px;
-    background: var(--border);
-    border-radius: 3px;
-    z-index: 0;
-  }
- 
-  .timeline-linea-progreso {
-    position: absolute;
-    top: 11px;
-    left: 5.5%;
-    height: 3px;
-    background: var(--primary);
-    border-radius: 3px;
-    z-index: 1;
-    transition: width 0.3s ease;
-  }
- 
-  .timeline-paso {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
- 
-  .timeline-punto {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--bg-main);
-    border: 3px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-  }
- 
-  .timeline-paso.hecho .timeline-punto {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-  }
- 
-  .timeline-paso.actual .timeline-punto {
-    background: var(--bg-main);
-    border-color: var(--primary);
-    color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-ultra-light);
-  }
- 
-  .timeline-etiqueta {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
- 
-  .timeline-paso.hecho .timeline-etiqueta,
-  .timeline-paso.actual .timeline-etiqueta {
-    color: var(--text-main);
-    font-weight: 600;
-  }
- 
-  @media (max-width: 700px) {
-    .resumen-grid { grid-template-columns: repeat(2, 1fr); }
-    .filtros-postulaciones { flex-direction: column; }
-    .postulacion-top { flex-direction: column; gap: 10px; }
-    .timeline-etiqueta { font-size: 10.5px; }
-  }
-</style>
-<div class="contenido">
- 
-  <!-- Encabezado -->
-  <div class="encabezado-postulaciones">
-    <div>
-      <h1>Mis postulaciones</h1>
-      <p>Seguimiento de tus procesos de selección</p>
-    </div>
-    <div class="avatar-usuario">JP</div>
-  </div>
- 
-  <!-- Filtros -->
-  <div class="filtros-postulaciones">
-    <div class="buscador-postulaciones">
-      <span>🔍</span>
-      <input type="text" placeholder="Buscar por cargo">
-    </div>
-    <select class="select-estado">
-      <option>Todos los estados</option>
-      <option>Postulado</option>
-      <option>En revisión</option>
-      <option>Entrevista</option>
-      <option>Contratado</option>
-    </select>
-  </div>
- 
-  <!-- Tarjeta: Postulado -->
-  <div class="postulacion-card">
-    <div class="postulacion-top">
-      <div>
-        <p class="postulacion-cargo">Auxiliar administrativo</p>
-        <p class="postulacion-meta">Medellín · Postulado el 18 ago 2026</p>
-      </div>
-      <span class="estado-badge postulado">Postulado</span>
-    </div>
-    <div class="timeline">
-      <div class="timeline-linea-fondo"></div>
-      <div class="timeline-linea-progreso" style="width: 0%"></div>
-      <div class="timeline-paso actual">
-        <div class="timeline-punto">1</div>
-        <span class="timeline-etiqueta">Postulado</span>
-      </div>
-      <div class="timeline-paso">
-        <div class="timeline-punto">2</div>
-        <span class="timeline-etiqueta">En revisión</span>
-      </div>
-      <div class="timeline-paso">
-        <div class="timeline-punto">3</div>
-        <span class="timeline-etiqueta">Entrevista</span>
-      </div>
-      <div class="timeline-paso">
-        <div class="timeline-punto">4</div>
-        <span class="timeline-etiqueta">Decisión</span>
-      </div>
-    </div>
-  </div>
- 
-  <!-- Tarjeta: En revisión -->
-  <div class="postulacion-card">
-    <div class="postulacion-top">
-      <div>
-        <p class="postulacion-cargo">Técnico asistencial</p>
-        <p class="postulacion-meta">Medellín · Postulado el 15 ago 2026</p>
-      </div>
-      <span class="estado-badge revision">En revisión</span>
-    </div>
-    <div class="timeline">
-      <div class="timeline-linea-fondo"></div>
-      <div class="timeline-linea-progreso" style="width: 33%"></div>
-      <div class="timeline-paso hecho">
-        <div class="timeline-punto">✓</div>
-        <span class="timeline-etiqueta">Postulado</span>
-      </div>
-      <div class="timeline-paso actual">
-        <div class="timeline-punto">2</div>
-        <span class="timeline-etiqueta">En revisión</span>
-      </div>
-      <div class="timeline-paso">
-        <div class="timeline-punto">3</div>
-        <span class="timeline-etiqueta">Entrevista</span>
-      </div>
-      <div class="timeline-paso">
-        <div class="timeline-punto">4</div>
-        <span class="timeline-etiqueta">Decisión</span>
-      </div>
-    </div>
-  </div>
+    <header class="topbar-vacantes">
+        <p class="topbar-title">Mis postulaciones</p>
+        <div class="topbar-actions">
+            <i class="ti ti-bell"></i>
+        </div>
+    </header>
 
- 
-  <!-- Tarjeta: Contratado -->
-  <div class="postulacion-card">
-    <div class="postulacion-top">
-      <div>
-        <p class="postulacion-cargo">Auxiliar asistencial</p>
-        <p class="postulacion-meta">Bogotá · Postulado el 2 ago 2026</p>
-      </div>
-      <span class="estado-badge contratado">Contratado</span>
-    </div>
-    <div class="timeline">
-      <div class="timeline-linea-fondo"></div>
-      <div class="timeline-linea-progreso" style="width: 100%; background: var(--verde);"></div>
-      <div class="timeline-paso hecho">
-        <div class="timeline-punto" style="background: var(--verde); border-color: var(--verde);">✓</div>
-        <span class="timeline-etiqueta">Postulado</span>
-      </div>
-      <div class="timeline-paso hecho">
-        <div class="timeline-punto" style="background: var(--verde); border-color: var(--verde);">✓</div>
-        <span class="timeline-etiqueta">En revisión</span>
-      </div>
-      <div class="timeline-paso hecho">
-        <div class="timeline-punto" style="background: var(--verde); border-color: var(--verde);">✓</div>
-        <span class="timeline-etiqueta">Entrevista</span>
-      </div>
-      <div class="timeline-paso hecho">
-        <div class="timeline-punto" style="background: var(--verde); border-color: var(--verde);">✓</div>
-        <span class="timeline-etiqueta">Decisión</span>
-      </div>
-    </div>
-  </div>
- 
+    <main class="page-content">
+
+        <form method="GET" class="filtros">
+            <div class="input-buscar">
+                <i class="ti ti-search"></i>
+                <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
+            </div>
+            <select name="estado" onchange="this.form.submit()">
+                <option value="">Todos los estados</option>
+                <option value="postulado">Postulado</option>
+                <option value="revision">En revisión</option>
+                <option value="entrevista">Entrevista</option>
+                <option value="contratado">Contratado</option>
+                <option value="rechazado">Rechazado</option>
+            </select>
+        </form>
+
+        <div class="grid-vacantes grid-postulaciones">
+            {% for p in postulaciones %}
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="icono {{ 'icono' if p.vacante.area == 'Administrativa' else 'icono' }}">
+                        </div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">{{ p.vacante.titulo }}</p>
+                            <p class="card-categoria">Postulado el {{ p.post.fecha_postulacion.strftime('%d %b %Y') if p.post.fecha_postulacion else '—' }}</p>
+                        </div>
+                        <span class="tag tag-estado estado-{{ p.post.estado }}">{{ p.post.estado|capitalize }}</span>
+                    </div>
+
+                    <div class="stepper">
+                        {% for paso in ['Postulado', 'En revisión', 'Entrevista', 'Decisión'] %}
+                        <div class="paso-wrap">
+                            <div class="paso {% if loop.index < p.paso_actual %}completado{% elif loop.index == p.paso_actual %}activo{% endif %}">
+                                <div class="circulo">
+                                    {% if loop.index < p.paso_actual %}✓{% else %}{{ loop.index }}{% endif %}
+                                </div>
+                                <span class="paso-label">{{ paso }}</span>
+                            </div>
+                        </div>
+                        {% if not loop.last %}
+                        <div class="linea {% if loop.index < p.paso_actual %}linea-completada{% endif %}"></div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <span class="empty-icon">🔍</span>
+                    <h3>No tienes postulaciones activas</h3>
+                    <p>Explora las vacantes disponibles y postúlate.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+    </main>
 </div>
 
 {% endblock %}

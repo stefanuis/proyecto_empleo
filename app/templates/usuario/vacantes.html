@@ -3,7 +3,7 @@
 
 <div class="main-area">
 
-    <header class="topbar">
+    <header class="topbar-vacantes">
         <p class="topbar-title">Vacantes activas</p>
         <div class="topbar-actions">
             <i class="ti ti-bell"></i>
@@ -113,93 +113,21 @@
     </main>
 </div>
 
-<style>
-.vacante-modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.vacante-modal-caja {
-    background: white;
-    border-radius: 10px;
-    padding: 24px;
-    max-width: 480px;
-    width: 90%;
-    max-height: 85vh;
-    overflow-y: auto;
-    position: relative;
-}
-.modal-cerrar {
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-    line-height: 1;
-}
-
-.modal-meta {
-    color: #777;
-    font-size: 14px;
-    margin: 4px 0 12px;
-}
-
-.modal-salario {
-    font-weight: bold;
-    color: #d81b60;
-    margin-bottom: 16px;
-}
-
-.modal-descripcion h4 {
-    margin-bottom: 6px;
-    font-size: 14px;
-}
-
-.btn-full {
-    width: 100%;
-    margin-top: 20px;
-    text-align: center;
-    display: block;
-    cursor: pointer;
-    border: none;
-}
-
-.btn-full:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.aviso-cerrada {
-    text-align: center;
-    color: #c0392b;
-    font-size: 13px;
-    margin-top: 8px;
-}
-</style>
-
 <script>
+
 function abrirModal(boton) {
     document.getElementById('modal-titulo').textContent = boton.dataset.titulo;
     document.getElementById('modal-area').textContent = boton.dataset.area;
     document.getElementById('modal-fecha').textContent = 'Publicada el ' + boton.dataset.fecha;
     document.getElementById('modal-salario').textContent = boton.dataset.salario;
     document.getElementById('modal-descripcion-texto').textContent = boton.dataset.descripcion;
-    document.getElementById('modal-requisito-texto').textContent = boton.dataset.requisito;  // <-- esta línea faltaba
+    document.getElementById('modal-requisito-texto').textContent = boton.dataset.requisito;
 
     const form = document.getElementById('modal-form-postular');
     const btnPostular = document.getElementById('modal-btn-postular');
     const avisoCerrada = document.getElementById('modal-cerrada-aviso');
 
-    // Ajusta esta URL si tu blueprint 'usuario' tiene un url_prefix distinto
-    form.action = "/vacantes/" + boton.dataset.id + "/postular";
+    form.action = "{{ url_for('usuario.postular', id=0) }}".replace('/0/', '/' + boton.dataset.id + '/');
 
     if (boton.dataset.estado === 'Activa') {
         btnPostular.style.display = 'block';
@@ -212,18 +140,6 @@ function abrirModal(boton) {
 
     document.getElementById('modal-vacante').style.display = 'flex';
 }
-
-function cerrarModal() {
-    document.getElementById('modal-vacante').style.display = 'none';
-}
-
-document.getElementById('modal-vacante').addEventListener('click', function(e) {
-    if (e.target === this) cerrarModal();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') cerrarModal();
-});
 </script>
 
 {% endblock %}

@@ -124,7 +124,7 @@ Principal Usuario
                         {% for error in form.grupo_etnico.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
-                    </div>
+                    </div>  
 
                     <div class="campo">
                         {{ form.nacionalidad.label }}
@@ -214,6 +214,23 @@ Principal Usuario
 
         </div>
     </div>
+
+    <script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
+    <script>
+        flatpickr("#fecha_exp_doc", {
+            dateFormat: "Y-m-d",      // formato que se ENVÍA al backend (coincide con tu DateField)
+            altInput: true,           // muestra un input visual aparte
+            altFormat: "d/m/Y",       // formato que VE el usuario
+            maxDate: "today"
+        });
+
+        flatpickr("#fecha_nacimiento", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            maxDate: "today"
+        });
+    </script>
 
 
 {% endblock %}

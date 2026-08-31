@@ -1,0 +1,101 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Postulaciones{% endblock %}
+{% block contenido %}
+
+<div class="contenedor-padre">
+    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
+
+        <div class="card-header">
+            <span class="card-title">Todas las postulaciones</span>
+        </div>
+
+        <form method="GET" class="filtros-vacantes-admin">
+            <div class="input-buscar">
+                <i class="ti ti-search"></i>
+                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ request.args.get('q', '') }}">
+            </div>
+
+            <select name="nivel" onchange="this.form.submit()">
+                <option value="">Todos los niveles</option>
+                <option value="Bachillerato" {% if request.args.get('nivel') == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
+                <option value="tecnico" {% if request.args.get('nivel') == 'tecnico' %}selected{% endif %}>Técnico</option>
+                <option value="tecnologo" {% if request.args.get('nivel') == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
+                <option value="universitario" {% if request.args.get('nivel') == 'universitario' %}selected{% endif %}>Universitario</option>
+                <option value="especializacion" {% if request.args.get('nivel') == 'especializacion' %}selected{% endif %}>Especialización</option>
+                <option value="maestria" {% if request.args.get('nivel') == 'maestria' %}selected{% endif %}>Maestría</option>
+                <option value="doctorado" {% if request.args.get('nivel') == 'doctorado' %}selected{% endif %}>Doctorado</option>
+            </select>
+
+            <select name="area" onchange="this.form.submit()">
+                <option value="">Todas las áreas</option>
+                <option value="Administrativa" {% if request.args.get('area') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
+                <option value="Asistencial" {% if request.args.get('area') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
+            </select>
+
+            <select name="estado" onchange="this.form.submit()">
+                <option value="">Todos los estados</option>
+                <option value="postulado" {% if request.args.get('estado') == 'postulado' %}selected{% endif %}>Postulado</option>
+                <option value="revision" {% if request.args.get('estado') == 'revision' %}selected{% endif %}>En revisión</option>
+                <option value="entrevista" {% if request.args.get('estado') == 'entrevista' %}selected{% endif %}>Entrevista</option>
+                <option value="contratado" {% if request.args.get('estado') == 'contratado' %}selected{% endif %}>Contratado</option>
+                <option value="rechazado" {% if request.args.get('estado') == 'rechazado' %}selected{% endif %}>Rechazado</option>
+            </select>
+        </form>
+
+        {% if resultados %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Vacante</th>
+                        <th>Área</th>
+                        <th>Postulado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post, usuario, vacante in resultados %}
+                    <tr>
+                        <td>{{ usuario.nombres }} {{ usuario.apellidos }}</td>
+                        <td>{{ vacante.titulo }}</td>
+                        <td>{{ vacante.area }}</td>
+                        <td>{{ post.fecha_postulacion.strftime('%d %b %Y') if post.fecha_postulacion else '—' }}</td>
+                        <td>
+                            {% if post.estado == 'postulado' %}
+                                <span class="badge badge-pink">Postulado</span>
+                            {% elif post.estado == 'revision' %}
+                                <span class="badge badge-blue">En revisión</span>
+                            {% elif post.estado == 'entrevista' %}
+                                <span class="badge badge-orange">Entrevista</span>
+                            {% elif post.estado == 'contratado' %}
+                                <span class="badge badge-green">Contratado</span>
+                            {% elif post.estado == 'rechazado' %}
+                                <span class="badge badge-red">Rechazado</span>
+                            {% else %}
+                                <span class="badge badge-gray">{{ post.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.ver_expediente', id=post.id) }}" class="btn-secondary btn-sm">
+                                Ver expediente
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon"></span>
+            <h3>No hay postulaciones que coincidan</h3>
+            <p>Ajusta los filtros para ver más resultados.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

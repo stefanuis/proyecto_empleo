@@ -2,54 +2,67 @@
     <ul>
         <li>
             <a href="{{ url_for('admin.inicial') }}">
-                <img class="sidebar-icon" src="{{ url_for('static', filename='img/iconos/inicio.png') }}" alt="Logo">
+                <span class="icon icon-home"></span>
                 <span class="sidebar-text">Dashboard</span>
             </a>
         </li>
 
         <hr>
 
-        <!-- Sección MI PERFIL con toggle -->
-
-        <hr> 
         <li class="sidebar-toggle-section">
             <div class="toggle-header" onclick="toggleMenu(this)" aria-expanded="false">
-                <span class="sidebar-text">Gestion de hojas de vida</span>
+                <span class="icon icon-briefcase"></span>
+                <span class="sidebar-text">Gestión hojas de vida</span>
                 <span class="toggle-arrow">▼</span>
             </div>
             <ul class="toggle-content">
-                <li>Ver todas las hojas de vida</li>
+                <li><a href="{{ url_for('admin.listar_postulaciones') }}">Ver hojas de vida</a></li>
             </ul>
-        </li>  
+        </li>
+
         <li class="sidebar-toggle-section">
             <div class="toggle-header" onclick="toggleMenu(this)" aria-expanded="false">
+                <span class="icon icon-briefcase"></span>
                 <span class="sidebar-text">Gestión de vacantes</span>
                 <span class="toggle-arrow">▼</span>
             </div>
             <ul class="toggle-content">
-                <li><a href="{{ url_for('admin.listar_vacantes')}}">Todas las vacantes</a></li>
-                <li><a href="{{ url_for('admin.crear_vacante')}}">Crear Vacantes</a></li>
+                <li><a href="{{ url_for('admin.listar_vacantes') }}">Todas las vacantes</a></li>
+                <li><a href="{{ url_for('admin.crear_vacante') }}">Crear vacante</a></li>
             </ul>
         </li>
-            <li class="sidebar-toggle-section">
+
+        <li class="sidebar-toggle-section">
             <div class="toggle-header" onclick="toggleMenu(this)" aria-expanded="false">
+                <span class="icon icon-clipboard-check"></span>
                 <span class="sidebar-text">Postulaciones</span>
                 <span class="toggle-arrow">▼</span>
             </div>
             <ul class="toggle-content">
-                <li>postulaciones</li>
+                <li><a href="#">Ver postulaciones</a></li>
             </ul>
         </li>
-       </ul>
 
-         <li class="sidebar-toggle-section">
+        <hr>
+
+        <li class="sidebar-toggle-section">
             <div class="toggle-header" onclick="toggleMenu(this)" aria-expanded="false">
-                <span class="sidebar-text">Gestion de usuarios</span>
+                <span class="icon icon-user"></span>
+                <span class="sidebar-text">Gestión de usuarios</span>
                 <span class="toggle-arrow">▼</span>
             </div>
             <ul class="toggle-content">
-                <li>Agregar roles</li>
+                <li><a href="#">Agregar roles</a></li>
             </ul>
         </li>
-       </ul>
+
+        <hr>
+
+        <li>
+            <a href="{{ url_for('admin.inicial') }}">
+                <span class="icon icon-logout"></span>
+                <span class="sidebar-text">Cerrar sesión</span>
+            </a>
+        </li>
+    </ul>
 </aside>

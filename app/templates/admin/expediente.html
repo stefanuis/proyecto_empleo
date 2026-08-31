@@ -1,0 +1,242 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}
+Expediente — {{ personal.nombres }} {{ personal.apellidos }}
+{% endblock %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+  <div class="contenedor-formulario" style="max-width: 900px;">
+
+    <div class="card-header">
+        <span class="card-title">Expediente del postulante</span>
+        <div class="card-actions">
+            <a href="{{ url_for('admin.listar_postulantes', id=post.id_vacante) }}"
+               class="btn-secondary">
+                Volver a postulantes
+            </a>
+        </div>
+    </div>
+
+    <!-- Encabezado -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div style="display:flex; gap:14px; align-items:center;">
+            {% if personal.ruta_foto_perfil %}
+                <img src="{{ personal.ruta_foto_perfil }}" alt="" class="avatar avatar-lg">
+            {% else %}
+                <div class="avatar-placeholder avatar-lg">
+                    {{ personal.nombres[0] }}{{ personal.apellidos[0] }}
+                </div>
+            {% endif %}
+            <div>
+                <h2 style="margin:0;">{{ personal.nombres }} {{ personal.apellidos }}</h2>
+                <p style="color:var(--text-secondary); margin-top:4px;">
+                    Postuló a: {{ vacante.titulo }}
+                </p>
+            </div>
+        </div>
+
+        {% if post.estado == 'postulado' %}
+            <span class="badge badge-pink">Postulado</span>
+        {% elif post.estado == 'revision' %}
+            <span class="badge badge-blue">En revisión</span>
+        {% elif post.estado == 'entrevista' %}
+            <span class="badge badge-orange">Entrevista</span>
+        {% elif post.estado == 'contratado' %}
+            <span class="badge badge-green">Contratado</span>
+        {% elif post.estado == 'rechazado' %}
+            <span class="badge badge-red">Rechazado</span>
+        {% else %}
+            <span class="badge badge-gray">{{ post.estado }}</span>
+        {% endif %}
+    </div>
+
+    <!-- ── Información personal ── -->
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información personal</h3>
+    <div class="form-grid">
+        <div class="campo">
+            <label class="form-label">Documento</label>
+            <p>{{ personal.tipo_doc or '—' }} {{ personal.num_doc or '' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Fecha de expedición</label>
+            <p>{{ personal.fecha_exp_doc.strftime('%d %b %Y') if personal.fecha_exp_doc else '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Fecha de nacimiento</label>
+            <p>{{ personal.fecha_nacimiento.strftime('%d %b %Y') if personal.fecha_nacimiento else '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Género</label>
+            <p>{{ personal.genero or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Grupo étnico</label>
+            <p>{{ personal.grupo_etnico or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Nacionalidad</label>
+            <p>{{ personal.nacionalidad or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Estado civil</label>
+            <p>{{ personal.estado_civil or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Personas a cargo</label>
+            <p>{{ personal.personas_cargo if personal.personas_cargo is not none else '—' }}</p>
+        </div>
+        <div class="campo campo-completo">
+            <label class="form-label">Ubicación</label>
+            <p>
+                {{ personal.direccion or '—' }}, {{ personal.barrio or '' }},
+                {{ personal.municipio or '' }} — {{ personal.departamento or '' }}
+                {% if personal.vive_rural == 'si' %} (zona rural){% endif %}
+            </p>
+        </div>
+        {% if personal.ruta_foto_doc %}
+        <div class="campo">
+            <label class="form-label">Documento de identidad</label>
+            <a href="{{ personal.ruta_foto_doc }}" target="_blank" class="btn-outline btn-sm">Ver imagen</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ── Contacto ── -->
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Contacto</h3>
+    <div class="form-grid">
+        <div class="campo">
+            <label class="form-label">Correo</label>
+            <p>{{ personal.email or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Celular</label>
+            <p>{{ personal.num_cel or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Celular alterno</label>
+            <p>{{ personal.num_cel_dos or '—' }}</p>
+        </div>
+    </div>
+
+    {% if contacto %}
+    <h4 style="margin-top:16px; color:var(--text-secondary); font-size:13.5px;">Contacto de emergencia</h4>
+    <div class="form-grid">
+        <div class="campo">
+            <label class="form-label">Nombre</label>
+            <p>{{ contacto.nombre }} {{ contacto.apellido }} ({{ contacto.parentesco or '—' }})</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Teléfono</label>
+            <p>{{ contacto.tel or '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Núm. residencia</label>
+            <p>{{ contacto.num_residencia or '—' }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Información académica ── -->
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información académica</h3>
+    {% if academica %}
+        {% for est in academica %}
+        <div class="job-card" style="flex-direction:column; align-items:stretch; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between;">
+                <p class="job-title" style="margin:0;">{{ est.titulo or est.nivel }}</p>
+                <span class="badge badge-gray">{{ est.estado or '—' }}</span>
+            </div>
+            <p class="job-company" style="margin:4px 0;">{{ est.institucion or '—' }} — {{ est.pais_institucion or '—' }}</p>
+            <p style="font-size:12.5px; color:var(--text-secondary);">
+                Nivel: {{ est.nivel or '—' }} · Área: {{ est.area or '—' }} ·
+                Finalización: {{ est.mes_finalizacion or '—' }}/{{ est.anno_finalizacion or '—' }} ·
+                Intensidad: {{ est.intensidad_horaria or '—' }}h
+                {% if est.convalidacion %} · Convalidado{% endif %}
+            </p>
+            {% if est.ruta_soporte %}
+                <a href="{{ est.ruta_soporte }}" target="_blank" class="btn-outline btn-sm" style="align-self:flex-start; margin-top:8px;">
+                    Ver soporte
+                </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <p style="color:var(--text-secondary);">No registró información académica.</p>
+    {% endif %}
+
+    <!-- ── Información familiar ── -->
+    {% if familiar %}
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información familiar</h3>
+    <div class="form-grid">
+        <div class="campo">
+            <label class="form-label">Personas en el hogar</label>
+            <p>{{ familiar.personas_casa if familiar.personas_casa is not none else '—' }}</p>
+        </div>
+        <div class="campo">
+            <label class="form-label">Dependen económicamente</label>
+            <p>{{ familiar.dependen_eco if familiar.dependen_eco is not none else '—' }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Referencias ── -->
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Referencias</h3>
+    {% if referencias %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Parentesco</th>
+                        <th>Empresa</th>
+                        <th>Teléfono</th>
+                        <th>Ciudad</th>
+                        <th>Autoriza contacto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ref in referencias %}
+                    <tr>
+                        <td>{{ ref.nombres }} {{ ref.apellidos }}</td>
+                        <td>{{ ref.parentesco or '—' }}</td>
+                        <td>{{ ref.empresa or '—' }}</td>
+                        <td>{{ ref.telefono or '—' }}</td>
+                        <td>{{ ref.ciudad or '—' }}</td>
+                        <td>{{ 'Sí' if ref.autoriza == 'si' else 'No' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p style="color:var(--text-secondary);">No registró referencias.</p>
+    {% endif %}
+
+    <!-- ── Estado y notas del reclutador ── -->
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Gestión del reclutador</h3>
+    <form method="POST" action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
+        <div class="form-grid">
+            <div class="campo">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-control">
+                    <option value="postulado" {% if post.estado == 'postulado' %}selected{% endif %}>Postulado</option>
+                    <option value="revision" {% if post.estado == 'revision' %}selected{% endif %}>En revisión</option>
+                    <option value="entrevista" {% if post.estado == 'entrevista' %}selected{% endif %}>Entrevista</option>
+                    <option value="contratado" {% if post.estado == 'contratado' %}selected{% endif %}>Contratado</option>
+                    <option value="rechazado" {% if post.estado == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                </select>
+            </div>
+            <div class="campo campo-completo">
+                <label class="form-label">Notas del reclutador</label>
+                <textarea name="notas_reclutador" class="form-control">{{ post.notas_reclutador or '' }}</textarea>
+            </div>
+        </div>
+
+        <div class="form-botones">
+            <button type="submit" class="btn-primary">Guardar cambios</button>
+        </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

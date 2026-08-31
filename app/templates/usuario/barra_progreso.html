@@ -1,5 +1,3 @@
-
-
 <div class="barra-progreso-container">
 
   <div class="barra-progreso-header">
@@ -17,12 +15,18 @@
     </div>
   </div>
 
-</div>
-<style>
-  /* ─────────────────────────────────────────
-     BARRA DE PROGRESO - COMPONENTE
-     ───────────────────────────────────────── */
 
+  <div class="pasos-indicador">
+    {% for i in range(1, total_pasos + 1) %}
+      <div class="paso-punto {% if i < paso_actual %}completado{% elif i == paso_actual %}activo{% endif %}">
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<style>
+ 
   .barra-progreso-container {
     background: var(--bg-soft);
     border: 1px solid var(--border);
@@ -54,7 +58,6 @@
     letter-spacing: 0.5px;
   }
 
-  /* Contenedor de la barra */
   .barra-progreso-wrapper {
     width: 100%;
     height: 6px;
@@ -64,13 +67,40 @@
     position: relative;
   }
 
-  /* Barra de relleno (progreso) */
   .barra-progreso {
     height: 100%;
     background: var(--primary);
     border-radius: 10px;
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 4px rgba(216, 27, 96, 0.3);
+  }
+
+  .pasos-indicador {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+
+  .paso-punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #E8E8E8;
+    border: 2px solid #E8E8E8;
+    transition: all 0.3s ease;
+  }
+
+  .paso-punto.completado {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .paso-punto.activo {
+    background: var(--bg-main);
+    border-color: var(--primary);
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 0 0 4px var(--primary-ultra-light);
   }
 
   /* ─────────────────────────────────────────
@@ -118,6 +148,16 @@
 
     .barra-progreso-wrapper {
       height: 4px;
+    }
+
+    .paso-punto {
+      width: 8px;
+      height: 8px;
+    }
+
+    .paso-punto.activo {
+      width: 11px;
+      height: 11px;
     }
   }
 </style>

@@ -6,11 +6,15 @@ from flask import (
     url_for,
     flash
 )
+
+from typing import Optional
+from werkzeug.datastructures import FileStorage
+from werkzeug.wrappers import Response
+
 from flask_login import current_user, login_required
 import os
 from werkzeug.utils import secure_filename
 from flask import current_app
-
 from datetime import datetime
 from app.extensions import db
 from app.models.user import User
@@ -101,6 +105,12 @@ def inicial():
     }
     return render_template("usuario/principal.html",datos=misDatos)
 
+##----configuracion
+
+@usuario_bp.route("/configuracion", methods=['GET', 'POST'])
+@login_required
+def configuracion():
+    return render_template("usuario/configuracion.html")
 
 
 @usuario_bp.route("/personal", methods=["GET", "POST"])
@@ -179,32 +189,26 @@ def contacto():
 
     #validar un formulario , si no existía, lo crea vacío 
     if form.validate_on_submit():
-        if not registro:
-            registro = Contacto(id_usuario=current_user.id)
+      if not registro:
+        registro = Contacto(id_usuario=current_user.id)
+        db.session.add(registro)
+        registro.fecha_registro = datetime.now()
 
-            #este objeto es nuevo, agrégalo para que se guarde
-            db.session.add(registro)
-
-            registro.nombre =  form.nombres.data
-            registro.apellido = form.apellidos.data
-            registro.parentesco = form.parentesco.data
-            registro.tel = form.tel.data
-            registro.num_residencia =  form.num_residencia.data
-            registro.fecha_registro = datetime.now()
-            db.session.commit()
-
-            
-        return redirect(url_for("usuario.familiar"))
-            #sirve para saber en que posicion esta 
-
-        #precargar lo existente para mostrarlo
+      registro.nombre = form.nombres.data
+      registro.apellido = form.apellidos.data
+      registro.parentesco = form.parentesco.data
+      registro.tel = form.tel.data
+      registro.num_residencia = form.num_residencia.data
+      db.session.commit()
+      return redirect(url_for("usuario.familiar"))
+    
+      # Precargar 
     if registro:
-
-            form.nombres.data = registro.nombre
-            form.apellidos.data = registro.apellido
-            form.parentesco.data = registro.parentesco
-            form.tel.data = registro.tel
-            form.num_residencia.data = registro.num_residencia
+        form.nombres.data = registro.nombre
+        form.apellidos.data = registro.apellido
+        form.parentesco.data = registro.parentesco
+        form.tel.data = registro.tel
+        form.num_residencia.data = registro.num_residencia
 
     return render_template("usuario/contacto.html",  form=form,  paso_actual=2, total_pasos=10)
 
@@ -676,6 +680,7 @@ def referencias():
         total_pasos=10,
         paso_anterior="competencias"
     )
+
 @usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
 @login_required
 def discapacidades():
@@ -735,38 +740,46 @@ def discapacidades():
 
     return render_template("usuario/discapacidades.html", form=form, paso_anterior="referencias")
 
-#-----------#subir los documentos#--------------#
 
+@usuario_bp.route('/documentos', methods=['GET', 'POST'])
 @login_required
-def documentos():
-    form = documentoForm()
-    if request.method == "POST":
-        print("¿Formulario válido?:", form.validate())
-        print("Errores del formulario:", form.errors)
+def documentos() -> str | Response:
+    form: documentoForm = documentoForm()
 
     if form.validate_on_submit():
-        for entry in form.Info_docs:
-            archivo = entry.ruta_soporte.data
+        for entry_form in form.Info_docs:
+            archivo: Optional[FileStorage] = entry_form.ruta_soporte.data
 
             # Si esta fila no trae archivo (quedó vacía), se ignora
             if not archivo or archivo.filename == "":
                 continue
 
-            nombre_original = secure_filename(archivo.filename)
-            nombre_unico = f"{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}_{nombre_original}"
+            nombre_original: str = secure_filename(archivo.filename)
+            nombre_unico: str = (
+                f"{current_user.id}_"
+                f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_"
+                f"{nombre_original}"
+            )
 
-            carpeta_destino = os.path.join(current_app.root_path, "static", "uploads", "docs")
+            carpeta_destino: str = os.path.join(
+                current_app.root_path, "static", "uploads", "docs"
+            )
             os.makedirs(carpeta_destino, exist_ok=True)
 
-            ruta_completa = os.path.join(carpeta_destino, nombre_unico)
-            archivo.save(ruta_completa)
+            ruta_completa: str = os.path.join(carpeta_destino, nombre_unico)
 
-            ruta_relativa = f"uploads/docs/{nombre_unico}"
+            try:
+                archivo.save(ruta_completa)
+            except OSError:
+                flash(f"No se pudo guardar el archivo {nombre_original}.", "danger")
+                continue
+
+            ruta_relativa: str = f"uploads/docs/{nombre_unico}"
 
             nuevo_doc = OtrosDocumentos(
                 id_usuario=current_user.id,
-                nombre=entry.nombre.data,
-                tipo=entry.tipo.data,
+                nombre=entry_form.nombre.data,
+                tipo=entry_form.tipo.data,
                 ruta_soporte=ruta_relativa,
                 fecha_registro=datetime.now()
             )
@@ -776,24 +789,27 @@ def documentos():
         flash("Documentos guardados exitosamente.", "success")
         return redirect(url_for("usuario.registro_completo"))
 
-    docs = OtrosDocumentos.query.filter_by(
+    docs: list[OtrosDocumentos] = OtrosDocumentos.query.filter_by(
         id_usuario=current_user.id
     ).order_by(OtrosDocumentos.fecha_registro.desc()).all()
 
-    return render_template("usuario/docs.html", form=form, docs=docs, paso_anterior="discapacidades")
+    return render_template(
+        "usuario/docs.html", form=form, docs=docs, paso_anterior="discapacidades"
+    )
 
 
 @usuario_bp.route("/documentos/eliminar/<int:id>", methods=["POST"])
 @login_required
-def eliminar_documento(id):
-
-    documento = OtrosDocumentos.query.filter_by(
+def eliminar_documento(id: int) -> Response:
+    documento: Optional[OtrosDocumentos] = OtrosDocumentos.query.filter_by(
         id=id,
         id_usuario=current_user.id
     ).first()
 
     if documento:
-        ruta_absoluta = os.path.join(current_app.root_path, "static", documento.ruta_soporte)
+        ruta_absoluta: str = os.path.join(
+            current_app.root_path, "static", documento.ruta_soporte
+        )
         if os.path.exists(ruta_absoluta):
             os.remove(ruta_absoluta)
 
@@ -839,7 +855,10 @@ def vacantes():
 def postular(id):
     vac = Vacante.query.get_or_404(id)
 
-    # Evitar que el usuario se postule dos veces a la misma vacante
+    if vac.estado != "Activa":
+        flash("Esta vacante ya no está disponible.", "danger")
+        return redirect(url_for("usuario.vacantes"))
+
     ya_postulado = Postulacion.query.filter_by(
         id_usuario=current_user.id,
         id_vacante=id
@@ -847,10 +866,6 @@ def postular(id):
 
     if ya_postulado:
         flash("Ya te has postulado a esta vacante.", "warning")
-        return redirect(url_for("usuario.vacantes"))
-
-    if vac.estado != "abierto":
-        flash("Esta vacante ya no está disponible.", "danger")
         return redirect(url_for("usuario.vacantes"))
 
     nueva_postulacion = Postulacion(
@@ -863,14 +878,49 @@ def postular(id):
     db.session.commit()
 
     flash("¡Te has postulado correctamente!", "success")
-    return redirect(url_for("usuario.vacantes"))
-
+    return redirect(url_for("usuario.mis_postulaciones"))
 
     
 
 ##------ mis postulaciones----------
 
-@usuario_bp.route("/postulaciones", methods=["GET", "POST"])
+@usuario_bp.route('/mis-postulaciones', methods=['GET'])
 @login_required
-def postulaciones():
-    return render_template("usuario/postulaciones.html")
+def mis_postulaciones():
+    q = request.args.get('q', '').strip()
+    estado_filtro = request.args.get('estado', '')
+
+    query = db.session.query(Postulacion, Vacante).join(
+        Vacante, Vacante.id == Postulacion.id_vacante
+    ).filter(
+        Postulacion.id_usuario == current_user.id
+    )
+
+    if q:
+        query = query.filter(Vacante.titulo.ilike(f'%{q}%'))
+    if estado_filtro:
+        query = query.filter(Postulacion.estado == estado_filtro)
+
+    resultados = query.order_by(Postulacion.fecha_postulacion.desc()).all()
+
+    # Mapeo de estado -> número de paso para el stepper
+    PASOS = {'postulado': 1, 'revision': 2, 'entrevista': 3}
+
+    postulaciones = []
+    for post, vacante in resultados:
+        if post.estado in ('contratado', 'rechazado'):
+            paso_actual = 4
+        else:
+            paso_actual = PASOS.get(post.estado, 1)
+
+        postulaciones.append({
+            'post': post,
+            'vacante': vacante,
+            'paso_actual': paso_actual
+        })
+
+    return render_template(
+        'usuario/postulaciones.html',
+        postulaciones=postulaciones
+    )
+

@@ -1,0 +1,119 @@
+{% extends 'usuario/base.html' %}
+{% block contenido %}
+
+<div class="main-area">
+
+    <header class="topbar-vacantes">
+        <p class="topbar-title">Configuración</p>
+    </header>
+
+    <main class="page-content">
+
+        <!-- Cambiar contraseña -->
+        <div class="card-config">
+            <div class="config-header">
+                <div class="icono icono-teal">
+                    <span class="icon icon-lock-password"></span>
+                </div>
+                <div>
+                    <h3>Seguridad</h3>
+                    <p class="config-sub">Actualiza tu contraseña de acceso</p>
+                </div>
+            </div>
+
+            <form method="POST" class="config-form">
+                <div class="campo">
+                    <label>Contraseña actual</label>
+                    <input type="password" name="actual" required>
+                </div>
+                <div class="campo">
+                    <label>Nueva contraseña</label>
+                    <input type="password" name="nueva" required>
+                </div>
+                <div class="campo">
+                    <label>Confirmar nueva contraseña</label>
+                    <input type="password" name="confirmar" required>
+                </div>
+                <button type="submit" class="btn-postular">Actualizar contraseña</button>
+            </form>
+        </div>
+
+        <!-- Notificaciones -->
+        <div class="card-config">
+            <div class="config-header">
+                <div class="icono icono-azul">
+                    <span class="icon icon-notification"></span>
+                </div>
+                <div>
+                    <h3>Notificaciones</h3>
+                    <p class="config-sub">Elige qué avisos quieres recibir</p>
+                </div>
+            </div>
+
+            <form method="POST">
+                <div class="fila-toggle">
+                    <div>
+                        <p class="toggle-titulo">Nuevas vacantes</p>
+                        <p class="toggle-sub">Recibe un correo cuando se publique una vacante nueva</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="notif_vacantes">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="fila-toggle">
+                    <div>
+                        <p class="toggle-titulo">Estado de postulaciones</p>
+                        <p class="toggle-sub">Recibe un correo cuando cambie el estado de una postulación</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="notif_postulaciones">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-postular">Guardar preferencias</button>
+            </form>
+        </div>
+
+        <!-- Datos -->
+        <div class="card-config">
+            <div class="config-header">
+                <div class="icono icono-teal">
+                    <span class="icon icon-clipboard-data"></span>
+                </div>
+                <div>
+                    <h3>Mis datos</h3>
+                    <p class="config-sub">Descarga una copia de tu hoja de vida</p>
+                </div>
+            </div>
+            <a href="#" class="btn-postular btn-secundario">Descargar mi hoja de vida (PDF)</a>
+        </div>
+
+        <!-- Zona de riesgo -->
+        <div class="card-config card-peligro">
+            <div class="config-header">
+                <div class="icono icono-rojo">
+                    <span class="icon icon-http-delete-off"></span>
+                </div>
+                <div>
+                    <h3>Eliminar cuenta</h3>
+                    <p class="config-sub">Esta acción es permanente y no se puede deshacer</p>
+                </div>
+            </div>
+            <button type="button" class="btn-eliminar" onclick="confirmarEliminar()">Eliminar mi cuenta</button>
+        </div>
+
+    </main>
+</div>
+
+<script>
+function confirmarEliminar() {
+    if (confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
+        alert('Aquí iría la eliminación de cuenta (pendiente de implementar)');
+    }
+}
+</script>
+
+{% endblock %}

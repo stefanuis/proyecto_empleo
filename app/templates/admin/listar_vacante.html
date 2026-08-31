@@ -7,7 +7,7 @@ Vacantes
 {% block contenido %}
 
 <div class="contenedor-padre">
-    <div class="contenedor-formulario" style="max-width: 1100px;">
+    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
 
         <div class="card-header">
             <span class="card-title">Vacantes publicadas</span>
@@ -17,7 +17,24 @@ Vacantes
                 </a>
             </div>
         </div>
+        <form method="GET" class="filtros-vacantes-admin">
+            <div class="input-buscar">
+                <i class="ti ti-search"></i>
+                <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
+            </div>
 
+            <select name="area" onchange="this.form.submit()">
+                <option value="">Todas las categorías</option>
+                <option value="Administrativa" {% if request.args.get('area') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
+                <option value="Asistencial" {% if request.args.get('area') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
+            </select>
+
+            <select name="estado" onchange="this.form.submit()">
+                <option value="" {% if not request.args.get('estado') %}selected{% endif %}>Todos los estados</option>
+                <option value="Activa" {% if request.args.get('estado') == 'Activa' %}selected{% endif %}>Activa</option>
+                <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrada</option>
+            </select>
+        </form>
         <!-- Mensajes flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -85,10 +102,10 @@ Vacantes
         </div>
         {% else %}
         <div class="empty-state">
-            <span class="empty-icon">📋</span>
+            <span class="empty-icon"></span>
             <h3>Aún no hay vacantes publicadas</h3>
             <p>Crea la primera vacante para empezar a recibir postulaciones.</p>
-            <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary">+ Nueva vacante</a>
+
         </div>
         {% endif %}
 
