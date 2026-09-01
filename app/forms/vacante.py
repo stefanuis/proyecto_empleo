@@ -84,4 +84,61 @@ class VacanteForm(FlaskForm):
         validators=[Optional()]
     )
 
+    area_aplicacion = SelectField(
+        "Área de Aplicación",
+        choices=[
+            ("", "Selecciona area de tu conocimiento"),
+            ("Administrativo", "Administrativo"),
+            ("Admisiones", "Admisiones"),
+            ("Archivo y Gestión Documental", "Archivo y Gestión Documental"),
+            ("Auditoría en Salud", "Auditoría en Salud"),
+            ("Calidad", "Calidad"),
+            ("Contabilidad y Finanzas", "Contabilidad y Finanzas"),
+            ("Enfermería", "Enfermería"),
+            ("Facturación y Cartera", "Facturación y Cartera"),
+            ("Farmacia", "Farmacia"),
+            ("Fisioterapia y Rehabilitación", "Fisioterapia y Rehabilitación"),
+            ("Gestión Humana", "Gestión Humana"),
+            ("Imágenes Diagnósticas", "Imágenes Diagnósticas"),
+            ("Ingeniería Biomédica", "Ingeniería Biomédica"),
+            ("Infraestructura y Obras", "Infraestructura y Obras"),
+            ("Instrumentación Quirúrgica", "Instrumentación Quirúrgica"),
+            ("Investigación y Docencia", "Investigación y Docencia"),
+            ("Jurídica", "Jurídica"),
+            ("Laboratorio Clínico", "Laboratorio Clínico"),
+            ("Logística", "Logística"),
+            ("Mantenimiento", "Mantenimiento"),
+            ("Medicina", "Medicina"),
+            ("Mercadeo y Comunicaciones", "Mercadeo y Comunicaciones"),
+            ("Nutrición", "Nutrición"),
+            ("Odontología", "Odontología"),
+            ("Psicología", "Psicología"),
+            ("Seguridad del Paciente", "Seguridad del Paciente"),
+            ("Seguridad Física", "Seguridad Física"),
+            ("Seguridad y SST", "Seguridad y SST"),
+            ("Servicios Generales", "Servicios Generales"),
+            ("Servicio al Cliente", "Servicio al Cliente"),
+            ("Sistemas - TI", "Sistemas - TI"),
+            ("Trabajo Social", "Trabajo Social"),
+        ],
+        validators=[DataRequired()]
+    )
+
+    nivel_academico = SelectField(
+        "Nivel Académico",
+        choices=[
+            ("", "Selecciona un nivel"),
+            ("Primaria", "Primaria"),
+            ("Bachillerato", "Bachillerato"),
+            ("Técnico", "Técnico"),
+            ("Tecnólogo", "Tecnólogo"),
+            ("Profesional universitario", "Profesional universitario"),
+            ("Especialización", "Especialización"),
+            ("Maestría", "Maestría"),
+            ("Doctorado", "Doctorado")
+           
+        ],
+        validators=[DataRequired()]
+    )
+
     submit = SubmitField("Guardar vacante")

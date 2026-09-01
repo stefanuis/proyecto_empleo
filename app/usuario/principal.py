@@ -91,11 +91,13 @@ def inject_progreso():
             paso_anterior=PASOS_seguimiento[idx - 1] if idx > 0 else None
         )
     return {}
+
+
 @usuario_bp.route("/")
 @login_required
 def principal():
 
-    print("----hOL ")
+    #print("----hOL ")
     total_postulaciones = Postulacion.query.filter_by(
         estado="Activa",
         id_usuario=current_user.id
@@ -110,6 +112,8 @@ def principal():
         total_postulaciones=total_postulaciones,
         total_vacantes=total_vacantes
     )
+
+
 @usuario_bp.route("/", methods=["GET"])
 @login_required
 def inicial():
@@ -202,6 +206,7 @@ def personal():
 
     return render_template("usuario/personal.html", form=form,  paso_actual=1, total_pasos=10)
 
+
 @usuario_bp.route('/contacto', methods=['GET', 'POST'])
 @login_required
 def contacto():
@@ -236,6 +241,7 @@ def contacto():
         form.num_residencia.data = registro.num_residencia
 
     return render_template("usuario/contacto.html",  form=form,  paso_actual=2, total_pasos=10)
+
 
 @usuario_bp.route('/familiar', methods=['GET', 'POST'])
 @login_required
@@ -274,6 +280,7 @@ def familiar():
 
     return render_template("usuario/familiar.html",form=form, paso_actual=3, total_pasos=10)
 
+
 @usuario_bp.route('/academica', methods=['GET', 'POST'])
 @login_required
 def academica():
@@ -304,8 +311,18 @@ def academica():
                 "eliminar": "0",
             })
 
+    print("Antes de validar el formulario")
+
+    print("ERRORES:", form.errors)
+
+    for i, info in enumerate(form.Info_academica):
+        print(f"INFO ACADÉMICA [{i}]")
+        print("AREA:", repr(info.area.data))
+        print("ERRORES:", info.area.errors)
+
     if form.validate_on_submit():
 
+        print("Despues de validar el formulario")
         for entry in form.Info_academica:
 
             registro_id = entry.registro_id.data
@@ -365,9 +382,15 @@ def academica():
 
         return redirect(url_for("usuario.experiencia"))
 
+    else:
+        print("ERRORES:", form.errors)
+
+
     return render_template(
         "usuario/academica.html", form=form, paso_actual=4, total_pasos=10, paso_anterior="contacto"
     )
+
+
 @usuario_bp.route("/experiencia", methods=["GET", "POST"])
 @login_required
 def experiencia():
@@ -466,6 +489,8 @@ def experiencia():
         "usuario/experiencia.html",
         form=form, paso_actual=5, total_pasos=10, paso_anterior="academica"
     )
+
+
 @usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
 def curso():
@@ -544,6 +569,8 @@ def curso():
         total_pasos=10,
         paso_anterior="experiencia"
     )
+
+
 @usuario_bp.route('/competencias', methods=['GET', 'POST'])
 @login_required
 def competencias():
@@ -619,6 +646,8 @@ def competencias():
         total_pasos=10,
         paso_anterior="curso"
     )
+
+
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
 @login_required
 def referencias():
@@ -705,6 +734,7 @@ def referencias():
         total_pasos=10,
         paso_anterior="competencias"
     )
+
 
 @usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
 @login_required
@@ -948,4 +978,7 @@ def mis_postulaciones():
         'usuario/postulaciones.html',
         postulaciones=postulaciones
     )
+
+
+
 

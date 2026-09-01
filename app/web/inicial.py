@@ -7,7 +7,7 @@ from flask import (
     flash,
     session
 )
-from flask_login import login_user
+from flask_login import login_user, current_user
 from datetime import datetime
 from app.extensions import db
 from app.models.user import User
@@ -53,13 +53,17 @@ def login_post():
 
     login_user(usuario)
 
+    session["rol"] = usuario.rol
+
+    #print(session["rol"])
+
     if(usuario.rol == "admin_maestro"):
-        print("Este es el admin maestro")
+        #print("Este es el admin maestro")
         return redirect(url_for("admin_maestro.inicial"))
     elif(usuario.rol == "admin"):
         return redirect(url_for("admin.inicial"))
     else:
-        print("Este no es admin")
+        #print("Este no es admin")
         return redirect(url_for("usuario.inicial"))
 
 

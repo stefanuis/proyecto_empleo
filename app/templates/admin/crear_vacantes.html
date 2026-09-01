@@ -80,6 +80,27 @@ Principal Usuario
                     {% endfor %}
                 </div>
 
+                <!-- Area de aplicación -->
+                <div class="campo">
+                    {{ form.area_aplicacion.label }}
+                    {{ form.area_aplicacion(class="form-control") }}
+
+                    {% for error in form.area_aplicacion.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+
+                <!-- nivel academico -->
+                <div class="campo">
+                    {{ form.nivel_academico.label }}
+                    {{ form.nivel_academico(class="form-control") }}
+
+                    {% for error in form.nivel_academico.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
                  <!--estado de la vacante -->
                 <div class="campo">
                     {{ form.estado.label }}
