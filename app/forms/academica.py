@@ -11,7 +11,6 @@ from wtforms import (
     FieldList,
     FormField,
     HiddenField,
-
 )
 
 from wtforms.validators import (

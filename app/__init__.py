@@ -3,6 +3,7 @@ from .extensions import db, mail, login_manager
 from .web import web_bp
 from .usuario import usuario_bp
 from .admin import admin_bp
+from .web.admin_maestro  import admin_maestro_bp
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +19,7 @@ def create_app():
     app.register_blueprint(web_bp)
     app.register_blueprint(usuario_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_maestro_bp)
 
 
     login_manager.init_app(app)

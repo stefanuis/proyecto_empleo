@@ -45,9 +45,7 @@ from app.models.postulacion import Postulacion
 
 from . import usuario_bp
 
-
 #eso me ayudara a saber por donde voy
-
 
 PASOS_seguimiento = [
     "personal",
@@ -204,7 +202,7 @@ def personal():
         form.personas_cargo.data = registro.personas_cargo
 
 
-    return render_template("usuario/personal.html", form=form,  paso_actual=1, total_pasos=10)
+    return render_template("usuario/personal.html", form=form)
 
 
 @usuario_bp.route('/contacto', methods=['GET', 'POST'])
@@ -240,7 +238,7 @@ def contacto():
         form.tel.data = registro.tel
         form.num_residencia.data = registro.num_residencia
 
-    return render_template("usuario/contacto.html",  form=form,  paso_actual=2, total_pasos=10)
+    return render_template("usuario/contacto.html",  form=form)
 
 
 @usuario_bp.route('/familiar', methods=['GET', 'POST'])
@@ -278,7 +276,7 @@ def familiar():
         form.personas_casa.data = registro.personas_casa
         form.dependen_eco.data = registro.dependen_eco
 
-    return render_template("usuario/familiar.html",form=form, paso_actual=3, total_pasos=10)
+    return render_template("usuario/familiar.html",form=form)
 
 
 @usuario_bp.route('/academica', methods=['GET', 'POST'])
@@ -311,18 +309,9 @@ def academica():
                 "eliminar": "0",
             })
 
-    print("Antes de validar el formulario")
-
-    print("ERRORES:", form.errors)
-
-    for i, info in enumerate(form.Info_academica):
-        print(f"INFO ACADÉMICA [{i}]")
-        print("AREA:", repr(info.area.data))
-        print("ERRORES:", info.area.errors)
-
     if form.validate_on_submit():
 
-        print("Despues de validar el formulario")
+
         for entry in form.Info_academica:
 
             registro_id = entry.registro_id.data
@@ -335,6 +324,12 @@ def academica():
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
+
+                print(
+                    "ID:", registro_id,
+                    "| eliminar:", entry.eliminar.data,
+                    "| marcado:", marcado_para_eliminar
+                )
 
             # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
             if marcado_para_eliminar:
@@ -387,8 +382,7 @@ def academica():
 
 
     return render_template(
-        "usuario/academica.html", form=form, paso_actual=4, total_pasos=10, paso_anterior="contacto"
-    )
+        "usuario/academica.html", form=form)
 
 
 @usuario_bp.route("/experiencia", methods=["GET", "POST"])
@@ -486,14 +480,12 @@ def experiencia():
         return redirect(url_for("usuario.curso"))
 
     return render_template(
-        "usuario/experiencia.html",
-        form=form, paso_actual=5, total_pasos=10, paso_anterior="academica"
-    )
+        "usuario/experiencia.html", form=form)
 
 
 @usuario_bp.route("/cursos", methods=["GET", "POST"])
 @login_required
-def curso():
+def cursos():
 
     form = CursoForm()
 
@@ -563,12 +555,7 @@ def curso():
         return redirect(url_for("usuario.competencias"))
 
     return render_template(
-        "usuario/cursos.html",
-        form=form,
-        paso_actual=5,
-        total_pasos=10,
-        paso_anterior="experiencia"
-    )
+        "usuario/cursos.html", form=form)
 
 
 @usuario_bp.route('/competencias', methods=['GET', 'POST'])
@@ -640,12 +627,7 @@ def competencias():
         return redirect(url_for("usuario.referencias"))  # ajusta al siguiente paso real
 
     return render_template(
-        "usuario/competencias.html",
-        form=form,
-        paso_actual=7,
-        total_pasos=10,
-        paso_anterior="curso"
-    )
+        "usuario/competencias.html", form=form)
 
 
 @usuario_bp.route('/referencias', methods=['GET', 'POST'])
@@ -665,7 +647,6 @@ def referencias():
                 "registro_id": registro.id,
                 "nombres": registro.nombres,
                 "apellidos": registro.apellidos,
-                "parentesco": registro.parentesco,
                 "empresa": registro.empresa,
                 "telefono": registro.telefono,
                 "ciudad": registro.ciudad,
@@ -699,7 +680,6 @@ def referencias():
                 # Editar existente
                 registro.nombres = entry.nombres.data
                 registro.apellidos = entry.apellidos.data
-                registro.parentesco = entry.parentesco.data
                 registro.empresa = entry.empresa.data
                 registro.telefono = entry.telefono.data
                 registro.ciudad = entry.ciudad.data
@@ -712,7 +692,6 @@ def referencias():
                     id_usuario=current_user.id,
                     nombres=entry.nombres.data,
                     apellidos=entry.apellidos.data,
-                    parentesco=entry.parentesco.data,
                     empresa=entry.empresa.data,
                     telefono=entry.telefono.data,
                     ciudad=entry.ciudad.data,
@@ -729,11 +708,8 @@ def referencias():
 
     return render_template(
         "usuario/referencias.html",
-        form=form,
-        paso_actual=8,
-        total_pasos=10,
-        paso_anterior="competencias"
-    )
+        form=form)
+
 
 
 @usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
@@ -793,7 +769,7 @@ def discapacidades():
 
         return redirect(url_for("usuario.documentos"))
 
-    return render_template("usuario/discapacidades.html", form=form, paso_anterior="referencias")
+    return render_template("usuario/discapacidades.html", form=form)
 
 
 @usuario_bp.route('/documentos', methods=['GET', 'POST'])
@@ -848,9 +824,7 @@ def documentos() -> str | Response:
         id_usuario=current_user.id
     ).order_by(OtrosDocumentos.fecha_registro.desc()).all()
 
-    return render_template(
-        "usuario/docs.html", form=form, docs=docs, paso_anterior="discapacidades"
-    )
+    return render_template("usuario/docs.html", form=form )
 
 
 @usuario_bp.route("/documentos/eliminar/<int:id>", methods=["POST"])
