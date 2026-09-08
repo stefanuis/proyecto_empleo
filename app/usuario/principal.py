@@ -953,6 +953,3 @@ def mis_postulaciones():
         postulaciones=postulaciones
     )
 
-
-
-

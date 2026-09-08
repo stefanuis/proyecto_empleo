@@ -7,6 +7,7 @@ class Vacante(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(150))
     area = db.Column(db.String(100))
+    area_aplicacion = db.Column(db.String(100))
     descripcion = db.Column(db.Text)
     requisito = db.Column(db.Text)
     salario = db.Column(db.String())

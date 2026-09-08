@@ -1,0 +1,176 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Postulaciones{% endblock %}
+{% block contenido %}
+
+
+<div class="contenedor-padre">
+    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
+
+        <div class="card-header">
+            <span class="card-title">Confirmaciones de asistencia</span>
+        </div>
+
+        <!-- Barra de búsqueda simple, siempre visible: input + botón Buscar, nada más -->
+        <form class="filtros-vacantes-admin">
+            <div class="input-buscar" style="flex: 1;">
+                <i class="ti ti-search"></i>
+                <input type="text" name="q" placeholder="Buscar por nombre">
+            </div>
+
+            <button type="submit" class="btn-secondary btn-sm">Buscar</button>
+        </form>
+
+
+        <!-- Panel de filtros avanzados (agrupados/anidados). Solo visual: siempre abierto aquí,
+             en tu lógica real este bloque se muestra/oculta con un toggle. -->
+        <div class="filtros-avanzados-panel" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 8px; margin-bottom: 16px;">
+
+            <div class="filtros-avanzados-grupos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+
+                <!-- Grupo 1: Vacante y área (anidado: el área filtra las vacantes disponibles) -->
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Vacante</p>
+
+                    <select name="area" style="width: 100%; margin-bottom: 8px;">
+                        <option value="">Todas las áreas</option>
+                        <option value="administrativa">Administrativa</option>
+                        <option value="asistencial">Asistencial</option>
+                    </select>
+
+                    <select name="vacante" style="width: 100%;">
+                        <option value="">Todas las vacantes</option>
+                        <option value="analista">Analista de operaciones</option>
+                        <option value="auxiliar">Auxiliar administrativo</option>
+                    </select>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">Se filtra según el área elegida.</p>
+                </div>
+
+                <!-- Grupo 2: Estado y entrevistador -->
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Estado de la cita</p>
+
+                    <div class="filtro-checks" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <input type="checkbox" name="estado" value="confirmado" checked> Confirmado
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <input type="checkbox" name="estado" value="pendiente" checked> Pendiente
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                            <input type="checkbox" name="estado" value="sin_responder"> Sin responder
+                        </label>
+                    </div>
+
+                    <select name="entrevistador" style="width: 100%;">
+                        <option value="">Todos los entrevistadores</option>
+                        <option value="laura">Laura Gómez</option>
+                        <option value="diego">Diego Ruiz</option>
+                    </select>
+                </div>
+
+                <!-- Grupo 3: Rango de fechas -->
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Rango de fecha de la cita</p>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Desde</label>
+                            <input type="date" name="fecha_desde" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Hasta</label>
+                            <input type="date" name="fecha_hasta" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+                <button type="button" class="btn-secondary btn-sm">Restablecer</button>
+                <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Vacante</th>
+                        <th>Fecha y hora</th>
+                        <th>Entrevistador</th>
+                        <th>Estado</th>
+                        <th>Respondió</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>Mariana Torres</td>
+                        <td>Analista de operaciones</td>
+                        <td>15 sep, 10:00 a.m.</td>
+                        <td>Laura Gómez</td>
+                        <td><span class="badge badge-green">Confirmado</span></td>
+                        <td>hace 2 días</td>
+                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Julián Restrepo</td>
+                        <td>Analista de operaciones</td>
+                        <td>15 sep, 11:00 a.m.</td>
+                        <td>Laura Gómez</td>
+                        <td><span class="badge badge-green">Confirmado</span></td>
+                        <td>hace 1 día</td>
+                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Camila Pérez</td>
+                        <td>Auxiliar administrativo</td>
+                        <td>15 sep, 2:00 p.m.</td>
+                        <td>Diego Ruiz</td>
+                        <td><span class="badge badge-orange">Pendiente</span></td>
+                        <td>—</td>
+                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Andrés Londoño</td>
+                        <td>Auxiliar administrativo</td>
+                        <td>16 sep, 9:00 a.m.</td>
+                        <td>Diego Ruiz</td>
+                        <td><span class="badge badge-gray">Sin responder</span></td>
+                        <td>—</td>
+                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
+                    </tr>
+
+                    <tr>
+                        <td>Valentina Suárez</td>
+                        <td>Analista de operaciones</td>
+                        <td>16 sep, 10:30 a.m.</td>
+                        <td>Laura Gómez</td>
+                        <td><span class="badge badge-gray">Sin responder</span></td>
+                        <td>—</td>
+                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vacío de referencia (oculto por defecto en tu lógica real) -->
+        <!--
+        <div class="empty-state">
+            <span class="empty-icon"></span>
+            <h3>No hay confirmaciones que coincidan</h3>
+            <p>Ajusta los filtros para ver más resultados.</p>
+        </div>
+        -->
+
+    </div>
+</div>
+{% endblock %}

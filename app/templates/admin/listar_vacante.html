@@ -17,24 +17,116 @@ Vacantes
                 </a>
             </div>
         </div>
-        <form method="GET" class="filtros-vacantes-admin">
-            <div class="input-buscar">
+        
+        <form class="filtros-vacantes-admin">
+            <div class="input-buscar" style="flex: 1;">
                 <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
+                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ request.args.get('q', '') }}">
             </div>
-
-            <select name="area" onchange="this.form.submit()">
-                <option value="">Todas las categorías</option>
-                <option value="Administrativa" {% if request.args.get('area') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
-                <option value="Asistencial" {% if request.args.get('area') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
-            </select>
-
-            <select name="estado" onchange="this.form.submit()">
-                <option value="" {% if not request.args.get('estado') %}selected{% endif %}>Todos los estados</option>
-                <option value="Activa" {% if request.args.get('estado') == 'Activa' %}selected{% endif %}>Activa</option>
-                <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrada</option>
-            </select>
+            <button type="submit" class="btn-secondary btn-sm">Buscar</button>
         </form>
+ 
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Filtros avanzados</p>
+        </div>
+ 
+        <!-- Panel de filtros avanzados -->
+        <div class="filtros-avanzados-panel" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 8px; margin-bottom: 16px;">
+ 
+            <div class="filtros-avanzados-grupos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+ 
+                
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Vacante</p>
+ 
+                    <select name="area" onchange="this.form.submit()" style="width: 100%; margin-bottom: 8px;">
+                        <option value="">Todas las áreas</option>
+                        <option value="Administrativa" {% if request.args.get('area') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
+                        <option value="Asistencial" {% if request.args.get('area') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
+                    </select>
+
+                    <select name="area_aplicacion" onchange="this.form.submit()" style="width: 100%; margin-bottom: 8px;">
+                        <option value=""> Todas las areas e aplicacion</option>
+                        {% for value, label in form.area_aplicacion.choices %}
+                            {% if value %}
+                            <option value="{{ value }}" {% if area_seleccionada == value %} selected {%  endif %}>
+                                {{ label}}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+ 
+                    <select name="vacantes" style="width: 100%;">
+                        <option value="">Todas las vacantes</opti
+                            
+                        {% for v in vacantes %}
+                        <option value="{{ v.id}}" {%  if vacante_seleccionada = v.id|string %} selected {% endif %}>
+                            {{ titulo }}
+                        </option>       
+                        {% endfor %}        
+                    </select>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">Se filtra según el área elegida.</p>
+                </div>
+ 
+
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Requisitos del puesto</p>
+ 
+                   <select name="nivel" onchange="this.form.submit()">
+                        <option value="">Todos los niveles</option>
+                        <option value="Bachillerato" {% if request.args.get('nivel') == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
+                        <option value="tecnico" {% if request.args.get('nivel') == 'tecnico' %}selected{% endif %}>Técnico</option>
+                        <option value="tecnologo" {% if request.args.get('nivel') == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
+                        <option value="universitario" {% if request.args.get('nivel') == 'universitario' %}selected{% endif %}>Universitario</option>
+                        <option value="especializacion" {% if request.args.get('nivel') == 'especializacion' %}selected{% endif %}>Especialización</option>
+                        <option value="maestria" {% if request.args.get('nivel') == 'maestria' %}selected{% endif %}>Maestría</option>
+                        <option value="doctorado" {% if request.args.get('nivel') == 'doctorado' %}selected{% endif %}>Doctorado</option>
+                    </select>
+ 
+                    <select name="experiencia_minima" style="width: 100%;">
+                        <option value="">Cualquier experiencia</option>
+                        <option value="0">Sin experiencia</option>
+                        <option value="1">1+ año</option>
+                        <option value="2">2+ años</option>
+                        <option value="3">3+ años</option>
+                        <option value="5">5+ años</option>
+                    </select>
+                </div>
+ 
+                <!-- Grupo 3: Estado de la vacante y fechas -->
+                <div class="filtro-grupo">
+                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Estado y fechas</p>
+ 
+                   <select name="estado" onchange="this.form.submit()">
+                    <option value="">Todos los estados</option>
+                    <option value="postulado" {% if request.args.get('estado') == 'postulado' %}selected{% endif %}>Postulado</option>
+                    <option value="revision" {% if request.args.get('estado') == 'revision' %}selected{% endif %}>En revisión</option>
+                    <option value="entrevista" {% if request.args.get('estado') == 'entrevista' %}selected{% endif %}>Entrevista</option>
+                    <option value="contratado" {% if request.args.get('estado') == 'contratado' %}selected{% endif %}>Contratado</option>
+                    <option value="rechazado" {% if request.args.get('estado') == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                  </select>
+ 
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Publicada desde</label>
+                            <input type="date" name="fecha_publicacion_desde" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Publicada hasta</label>
+                            <input type="date" name="fecha_publicacion_hasta" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+ 
+            </div>
+ 
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
+                <button type="button" class="btn-secondary btn-sm">Restablecer</button>
+                <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
+            </div>
+ 
+        </div>
         <!-- Mensajes flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
