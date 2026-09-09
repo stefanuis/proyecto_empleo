@@ -63,20 +63,19 @@ PASOS_seguimiento = [
 TOTAL_PASOS = len(PASOS_seguimiento)
 
 NOMBRES_PASO = {
-    "personal": "Información Personal",
-    "contacto": "Información de Contacto",
-    "familiar": "Información Familiar",
-    "academica": "Formación Académica",
-    "experiencia": "Experiencia Laboral",
-    "cursos": "Cursos y Certificaciones",
-    "competencias": "Competencias",
-    "referencias": "Referencias Laborales",
-    "discapacidades": "Discapacidades",
-    "documentos": "Documentos Soportantes",
+    "personal": "Información básica de identificación del candidato.",
+    "contacto": "Información contacto de emergencia.",
+    "familiar": "Informacion familiar: cónyuge, hijos y personas a cargo.",
+    "academica": "Formación académica: nivel educativo, institución, título obtenido y año de graduación.",
+    "experiencia":"Experiencia Laboral:Empresas donde ha trabajado, cargos desempeñados, funciones y tiempo de permanencia en cada uno.",
+    "cursos": "Cursos:Diplomados, certificaciones y formación complementaria con institución y fecha de obtención.",
+    "Competencias:": "Competencias:conocimientos técnicos, manejo de herramientas específicas y habilidades blandas",
+    "referencias": "Referencias Laborales:Datos de contacto de jefes o compañeros anteriores que puedan validar su desempeño laboral.",
+    "discapacidades": "Discapacidades:Condición de discapacidad, tipo y ajustes razonables requeridos, en caso de aplicar.",
+    "documentos": "Documentos:Hoja de vida, cédula, diplomas y demás soportes requeridos para la postulación.",
 }
 
-# 3. El context_processor - va aquí, después de las constantes, 
-#    y ANTES o DESPUÉS de tus rutas (el orden respecto a las rutas no importa)
+#
 @usuario_bp.context_processor
 def inject_progreso():
     endpoint = request.endpoint.split('.')[-1]
@@ -133,6 +132,10 @@ def inicial():
         return render_template("usuario/principal.html", fecha_hoy=fecha_hoy)
 
 ##----configuracion
+@usuario_bp.route("/beneficios", methods=["GET", "POST"])
+@login_required
+def beneficios():
+    return render_template("usuario/beneficios.html")
 
 @usuario_bp.route("/configuracion", methods=['GET', 'POST'])
 @login_required

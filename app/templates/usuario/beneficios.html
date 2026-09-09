@@ -1,0 +1,78 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Competencias Profesionales
+{% endblock %}
+
+{% block contenido %}
+
+<section class="beneficios-clinica">
+
+    <div class="beneficios-banner">
+        <img src="{{ url_for('static', filename='img/banner-empleo.png') }}" alt="Trabaja con nosotros - Clínica">
+    </div>
+    <div class="beneficios-header">
+        <p>Hacemos parte de tu desarrollo profesional y bienestar, no solo de tu trabajo diario.</p>
+    </div>
+
+    <div class="beneficios-grid">
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-heart-handshake"></i>
+            </div>
+            <h3>Ambiente humano y colaborativo</h3>
+            <p>Un equipo interdisciplinario comprometido con el cuidado, tanto de nuestros pacientes como de quienes trabajan aquí.</p>
+        </div>
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-school"></i>
+            </div>
+            <h3>Formación y crecimiento continuo</h3>
+            <p>Programas de capacitación, actualización clínica y apoyo para tu desarrollo profesional dentro de la institución.</p>
+        </div>
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-shield-check"></i>
+            </div>
+            <h3>Estabilidad laboral</h3>
+            <p>Contratación formal, con todas las prestaciones de ley y procesos de vinculación transparentes.</p>
+        </div>
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-clock"></i>
+            </div>
+            <h3>Equilibrio vida-trabajo</h3>
+            <p>Horarios organizados que respetan tu tiempo personal y familiar, dentro de las exigencias del sector salud.</p>
+        </div>
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-medical-cross"></i>
+            </div>
+            <h3>Bienestar integral</h3>
+            <p>Programas de seguridad y salud en el trabajo, acompañamiento psicosocial y espacios de bienestar para el equipo.</p>
+        </div>
+
+        <div class="beneficio-card">
+            <div class="beneficio-icono">
+                <i class="ti ti-trending-up"></i>
+            </div>
+            <h3>Oportunidades de crecimiento</h3>
+            <p>Damos prioridad a la promoción interna: preferimos que nuestro propio equipo crezca antes que buscar afuera.</p>
+        </div>
+
+    </div>
+
+    <div class="beneficios-cta">
+        <a href="#" class="btn-primary">Ver vacantes disponibles</a>
+    </div>
+</section>
+
+
+
+
+{% endblock %}

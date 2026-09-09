@@ -16,7 +16,6 @@ class Vacante(db.Model):
     fecha_cierre = db.Column(db.DateTime, default=datetime.now)
     id_usuario_creador = db.Column(db.Integer)
     nivel_academico = db.Column(db.String(45))
-    area_aplicacion = db.Column(db.String(45))
 
 
     # ─────────────────────────────────────────

@@ -6,201 +6,662 @@ Vacantes
 
 {% block contenido %}
 
-<div class="contenedor-padre">
-    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
+<form class="filtros-vacantes-admin"
+      method="GET"
+      action="{{ url_for('admin.listar_vacantes') }}">
 
-        <div class="card-header">
-            <span class="card-title">Vacantes publicadas</span>
-            <div class="card-actions">
-                <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary">
-                    + Nueva vacante
-                </a>
-            </div>
-        </div>
-        
-        <form class="filtros-vacantes-admin">
-            <div class="input-buscar" style="flex: 1;">
-                <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ request.args.get('q', '') }}">
-            </div>
-            <button type="submit" class="btn-secondary btn-sm">Buscar</button>
-        </form>
- 
 
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
-            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Filtros avanzados</p>
-        </div>
- 
-        <!-- Panel de filtros avanzados -->
-        <div class="filtros-avanzados-panel" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 8px; margin-bottom: 16px;">
- 
-            <div class="filtros-avanzados-grupos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
- 
-                
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Vacante</p>
- 
-                    <select name="area" onchange="this.form.submit()" style="width: 100%; margin-bottom: 8px;">
-                        <option value="">Todas las áreas</option>
-                        <option value="Administrativa" {% if request.args.get('area') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
-                        <option value="Asistencial" {% if request.args.get('area') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
-                    </select>
+<div class="input-buscar" style="flex: 1;">
 
-                    <select name="area_aplicacion" onchange="this.form.submit()" style="width: 100%; margin-bottom: 8px;">
-                        <option value=""> Todas las areas e aplicacion</option>
-                        {% for value, label in form.area_aplicacion.choices %}
-                            {% if value %}
-                            <option value="{{ value }}" {% if area_seleccionada == value %} selected {%  endif %}>
-                                {{ label}}
-                            </option>
+    <i class="ti ti-search"></i>
+
+    <input
+        type="text"
+        name="q"
+        placeholder="Buscar por nombre"
+        value="{{ q }}"
+    >
+
+    <button
+        type="submit"
+        name="accion"
+        value="buscar"
+        class="btn-secondary btn-sm"
+    >
+        Buscar
+    </button>
+
+</div>
+
+
+
+<div style="
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+">
+
+    <p style="
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+    ">
+
+    </p>
+
+</div>
+
+
+<div
+    class="filtros-avanzados-panel"
+    style="
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 8px;
+        margin-bottom: 16px;
+    "
+>
+
+    <div
+        class="filtros-avanzados-grupos"
+        style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        "
+    >
+
+        <!-- ================================================= -->
+        <!-- VACANTE -->
+        <!-- ================================================= -->
+
+        <div class="filtro-grupo">
+
+            <p
+                class="filtro-grupo-titulo"
+                style="
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: .03em;
+                    margin: 0 0 8px;
+                "
+            >
+                Vacante
+            </p>
+
+
+            <!-- Área de aplicación -->
+
+            <select
+                name="area_aplicacion"
+                style="width: 100%; margin-bottom: 8px;"
+            >
+
+                <option value="">
+                    Todas las áreas de aplicación
+                </option>
+
+                {% for value, label in areas %}
+
+                    {% if value %}
+
+                        <option
+                            value="{{ value }}"
+                            {% if area_aplicacion_seleccionada == value %}
+                                selected
                             {% endif %}
-                        {% endfor %}
-                    </select>
- 
-                    <select name="vacantes" style="width: 100%;">
-                        <option value="">Todas las vacantes</opti
-                            
-                        {% for v in vacantes %}
-                        <option value="{{ v.id}}" {%  if vacante_seleccionada = v.id|string %} selected {% endif %}>
-                            {{ titulo }}
-                        </option>       
-                        {% endfor %}        
-                    </select>
-                    <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">Se filtra según el área elegida.</p>
-                </div>
- 
+                        >
+                            {{ label }}
+                        </option>
 
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Requisitos del puesto</p>
- 
-                   <select name="nivel" onchange="this.form.submit()">
-                        <option value="">Todos los niveles</option>
-                        <option value="Bachillerato" {% if request.args.get('nivel') == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
-                        <option value="tecnico" {% if request.args.get('nivel') == 'tecnico' %}selected{% endif %}>Técnico</option>
-                        <option value="tecnologo" {% if request.args.get('nivel') == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
-                        <option value="universitario" {% if request.args.get('nivel') == 'universitario' %}selected{% endif %}>Universitario</option>
-                        <option value="especializacion" {% if request.args.get('nivel') == 'especializacion' %}selected{% endif %}>Especialización</option>
-                        <option value="maestria" {% if request.args.get('nivel') == 'maestria' %}selected{% endif %}>Maestría</option>
-                        <option value="doctorado" {% if request.args.get('nivel') == 'doctorado' %}selected{% endif %}>Doctorado</option>
-                    </select>
- 
-                    <select name="experiencia_minima" style="width: 100%;">
-                        <option value="">Cualquier experiencia</option>
-                        <option value="0">Sin experiencia</option>
-                        <option value="1">1+ año</option>
-                        <option value="2">2+ años</option>
-                        <option value="3">3+ años</option>
-                        <option value="5">5+ años</option>
-                    </select>
-                </div>
- 
-                <!-- Grupo 3: Estado de la vacante y fechas -->
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Estado y fechas</p>
- 
-                   <select name="estado" onchange="this.form.submit()">
-                    <option value="">Todos los estados</option>
-                    <option value="postulado" {% if request.args.get('estado') == 'postulado' %}selected{% endif %}>Postulado</option>
-                    <option value="revision" {% if request.args.get('estado') == 'revision' %}selected{% endif %}>En revisión</option>
-                    <option value="entrevista" {% if request.args.get('estado') == 'entrevista' %}selected{% endif %}>Entrevista</option>
-                    <option value="contratado" {% if request.args.get('estado') == 'contratado' %}selected{% endif %}>Contratado</option>
-                    <option value="rechazado" {% if request.args.get('estado') == 'rechazado' %}selected{% endif %}>Rechazado</option>
-                  </select>
- 
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <div>
-                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Publicada desde</label>
-                            <input type="date" name="fecha_publicacion_desde" style="width: 100%;">
-                        </div>
-                        <div>
-                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Publicada hasta</label>
-                            <input type="date" name="fecha_publicacion_hasta" style="width: 100%;">
-                        </div>
-                    </div>
-                </div>
- 
-            </div>
- 
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
-                <button type="button" class="btn-secondary btn-sm">Restablecer</button>
-                <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
-            </div>
- 
-        </div>
-        <!-- Mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
+                    {% endif %}
+
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
 
-        {% if vacantes %}
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Área</th>
-                        <th>Salario</th>
-                        <th>Estado</th>
-                        <th>Publicada</th>
-                        <th>Cierra</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for v in vacantes %}
-                    <tr>
-                        <td>{{ v.titulo }}</td>
-                        <td>{{ v.area }}</td>
-                        <td>{{ v.salario or '—' }}</td>
-                        <td>
-                            {% if v.estado == 'Activa' %}
-                                <span class="badge badge-green">Activa</span>
-                            {% else %}
-                                <span class="badge badge-red">Cerrada</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '—' }}</td>
-                        <td>{{ v.fecha_cierre.strftime('%d %b %Y') if v.fecha_cierre else '—' }}</td>
-                        <td>
-                            <div style="display:flex; gap:6px;">
-                                    <a href="{{ url_for('admin.listar_postulantes', id=v.id) }}"
-                                    class="btn-secondary btn-sm" title="Ver postulantes">
-                                        Postulantes
-                                    </a>
-                                <a href="{{ url_for('admin.editar_vacante', id=v.id) }}"
-                                   class="btn-secondary btn-sm" title="Editar">
-                                    Editar
-                                </a>
-                                <form method="POST"
-                                      action="{{ url_for('admin.eliminar_vacante', id=v.id) }}">
-                                    <button type="submit" class="btn-outline btn-sm" style="border-color:#C62828; color:#C62828;">
-                                        Eliminar
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <span class="empty-icon"></span>
-            <h3>Aún no hay vacantes publicadas</h3>
-            <p>Crea la primera vacante para empezar a recibir postulaciones.</p>
+            </select>
+
+
+            <!-- Vacante -->
+
+            <select
+                name="vacantes"
+                style="width: 100%;"
+            >
+
+                <option value="">
+                    Todas las vacantes
+                </option>
+
+                {% for v in todas_las_vacantes %}
+
+                    <option
+                        value="{{ v.id }}"
+                        {% if vacante_seleccionada == v.id|string %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ v.titulo }}
+                    </option>
+
+                {% endfor %}
+
+            </select>
+
+
+            <p style="
+                font-size: 11px;
+                color: var(--text-muted);
+                margin: 6px 0 0;
+            ">
+                Selecciona el área o la vacante que deseas filtrar.
+            </p>
 
         </div>
-        {% endif %}
+
+
+        <!-- ================================================= -->
+        <!-- REQUISITOS DEL PUESTO -->
+        <!-- ================================================= -->
+
+        <div class="filtro-grupo">
+
+            <p
+                class="filtro-grupo-titulo"
+                style="
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: .03em;
+                    margin: 0 0 8px;
+                "
+            >
+                Requisitos del puesto
+            </p>
+
+
+            <!-- Nivel académico -->
+
+            <select
+                name="nivel"
+                style="width: 100%; margin-bottom: 8px;"
+            >
+
+                <option value="">
+                    Todos los niveles
+                </option>
+
+                <option
+                    value="Bachillerato"
+                    {% if nivel_seleccionado == 'Bachillerato' %}
+                        selected
+                    {% endif %}
+                >
+                    Bachillerato
+                </option>
+
+                <option
+                    value="tecnico"
+                    {% if nivel_seleccionado == 'tecnico' %}
+                        selected
+                    {% endif %}
+                >
+                    Técnico
+                </option>
+
+                <option
+                    value="tecnologo"
+                    {% if nivel_seleccionado == 'tecnologo' %}
+                        selected
+                    {% endif %}
+                >
+                    Tecnólogo
+                </option>
+
+                <option
+                    value="universitario"
+                    {% if nivel_seleccionado == 'universitario' %}
+                        selected
+                    {% endif %}
+                >
+                    Universitario
+                </option>
+
+                <option
+                    value="especializacion"
+                    {% if nivel_seleccionado == 'especializacion' %}
+                        selected
+                    {% endif %}
+                >
+                    Especialización
+                </option>
+
+                <option
+                    value="maestria"
+                    {% if nivel_seleccionado == 'maestria' %}
+                        selected
+                    {% endif %}
+                >
+                    Maestría
+                </option>
+
+                <option
+                    value="doctorado"
+                    {% if nivel_seleccionado == 'doctorado' %}
+                        selected
+                    {% endif %}
+                >
+                    Doctorado
+                </option>
+
+            </select>
+
+
+            <!-- Experiencia -->
+
+            <select
+                name="experiencia_minima"
+                style="width: 100%;"
+            >
+
+                <option value="">
+                    Cualquier experiencia
+                </option>
+
+                <option
+                    value="0"
+                    {% if experiencia_seleccionada == '0' %}
+                        selected
+                    {% endif %}
+                >
+                    Sin experiencia
+                </option>
+
+                <option
+                    value="1"
+                    {% if experiencia_seleccionada == '1' %}
+                        selected
+                    {% endif %}
+                >
+                    1+ año
+                </option>
+
+                <option
+                    value="2"
+                    {% if experiencia_seleccionada == '2' %}
+                        selected
+                    {% endif %}
+                >
+                    2+ años
+                </option>
+
+                <option
+                    value="3"
+                    {% if experiencia_seleccionada == '3' %}
+                        selected
+                    {% endif %}
+                >
+                    3+ años
+                </option>
+
+                <option
+                    value="5"
+                    {% if experiencia_seleccionada == '5' %}
+                        selected
+                    {% endif %}
+                >
+                    5+ años
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- ESTADO Y FECHAS -->
+        <!-- ================================================= -->
+
+        <div class="filtro-grupo">
+
+            <p
+                class="filtro-grupo-titulo"
+                style="
+                    font-size: 12px;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: .03em;
+                    margin: 0 0 8px;
+                "
+            >
+                Estado y fechas
+            </p>
+
+
+            <!-- Estado -->
+
+            <select
+                name="estado"
+                style="width: 100%; margin-bottom: 8px;"
+            >
+
+                <option value="">
+                    Estados
+                </option>
+
+                <option
+                    value="Activa"
+                    {% if estado_seleccionado == 'Activa' %}
+                        selected
+                    {% endif %}
+                >
+                    Activa
+                </option>
+
+                <option
+                    value="Cerrada"
+                    {% if estado_seleccionado == 'Cerrada' %}
+                        selected
+                    {% endif %}
+                >
+                    Cerrada
+                </option>
+
+            </select>
+
+
+            <!-- Fechas -->
+
+            <div style="
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            ">
+
+                <div>
+
+                    <label style="
+                        font-size: 11px;
+                        color: var(--text-muted);
+                        display: block;
+                        margin-bottom: 3px;
+                    ">
+                        Publicada desde
+                    </label>
+
+                    <input
+                        type="date"
+                        name="fecha_publicacion_desde"
+                        value="{{ fecha_publicacion_valor }}"
+                        style="width: 100%;"
+                    >
+
+                </div>
+
+
+                <div>
+
+                    <label style="
+                        font-size: 11px;
+                        color: var(--text-muted);
+                        display: block;
+                        margin-bottom: 3px;
+                    ">
+                        Publicada hasta
+                    </label>
+
+                    <input
+                        type="date"
+                        name="fecha_publicacion_hasta"
+                        value="{{ fecha_cierre_valor }}"
+                        style="width: 100%;"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
+
+
+    <!-- ================================================= -->
+    <!-- BOTONES -->
+    <!-- ================================================= -->
+
+    <div style="
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+    ">
+
+        <!-- Restablecer -->
+
+        <button
+            type="button"
+            class="btn-secondary btn-sm"
+            onclick="window.location.href=window.location.pathname"
+        >
+            Restablecer
+        </button>
+
+
+        <!-- Aplicar filtros -->
+
+        <button
+            type="submit"
+            name="accion"
+            value="filtrar"
+            class="btn-primary btn-sm"
+        >
+            Aplicar filtros
+        </button>
+
+    </div>
+
+</div>
+
+
+</form>
+
+<!---tabla -->
+
+<div class="tabla-container">
+
+
+<table class="tabla-vacantes">
+
+    <thead>
+
+        <tr>
+
+            <th>ID</th>
+
+            <th>Vacante</th>
+
+            <th>Área</th>
+
+            <th>Área de aplicación</th>
+
+            <th>Nivel académico</th>
+
+            <th>Salario</th>
+
+            <th>Estado</th>
+
+            <th>Publicación</th>
+
+            <th>Cierre</th>
+
+            <th>Acciones</th>
+
+        </tr>
+
+    </thead>
+
+
+    <tbody>
+
+        {% for vacante in vacantes %}
+
+            <tr>
+
+                <!-- ID -->
+
+                <td>
+                    {{ vacante.id }}
+                </td>
+
+
+                <!-- Título -->
+
+                <td>
+                    <strong>
+                        {{ vacante.titulo }}
+                    </strong>
+                </td>
+
+
+                <!-- Área -->
+
+                <td>
+                    {{ vacante.area or 'No especificada' }}
+                </td>
+
+
+                <!-- Área de aplicación -->
+
+                <td>
+                    {{ vacante.area_aplicacion or 'No especificada' }}
+                </td>
+
+
+                <!-- Nivel académico -->
+
+                <td>
+                    {{ vacante.nivel_academico or 'No especificado' }}
+                </td>
+
+
+                <!-- Salario -->
+
+                <td>
+                    {{ vacante.salario or 'No especificado' }}
+                </td>
+
+
+                <!-- Estado -->
+
+                <td>
+
+                    {% if vacante.estado == 'Activa' %}
+
+                        <span class="estado-activa">
+                            Activa
+                        </span>
+
+                    {% elif vacante.estado == 'Cerrada' %}
+
+                        <span class="estado-cerrada">
+                            Cerrada
+                        </span>
+
+                    {% else %}
+
+                        {{ vacante.estado or 'Sin estado' }}
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- Fecha publicación -->
+
+                <td>
+
+                    {% if vacante.fecha_publicacion %}
+
+                        {{ vacante.fecha_publicacion.strftime('%d/%m/%Y') }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- Fecha cierre -->
+
+                <td>
+
+                    {% if vacante.fecha_cierre %}
+
+                        {{ vacante.fecha_cierre.strftime('%d/%m/%Y') }}
+
+                    {% else %}
+
+                        —
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- Acciones -->
+
+                <td>
+
+                    <div class="acciones-vacante">
+
+                        <button
+                            type="button"
+                            class="btn-secondary btn-sm"
+                        >
+                        <a href=" {{  url_for('admin.listar_postulaciones') }}"> Ver postulantes</a>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="btn-primary btn-sm"
+                        >
+                            Editar
+                        </button>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+
+        {% else %}
+
+            <tr>
+
+                <td
+                    colspan="10"
+                    style="text-align: center; padding: 30px;"
+                >
+                    No se encontraron vacantes.
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+
+
 </div>
 
 {% endblock %}

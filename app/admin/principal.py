@@ -10,7 +10,7 @@ from flask import (
 from sqlalchemy import exists
 from sqlalchemy import case
 from sqlalchemy import func
-from datetime import date
+from datetime import date,timedelta
 from flask_login import current_user, login_required
 from datetime import datetime
 from app.extensions import db
@@ -68,69 +68,277 @@ def inicial():
 @admin_bp.route("/vacantes")
 @login_required
 def listar_vacantes():
-    if(session["rol"] == "admin"):
-        q = request.args.get('q', '').strip()
-        area = request.args.get('area', '')
-        area_aplicacion= request.args.get('area_aplicacion','')
-        titulo = request.args.get('titulo', '')
-        nivel_academico = request.args.get('nivel_academico', '')
-        estado = request.args.get('estado', '')
-        experiencia_minima = request.args.get('experiencia','')
-        estado = request.args.get('estado','')
-        fecha_publicacion = request.args.get('fecha_publicacion', '')
-        fecha_cierre = request.args.get('fecha_cierre','')
-        
-        query = Vacante.query
+
+    # --------------------------------------------------
+    # VALIDAR ROL
+    # --------------------------------------------------
+    if session.get("rol") != "admin":
+        return "No tienes permiso para acceder a esta página", 403
+
+
+    # --------------------------------------------------
+    # DATOS RECIBIDOS POR GET
+    # --------------------------------------------------
+
+    accion = request.args.get("accion", "")
+
+    q = request.args.get("q", "").strip()
+
+    area = request.args.get("area", "").strip()
+
+    area_aplicacion = request.args.get(
+        "area_aplicacion", ""
+    ).strip()
+
+    vacante_id = request.args.get(
+        "vacantes", ""
+    ).strip()
+
+    nivel = request.args.get(
+        "nivel", ""
+    ).strip()
+
+    experiencia_minima = request.args.get(
+        "experiencia_minima", ""
+    ).strip()
+
+    estado = request.args.get(
+        "estado", ""
+    ).strip()
+
+    fecha_desde = request.args.get(
+        "fecha_publicacion_desde", ""
+    ).strip()
+
+    fecha_hasta = request.args.get(
+        "fecha_publicacion_hasta", ""
+    ).strip()
+
+
+    # --------------------------------------------------
+    # TODAS LAS VACANTES
+    # Se utiliza para el SELECT de vacantes
+    # --------------------------------------------------
+
+    todas_las_vacantes = Vacante.query.order_by(
+        Vacante.titulo.asc()
+    ).all()
+
+
+    # --------------------------------------------------
+    # CONSULTA PRINCIPAL
+    # --------------------------------------------------
+
+    query = Vacante.query
+
+
+
+    if accion == "buscar":
 
         if q:
-            query = query.filter(Vacante.titulo.ilike(f'%{q}%'))
-        if area:
-            query = query.filter_by(area=area)
-        if area_aplicacion:
-            query = query.filter_by(area_aplicacion=area_aplicacion)
-        if titulo:
-            query = query.filter_by(titulo=titulo)
-        if nivel_academico:
-            query = query.filter_by(nivel_academico=nivel_academico)
-        if experiencia_minima:
-            query = query.filter_by(experiencia_minima=experiencia_minima)
-        if fecha_publicacion:
-            query = query.filter_by(fecha_publicacion=fecha_publicacion)
-        if fecha_cierre:
-            query = query.filter_by(fecha_cierre=fecha_cierre)          
-        if estado:
-            query = query.filter_by(estado=estado)
-
-           # --- Filtro: estado (tabla Postulacion) ---
-        if estado:
-            if not postulacion_unida:
-                query = query.join(Postulacion, Postulacion.vacante_id == Vacante.id)
-                postulacion_unida = True
-            query = query.filter(Postulacion.estado == estado)
-            necesita_distinct = True
-
-        # --- Filtro: experiencia mínima (tabla tbl_experiencia, vía Postulacion) ---
-        if experiencia_minima:
-            if not postulacion_unida:
-                query = query.join(Postulacion, Postulacion.vacante_id == Vacante.id)
-                postulacion_unida = True
-
-            # Fecha de fin efectiva: si actual=True, usar hoy; si no, usar fecha_salida
-            fecha_fin_efectiva = case(
-                (Experiencia.actual == True, date.today()),
-                else_=Experiencia.fecha_salida
+            query = query.filter(
+                Vacante.titulo.ilike(f"%{q}%")
             )
 
-            duracion_anios = func.datediff(
-              fecha_fin_efectiva, Experiencia.fecha_ingreso
-             ) / 365.25
 
-            
-           
-        return render_template("admin/listar_vacante.html")
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
-    
+
+    elif accion == "filtrar":
+
+        # ----------------------------------------------
+        # ÁREA
+        # ----------------------------------------------
+
+        if area:
+            query = query.filter(
+                Vacante.area == area
+            )
+
+
+        # ----------------------------------------------
+        # ÁREA DE APLICACIÓN
+        # ----------------------------------------------
+
+        if area_aplicacion:
+            query = query.filter(
+                Vacante.area_aplicacion == area_aplicacion
+            )
+
+
+        # ----------------------------------------------
+        # VACANTE ESPECÍFICA
+        # ----------------------------------------------
+
+        if vacante_id:
+
+            try:
+                query = query.filter(
+                    Vacante.id == int(vacante_id)
+                )
+
+            except ValueError:
+                pass
+
+
+        # ----------------------------------------------
+        # NIVEL ACADÉMICO
+        # ----------------------------------------------
+
+        if nivel:
+            query = query.filter(
+                Vacante.nivel_academico == nivel
+            )
+
+
+        # ----------------------------------------------
+        # ESTADO DE LA VACANTE
+        # ----------------------------------------------
+
+        if estado:
+            query = query.filter(
+                Vacante.estado == estado
+            )
+
+
+        # ----------------------------------------------
+        # FECHA DE PUBLICACIÓN DESDE
+        # ----------------------------------------------
+
+        if fecha_desde:
+
+            try:
+
+                fecha_desde_dt = datetime.strptime(
+                    fecha_desde,
+                    "%Y-%m-%d"
+                )
+
+                query = query.filter(
+                    Vacante.fecha_publicacion >= fecha_desde_dt
+                )
+
+            except ValueError:
+                pass
+
+
+        # ----------------------------------------------
+        # FECHA DE PUBLICACIÓN HASTA
+        # ----------------------------------------------
+
+        if fecha_hasta:
+
+            try:
+
+                fecha_hasta_dt = datetime.strptime(
+                    fecha_hasta,
+                    "%Y-%m-%d"
+                )
+
+                # Agregamos un día para incluir
+                # completamente la fecha seleccionada
+                fecha_hasta_dt = fecha_hasta_dt + timedelta(days=1)
+
+                query = query.filter(
+                    Vacante.fecha_publicacion < fecha_hasta_dt
+                )
+
+            except ValueError:
+                pass
+
+
+        # ----------------------------------------------
+        # EXPERIENCIA MÍNIMA
+        # ----------------------------------------------
+
+        if experiencia_minima:
+
+            try:
+
+                experiencia_minima_float = float(
+                    experiencia_minima
+                )
+
+                fecha_fin_efectiva = case(
+                    (
+                        Experiencia.actual == True,
+                        date.today()
+                    ),
+                    else_=Experiencia.fecha_salida
+                )
+
+                duracion_anios = (
+                    func.datediff(
+                        fecha_fin_efectiva,
+                        Experiencia.fecha_ingreso
+                    ) / 365.25
+                )
+
+                query = query.join(
+                    Postulacion,
+                    Postulacion.id_vacante == Vacante.id
+                ).join(
+                    Experiencia,
+                    Experiencia.id_usuario == Postulacion.id_usuario
+                ).group_by(
+                    Vacante.id
+                ).having(
+                    func.sum(duracion_anios)
+                    >= experiencia_minima_float
+                )
+
+            except ValueError:
+                pass
+
+
+    # ==================================================
+    # OBTENER RESULTADOS
+    # ==================================================
+
+    vacantes = query.order_by(
+        Vacante.fecha_publicacion.desc()
+    ).all()
+
+
+    # --------------------------------------------------
+    # ÁREAS DE APLICACIÓN
+    # --------------------------------------------------
+
+    areas_aplicacion = (
+        VacanteForm
+        .area_aplicacion
+        .kwargs["choices"]
+    )
+
+
+    # --------------------------------------------------
+
+
+    return render_template(
+        "admin/listar_vacante.html",
+
+        vacantes=vacantes,
+
+        todas_las_vacantes=todas_las_vacantes,
+
+        areas=areas_aplicacion,
+
+        q=q,
+
+        area_seleccionada=area,
+
+        area_aplicacion_seleccionada=area_aplicacion,
+
+        vacante_seleccionada=vacante_id,
+
+        nivel_seleccionado=nivel,
+
+        experiencia_seleccionada=experiencia_minima,
+
+        estado_seleccionado=estado,
+
+        fecha_publicacion_valor=fecha_desde,
+
+        fecha_cierre_valor=fecha_hasta
+    )
 
 @admin_bp.route("/vacantes/crear", methods=["GET", "POST"])
 @login_required
