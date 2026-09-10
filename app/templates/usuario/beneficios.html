@@ -11,9 +11,7 @@ Competencias Profesionales
     <div class="beneficios-banner">
         <img src="{{ url_for('static', filename='img/banner-empleo.png') }}" alt="Trabaja con nosotros - Clínica">
     </div>
-    <div class="beneficios-header">
-        <p>Hacemos parte de tu desarrollo profesional y bienestar, no solo de tu trabajo diario.</p>
-    </div>
+
 
     <div class="beneficios-grid">
 
@@ -68,7 +66,7 @@ Competencias Profesionales
     </div>
 
     <div class="beneficios-cta">
-        <a href="#" class="btn-primary">Ver vacantes disponibles</a>
+        <a href="{{ url_for('usuario.vacantes') }}" class="btn-primary">Ver vacantes disponibles</a>
     </div>
 </section>
 

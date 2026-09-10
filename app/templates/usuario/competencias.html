@@ -75,17 +75,19 @@ Competencias Profesionales
 
             <div class="form-botones">
 
-                {% if paso_anterior %}
-                    <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
-                        Anterior
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
-                        Anterior
-                    </a>
-                {% endif %}
+                <button type="submit"
+                        name="accion"
+                        value="anterior"
+                        class="btn-secondary">
+                    Anterior
+                </button>
 
-                {{ form.submit(class="btn-primary") }}
+                <button type="submit"
+                        name="accion"
+                        value="continuar"
+                        class="btn-primary">
+                    Guardar y continuar
+                </button>
 
             </div>
 
@@ -125,33 +127,106 @@ Competencias Profesionales
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const container = document.getElementById("competencias-container");
-    const plantilla = document.getElementById("plantilla-competencia-vacia");
-    const btnAgregar = document.getElementById("btn-agregar-competencia");
 
-    let contador = container.querySelectorAll(".competencia-fila").length;
+    const container = document.getElementById("competencias-container");
+
+    const plantilla = document.getElementById(
+        "plantilla-competencia-vacia"
+    );
+
+    const btnAgregar = document.getElementById(
+        "btn-agregar-competencia"
+    );
+
+    let contador = container.querySelectorAll(
+        ".competencia-fila"
+    ).length;
+
+    // ==========================================================
+    // AGREGAR NUEVO REGISTRO
+    // ==========================================================
 
     btnAgregar.addEventListener("click", function () {
-        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+
+        const html = plantilla.innerHTML.replaceAll(
+            "__INDEX__",
+            contador
+        );
+
         const div = document.createElement("div");
+
         div.innerHTML = html;
-        container.appendChild(div.firstElementChild);
+
+        container.appendChild(
+            div.firstElementChild
+        );
+
         contador++;
+
     });
+
+    // ==========================================================
+    // ELIMINAR REGISTRO
+    // ==========================================================
 
     container.addEventListener("click", function (e) {
-        if (e.target.classList.contains("btn-eliminar-fila")) {
-            const fila = e.target.closest(".competencia-fila");
-            const campoEliminar = fila.querySelector(".campo-eliminar");
 
-            if (campoEliminar) {
-                campoEliminar.value = "1";
-                fila.style.display = "none";
-            } else {
-                fila.remove();
-            }
+        if (
+            !e.target.classList.contains(
+                "btn-eliminar-fila"
+            )
+        ) {
+
+            return;
+
         }
+
+        const fila = e.target.closest(
+            ".competencia-fila"
+        );
+
+        if (!fila) {
+
+            return;
+
+        }
+
+        const registroId = fila.querySelector(
+            'input[name$="-registro_id"]'
+        );
+
+        const campoEliminar = fila.querySelector(
+            ".campo-eliminar"
+        );
+
+        // ======================================================
+        // REGISTRO EXISTENTE
+        // ======================================================
+
+        if (
+            registroId &&
+            registroId.value &&
+            campoEliminar
+        ) {
+
+            campoEliminar.value = "1";
+
+            fila.style.display = "none";
+
+        }
+
+        // ======================================================
+        // REGISTRO NUEVO
+        // ======================================================
+
+        else {
+
+            fila.remove();
+
+        }
+
     });
+
 });
 </script>
 

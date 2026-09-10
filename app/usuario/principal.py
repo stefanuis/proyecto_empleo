@@ -41,6 +41,10 @@ from app.forms.docs import documentoForm
 from app.models.docs import OtrosDocumentos
 from app.models.vacante import Vacante
 from app.models.postulacion import Postulacion
+from app.forms.validaciones import validar_academica
+from app.forms.validaciones import validar_experiencia
+from app.forms.validaciones import validar_cursos
+from app.forms.validaciones import validar_competencias
 
 
 from . import usuario_bp
@@ -67,7 +71,7 @@ NOMBRES_PASO = {
     "contacto": "Información contacto de emergencia.",
     "familiar": "Informacion familiar: cónyuge, hijos y personas a cargo.",
     "academica": "Formación académica: nivel educativo, institución, título obtenido y año de graduación.",
-    "experiencia":"Experiencia Laboral:Empresas donde ha trabajado, cargos desempeñados, funciones y tiempo de permanencia en cada uno.",
+    "experiencia":"Experiencia Laboral:Empresas donde ha trabajado, cargos desempeñados, funciones.",
     "cursos": "Cursos:Diplomados, certificaciones y formación complementaria con institución y fecha de obtención.",
     "Competencias:": "Competencias:conocimientos técnicos, manejo de herramientas específicas y habilidades blandas",
     "referencias": "Referencias Laborales:Datos de contacto de jefes o compañeros anteriores que puedan validar su desempeño laboral.",
@@ -295,7 +299,9 @@ def academica():
         ).all()
 
         for registro in registros:
+
             form.Info_academica.append_entry({
+
                 "registro_id": registro.id,
                 "nivel": registro.nivel,
                 "estado": registro.estado,
@@ -310,82 +316,130 @@ def academica():
                 "ruta_soporte": registro.ruta_soporte,
                 "intensidad_horaria": registro.intensidad_horaria,
                 "eliminar": "0",
+
             })
 
-    if form.validate_on_submit():
+
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
+
 
 
         for entry in form.Info_academica:
 
             registro_id = entry.registro_id.data
-            marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
+            marcado_para_eliminar = (
+                entry.eliminar.data == "1"
+            )
 
-            if registro_id:
+
+            if registro_id and marcado_para_eliminar:
+
                 registro = Info_academica.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-                print(
-                    "ID:", registro_id,
-                    "| eliminar:", entry.eliminar.data,
-                    "| marcado:", marcado_para_eliminar
-                )
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
 
-                # Editar existente
-                registro.nivel = entry.nivel.data
-                registro.estado = entry.estado.data
-                registro.periodos_cursados = entry.periodos_cursados.data
-                registro.area = entry.area.data
-                registro.titulo = entry.titulo.data
-                registro.institucion = entry.institucion.data
-                registro.pais_institucion = entry.pais_institucion.data
-                registro.convalidacion = entry.convalidacion.data
-                registro.mes_finalizacion = entry.mes_finalizacion.data
-                registro.anno_finalizacion = entry.anno_finalizacion.data
-                registro.intensidad_horaria = entry.intensidad_horaria.data
+        if accion == "anterior":
 
-            else:
+            db.session.commit()
 
-                # Crear nuevo
-                nuevo = Info_academica(
-                    id_usuario=current_user.id,
-                    nivel=entry.nivel.data,
-                    estado=entry.estado.data,
-                    periodos_cursados=entry.periodos_cursados.data,
-                    area=entry.area.data,
-                    titulo=entry.titulo.data,
-                    institucion=entry.institucion.data,
-                    pais_institucion=entry.pais_institucion.data,
-                    convalidacion=entry.convalidacion.data,
-                    mes_finalizacion=entry.mes_finalizacion.data,
-                    anno_finalizacion=entry.anno_finalizacion.data,
-                    intensidad_horaria=entry.intensidad_horaria.data,
+            return redirect(
+                url_for("usuario.familiar")
+            )
+
+
+
+        if form.validate():
+
+            for entry in form.Info_academica:
+
+                registro_id = entry.registro_id.data
+
+                marcado_para_eliminar = (
+                    entry.eliminar.data == "1"
                 )
 
-                db.session.add(nuevo)
-                db.session.flush()
 
-        db.session.commit()
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
 
-        return redirect(url_for("usuario.experiencia"))
+                    continue
 
-    else:
-        print("ERRORES:", form.errors)
+
+                registro = None
+
+
+                if registro_id:
+
+                    registro = Info_academica.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+
+
+                if registro:
+
+                    registro.nivel = entry.nivel.data
+                    registro.estado = entry.estado.data
+                    registro.periodos_cursados = entry.periodos_cursados.data
+                    registro.area = entry.area.data
+                    registro.titulo = entry.titulo.data
+                    registro.institucion = entry.institucion.data
+                    registro.pais_institucion = entry.pais_institucion.data
+                    registro.convalidacion = entry.convalidacion.data
+                    registro.mes_finalizacion = entry.mes_finalizacion.data
+                    registro.anno_finalizacion = entry.anno_finalizacion.data
+                    registro.intensidad_horaria = entry.intensidad_horaria.data
+
+
+                else:
+
+                    nuevo = Info_academica(
+
+                        id_usuario=current_user.id,
+                        nivel=entry.nivel.data,
+                        estado=entry.estado.data,
+                        periodos_cursados=entry.periodos_cursados.data,
+                        area=entry.area.data,
+                        titulo=entry.titulo.data,
+                        institucion=entry.institucion.data,
+                        pais_institucion=entry.pais_institucion.data,
+                        convalidacion=entry.convalidacion.data,
+                        mes_finalizacion=entry.mes_finalizacion.data,
+                        anno_finalizacion=entry.anno_finalizacion.data,
+                        intensidad_horaria=entry.intensidad_horaria.data
+
+                    )
+
+                    db.session.add(nuevo)
+
+
+            db.session.commit()
+
+            return redirect(
+                url_for("usuario.experiencia")
+            )
+
+
+        else:
+
+            print("ERRORES:", form.errors)
 
 
     return render_template(
-        "usuario/academica.html", form=form)
+        "usuario/academica.html",
+        form=form
+    )
 
 
 @usuario_bp.route("/experiencia", methods=["GET", "POST"])
@@ -418,69 +472,100 @@ def experiencia():
                 "eliminar": "0",
             })
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
 
         for entry in form.Info_experiencia:
 
             registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
+            if registro_id and marcado_para_eliminar:
 
-            if registro_id:
                 registro = Experiencia.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
+        if accion == "anterior":
 
-                # Editar existente
-                registro.entidad = entry.entidad.data
-                registro.area = entry.area.data
-                registro.cargo = entry.cargo.data
-                registro.actual = entry.actual.data
-                registro.motivo = entry.motivo.data
-                registro.otro = entry.otro.data
-                registro.fecha_ingreso = entry.fecha_ingreso.data
-                registro.fecha_salida = entry.fecha_salida.data
-                registro.pais = entry.pais.data
-                registro.departamento = entry.departamento.data
-                registro.municipio = entry.municipio.data
-                registro.funciones_realizadas = entry.funciones_realizadas.data
+            db.session.commit()
 
-            else:
+            return redirect(
+                url_for("usuario.academica")
+            )
 
-                # Crear nuevo
-                nuevo = Experiencia(
-                    id_usuario=current_user.id,
-                    entidad=entry.entidad.data,
-                    area=entry.area.data,
-                    cargo=entry.cargo.data,
-                    actual=entry.actual.data,
-                    motivo=entry.motivo.data,
-                    otro=entry.otro.data,
-                    fecha_ingreso=entry.fecha_ingreso.data,
-                    fecha_salida=entry.fecha_salida.data,
-                    pais=entry.pais.data,
-                    departamento=entry.departamento.data,
-                    municipio=entry.municipio.data,
-                    funciones_realizadas=entry.funciones_realizadas.data,
-                    fecha_registro=datetime.now()
-                )
+        if form.validate():
 
-                db.session.add(nuevo)
-                db.session.flush()
+            for entry in form.Info_experiencia:
 
-        db.session.commit()
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
 
-        return redirect(url_for("usuario.curso"))
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
+
+                    continue
+
+                registro = None
+
+                if registro_id:
+
+                    registro = Experiencia.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if registro:
+
+                    # Editar existente
+                    registro.entidad = entry.entidad.data
+                    registro.area = entry.area.data
+                    registro.cargo = entry.cargo.data
+                    registro.actual = entry.actual.data
+                    registro.motivo = entry.motivo.data
+                    registro.otro = entry.otro.data
+                    registro.fecha_ingreso = entry.fecha_ingreso.data
+                    registro.fecha_salida = entry.fecha_salida.data
+                    registro.pais = entry.pais.data
+                    registro.departamento = entry.departamento.data
+                    registro.municipio = entry.municipio.data
+                    registro.funciones_realizadas = entry.funciones_realizadas.data
+
+                else:
+
+                    # Crear nuevo
+                    nuevo = Experiencia(
+                        id_usuario=current_user.id,
+                        entidad=entry.entidad.data,
+                        area=entry.area.data,
+                        cargo=entry.cargo.data,
+                        actual=entry.actual.data,
+                        motivo=entry.motivo.data,
+                        otro=entry.otro.data,
+                        fecha_ingreso=entry.fecha_ingreso.data,
+                        fecha_salida=entry.fecha_salida.data,
+                        pais=entry.pais.data,
+                        departamento=entry.departamento.data,
+                        municipio=entry.municipio.data,
+                        funciones_realizadas=entry.funciones_realizadas.data,
+                        fecha_registro=datetime.now()
+                    )
+
+                    db.session.add(nuevo)
+
+            db.session.commit()
+
+            return redirect(url_for("usuario.cursos"))
+
+        else:
+
+            print("ERRORES:", form.errors)
 
     return render_template(
         "usuario/experiencia.html", form=form)
@@ -508,54 +593,85 @@ def cursos():
                 "eliminar": "0",
             })
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
 
         for entry in form.Info_curso:
 
             registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
+            if registro_id and marcado_para_eliminar:
 
-            if registro_id:
                 registro = Cursos.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
-                # Editar existente
-                registro.nombre = entry.nombre.data
-                registro.institucion = entry.institucion.data
-                registro.area = entry.area.data
-                registro.horas = entry.horas.data
-                registro.fecha_realizacion = entry.fecha_realizacion.data
-                # certificado ya no se toca al editar
+        if accion == "anterior":
 
-            else:
-                # Crear nuevo
-                nuevo = Cursos(
-                    id_usuario=current_user.id,
-                    nombre=entry.nombre.data,
-                    institucion=entry.institucion.data,
-                    area=entry.area.data,
-                    horas=entry.horas.data,
-                    fecha_realizacion=entry.fecha_realizacion.data,
-                    certificado=False,  # valor por defecto, el usuario ya no lo llena
-                )
+            db.session.commit()
 
-                db.session.add(nuevo)
-                db.session.flush()
+            return redirect(
+                url_for("usuario.experiencia")
+            )
 
-        db.session.commit()
+        if form.validate():
 
-        return redirect(url_for("usuario.competencias"))
+            for entry in form.Info_curso:
+
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
+
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
+
+                    continue
+
+                registro = None
+
+                if registro_id:
+
+                    registro = Cursos.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if registro:
+                    # Editar existente
+                    registro.nombre = entry.nombre.data
+                    registro.institucion = entry.institucion.data
+                    registro.area = entry.area.data
+                    registro.horas = entry.horas.data
+                    registro.fecha_realizacion = entry.fecha_realizacion.data
+                    # certificado ya no se toca al editar
+
+                else:
+                    # Crear nuevo
+                    nuevo = Cursos(
+                        id_usuario=current_user.id,
+                        nombre=entry.nombre.data,
+                        institucion=entry.institucion.data,
+                        area=entry.area.data,
+                        horas=entry.horas.data,
+                        fecha_realizacion=entry.fecha_realizacion.data,
+                        certificado=False,  # valor por defecto, el usuario ya no lo llena
+                    )
+
+                    db.session.add(nuevo)
+
+            db.session.commit()
+
+            return redirect(url_for("usuario.competencias"))
+
+        else:
+
+            print("ERRORES:", form.errors)
 
     return render_template(
         "usuario/cursos.html", form=form)
@@ -582,52 +698,83 @@ def competencias():
                 "eliminar": "0",
             })
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
 
         for entry in form.Info_competencias:
 
             registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
+            if registro_id and marcado_para_eliminar:
 
-            if registro_id:
                 registro = Competencias.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
+        if accion == "anterior":
 
-                # Editar existente
-                registro.competencia = entry.competencia.data
-                registro.nivel = entry.nivel.data
-                registro.experiencia = entry.experiencia.data
-                registro.fecha_actualizacion = datetime.now()
+            db.session.commit()
 
-            else:
+            return redirect(
+                url_for("usuario.cursos")
+            )
 
-                # Crear nuevo
-                nuevo = Competencias(
-                    id_usuario=current_user.id,
-                    competencia=entry.competencia.data,
-                    nivel=entry.nivel.data,
-                    experiencia=entry.experiencia.data,
-                    fecha_actualizacion=datetime.now(),
-                )
+        if form.validate():
 
-                db.session.add(nuevo)
-                db.session.flush()
+            for entry in form.Info_competencias:
 
-        db.session.commit()
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
 
-        return redirect(url_for("usuario.referencias"))  # ajusta al siguiente paso real
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
+
+                    continue
+
+                registro = None
+
+                if registro_id:
+
+                    registro = Competencias.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if registro:
+
+                    # Editar existente
+                    registro.competencia = entry.competencia.data
+                    registro.nivel = entry.nivel.data
+                    registro.experiencia = entry.experiencia.data
+                    registro.fecha_actualizacion = datetime.now()
+
+                else:
+
+                    # Crear nuevo
+                    nuevo = Competencias(
+                        id_usuario=current_user.id,
+                        competencia=entry.competencia.data,
+                        nivel=entry.nivel.data,
+                        experiencia=entry.experiencia.data,
+                        fecha_actualizacion=datetime.now(),
+                    )
+
+                    db.session.add(nuevo)
+
+            db.session.commit()
+
+            return redirect(url_for("usuario.referencias"))
+
+        else:
+
+            print("ERRORES:", form.errors)
 
     return render_template(
         "usuario/competencias.html", form=form)
@@ -657,57 +804,88 @@ def referencias():
                 "eliminar": "0",
             })
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
 
         for entry in form.Info_referencias:
 
             registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
+            if registro_id and marcado_para_eliminar:
 
-            if registro_id:
                 registro = Referencias.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
+        if accion == "anterior":
 
-                # Editar existente
-                registro.nombres = entry.nombres.data
-                registro.apellidos = entry.apellidos.data
-                registro.empresa = entry.empresa.data
-                registro.telefono = entry.telefono.data
-                registro.ciudad = entry.ciudad.data
-                registro.autoriza = entry.autoriza.data
+            db.session.commit()
 
-            else:
+            return redirect(
+                url_for("usuario.competencias")
+            )
 
-                # Crear nuevo
-                nuevo = Referencias(
-                    id_usuario=current_user.id,
-                    nombres=entry.nombres.data,
-                    apellidos=entry.apellidos.data,
-                    empresa=entry.empresa.data,
-                    telefono=entry.telefono.data,
-                    ciudad=entry.ciudad.data,
-                    autoriza=entry.autoriza.data,
-                    fecha_registro=datetime.now()
-                )
+        if form.validate():
 
-                db.session.add(nuevo)
-                db.session.flush()
+            for entry in form.Info_referencias:
 
-        db.session.commit()
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
 
-        return redirect(url_for("usuario.discapacidades"))
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
+
+                    continue
+
+                registro = None
+
+                if registro_id:
+
+                    registro = Referencias.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if registro:
+
+                    # Editar existente
+                    registro.nombres = entry.nombres.data
+                    registro.apellidos = entry.apellidos.data
+                    registro.empresa = entry.empresa.data
+                    registro.telefono = entry.telefono.data
+                    registro.ciudad = entry.ciudad.data
+                    registro.autoriza = entry.autoriza.data
+
+                else:
+
+                    # Crear nuevo
+                    nuevo = Referencias(
+                        id_usuario=current_user.id,
+                        nombres=entry.nombres.data,
+                        apellidos=entry.apellidos.data,
+                        empresa=entry.empresa.data,
+                        telefono=entry.telefono.data,
+                        ciudad=entry.ciudad.data,
+                        autoriza=entry.autoriza.data,
+                        fecha_registro=datetime.now()
+                    )
+
+                    db.session.add(nuevo)
+
+            db.session.commit()
+
+            return redirect(url_for("usuario.discapacidades"))
+
+        else:
+
+            print("ERRORES:", form.errors)
 
     return render_template(
         "usuario/referencias.html",
@@ -733,44 +911,76 @@ def discapacidades():
                 "eliminar": "0",
             })
 
-    if form.validate_on_submit():
+    if request.method == "POST":
+
+        accion = request.form.get("accion")
 
         for entry in form.Info_discapacidades:
 
             registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            registro = None
-            if registro_id:
+            if registro_id and marcado_para_eliminar:
+
                 registro = Discapacidades.query.filter_by(
                     id=registro_id,
                     id_usuario=current_user.id
                 ).first()
 
-            # --- Eliminar SOLO si el usuario lo marcó explícitamente ---
-            if marcado_para_eliminar:
                 if registro:
+
                     db.session.delete(registro)
-                continue
 
-            if registro:
-                # Editar existente
-                registro.categoria = entry.categoria.data
-                registro.descripcion = entry.descripcion.data
-            else:
-                # Crear nuevo
-                nuevo = Discapacidades(
-                    id_usuario=current_user.id,
-                    categoria=entry.categoria.data,
-                    descripcion=entry.descripcion.data,
-                    fecha_registro=datetime.now(),
-                )
-                db.session.add(nuevo)
-                db.session.flush()
+        if accion == "anterior":
 
-        db.session.commit()
+            db.session.commit()
 
-        return redirect(url_for("usuario.documentos"))
+            return redirect(
+                url_for("usuario.referencias")
+            )
+
+        if form.validate():
+
+            for entry in form.Info_discapacidades:
+
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
+
+                # Ya fue procesado arriba
+                if marcado_para_eliminar:
+
+                    continue
+
+                registro = None
+
+                if registro_id:
+
+                    registro = Discapacidades.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if registro:
+                    # Editar existente
+                    registro.categoria = entry.categoria.data
+                    registro.descripcion = entry.descripcion.data
+                else:
+                    # Crear nuevo
+                    nuevo = Discapacidades(
+                        id_usuario=current_user.id,
+                        categoria=entry.categoria.data,
+                        descripcion=entry.descripcion.data,
+                        fecha_registro=datetime.now(),
+                    )
+                    db.session.add(nuevo)
+
+            db.session.commit()
+
+            return redirect(url_for("usuario.documentos"))
+
+        else:
+
+            print("ERRORES:", form.errors)
 
     return render_template("usuario/discapacidades.html", form=form)
 

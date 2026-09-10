@@ -58,11 +58,21 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+              
+            <div class="form-botones"> 
+                    <button type="submit"
+                        name="accion"
+                        value="anterior"
+                        class="btn-secondary">
+                      Anterior
+                    </button>
 
-            <div class="form-botones">
-                <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
-                
-                {{ form.submit(class="btn-primary") }}
+                    <button type="submit"
+                            name="accion"
+                            value="continuar"
+                            class="btn-primary">
+                        Guardar y continuar
+                    </button>  
             </div>
         </form>
     </div>
@@ -161,35 +171,106 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const container = document.getElementById("academica-container");
-    const plantilla = document.getElementById("plantilla-academica-vacia");
-    const btnAgregar = document.getElementById("btn-agregar-curso");
 
-    let contador = container.querySelectorAll(".academica-fila").length;
+    const container = document.getElementById("academica-container");
+
+    const plantilla = document.getElementById(
+        "plantilla-academica-vacia"
+    );
+
+    const btnAgregar = document.getElementById(
+        "btn-agregar-curso"
+    );
+
+    let contador = container.querySelectorAll(
+        ".academica-fila"
+    ).length;
+
+    // ==========================================================
+    // AGREGAR NUEVO REGISTRO
+    // ==========================================================
 
     btnAgregar.addEventListener("click", function () {
-        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+
+        const html = plantilla.innerHTML.replaceAll(
+            "__INDEX__",
+            contador
+        );
+
         const div = document.createElement("div");
+
         div.innerHTML = html;
-        container.appendChild(div.firstElementChild);
+
+        container.appendChild(
+            div.firstElementChild
+        );
+
         contador++;
+
     });
+
+    // ==========================================================
+    // ELIMINAR REGISTRO
+    // ==========================================================
 
     container.addEventListener("click", function (e) {
-        if (e.target.classList.contains("btn-eliminar-fila")) {
-            const fila = e.target.closest(".academica-fila");
-            const campoEliminar = fila.querySelector(".campo-eliminar");
 
-            if (campoEliminar) {
-                // Fila ya existente en la BD: la marcamos y ocultamos, no la borramos del DOM
-                campoEliminar.value = "1";
-                fila.style.display = "none";
-            } else {
-                // Fila nueva (aún no guardada): sí se puede quitar del DOM sin problema
-                fila.remove();
-            }
+        if (
+            !e.target.classList.contains(
+                "btn-eliminar-fila"
+            )
+        ) {
+
+            return;
+
         }
+
+        const fila = e.target.closest(
+            ".academica-fila"
+        );
+
+        if (!fila) {
+
+            return;
+
+        }
+
+        const registroId = fila.querySelector(
+            'input[name$="-registro_id"]'
+        );
+
+        const campoEliminar = fila.querySelector(
+            ".campo-eliminar"
+        );
+
+        // ======================================================
+        // REGISTRO EXISTENTE
+        // ======================================================
+
+        if (
+            registroId &&
+            registroId.value &&
+            campoEliminar
+        ) {
+
+            campoEliminar.value = "1";
+
+            fila.style.display = "none";
+
+        }
+
+        // ======================================================
+        // REGISTRO NUEVO
+        // ======================================================
+
+        else {
+
+            fila.remove();
+
+        }
+
     });
+
 });
 </script>
 {% endblock %}

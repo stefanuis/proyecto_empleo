@@ -1,0 +1,29 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}
+Competencias Profesionales
+{% endblock %}
+
+{% block contenido %}
+
+<div class="contenedor-formulario">
+    <div class="card-header">
+        <span class="card-title">Video de presentación</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.guardar_video_presentacion') }}">
+        <label for="video_url" style="font-size: 13px; color: var(--text-secondary); display:block; margin-bottom: 6px;">
+            URL del video (YouTube o Vimeo)
+        </label>
+        <input
+            type="url"
+            id="video_url"
+            name="video_url"
+            placeholder="https://www.youtube.com/watch?v=xxxxxxxxxxx"
+            value="{{ video_url or '' }}"
+            style="width: 100%; margin-bottom: 12px;"
+            required
+        >
+        <button type="submit" class="btn-primary btn-sm">Guardar video</button>
+    </form>
+</div>

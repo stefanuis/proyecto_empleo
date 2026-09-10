@@ -20,6 +20,7 @@
                 {% for entry in form.Info_curso %}
                 <div class="curso-fila" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
                     <div class="form-grid">
                         <div class="campo">
@@ -52,8 +53,19 @@
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
 
             <div class="form-botones">
-                <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">Anterior</a>
-                {{ form.submit(class="btn-primary") }}
+                <button type="submit"
+                        name="accion"
+                        value="anterior"
+                        class="btn-secondary">
+                    Anterior
+                </button>
+
+                <button type="submit"
+                        name="accion"
+                        value="continuar"
+                        class="btn-primary">
+                    Guardar y continuar
+                </button>
             </div>
         </form>
     </div>
@@ -63,6 +75,7 @@
 <template id="plantilla-curso-vacio">
     <div class="curso-fila" data-index="__INDEX__">
         <input type="hidden" name="Info_curso-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_curso-__INDEX__-eliminar" value="0">
         <div class="form-grid">
             <div class="campo">
                 <label>Nombre del curso</label>
@@ -91,25 +104,106 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const container = document.getElementById("cursos-container");
-    const plantilla = document.getElementById("plantilla-curso-vacio");
-    const btnAgregar = document.getElementById("btn-agregar-curso");
 
-    let contador = container.querySelectorAll(".curso-fila").length;
+    const container = document.getElementById("cursos-container");
+
+    const plantilla = document.getElementById(
+        "plantilla-curso-vacio"
+    );
+
+    const btnAgregar = document.getElementById(
+        "btn-agregar-curso"
+    );
+
+    let contador = container.querySelectorAll(
+        ".curso-fila"
+    ).length;
+
+    // ==========================================================
+    // AGREGAR NUEVO REGISTRO
+    // ==========================================================
 
     btnAgregar.addEventListener("click", function () {
-        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+
+        const html = plantilla.innerHTML.replaceAll(
+            "__INDEX__",
+            contador
+        );
+
         const div = document.createElement("div");
+
         div.innerHTML = html;
-        container.appendChild(div.firstElementChild);
+
+        container.appendChild(
+            div.firstElementChild
+        );
+
         contador++;
+
     });
 
+    // ==========================================================
+    // ELIMINAR REGISTRO
+    // ==========================================================
+
     container.addEventListener("click", function (e) {
-        if (e.target.classList.contains("btn-eliminar-fila")) {
-            e.target.closest(".curso-fila").remove();
+
+        if (
+            !e.target.classList.contains(
+                "btn-eliminar-fila"
+            )
+        ) {
+
+            return;
+
         }
+
+        const fila = e.target.closest(
+            ".curso-fila"
+        );
+
+        if (!fila) {
+
+            return;
+
+        }
+
+        const registroId = fila.querySelector(
+            'input[name$="-registro_id"]'
+        );
+
+        const campoEliminar = fila.querySelector(
+            ".campo-eliminar"
+        );
+
+        // ======================================================
+        // REGISTRO EXISTENTE
+        // ======================================================
+
+        if (
+            registroId &&
+            registroId.value &&
+            campoEliminar
+        ) {
+
+            campoEliminar.value = "1";
+
+            fila.style.display = "none";
+
+        }
+
+        // ======================================================
+        // REGISTRO NUEVO
+        // ======================================================
+
+        else {
+
+            fila.remove();
+
+        }
+
     });
+
 });
 </script>
 {% endblock %}
