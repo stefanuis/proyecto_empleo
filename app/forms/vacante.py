@@ -4,6 +4,7 @@ from wtforms import (
     SelectField,
     SubmitField,
     TextAreaField,
+    BooleanField,
     DateField
 )
 from wtforms.validators import (
@@ -139,6 +140,12 @@ class VacanteForm(FlaskForm):
            
         ],
         validators=[DataRequired()]
+    )
+
+    
+    requiere_video = BooleanField(
+        "requiere video de presentacion",
+        validators=[Optional()]
     )
 
     submit = SubmitField("Guardar vacante")

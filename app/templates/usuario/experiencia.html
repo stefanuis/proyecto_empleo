@@ -166,7 +166,7 @@
                 <input class="form-control" name="Info_experiencia-__INDEX__-municipio">
             </div>
 
-            <!-- ============ chips de funciones en la plantilla clonable ============ -->
+
             <div class="campo campo-completo">
                 <label>Funciones realizadas</label>
 
@@ -179,7 +179,7 @@
 
                 <input type="hidden" class="funciones-lista-hidden" name="Info_experiencia-__INDEX__-funciones_lista" value="">
             </div>
-            <!-- ============================================================================= -->
+           
 
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
@@ -203,9 +203,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ".experiencia-fila"
     ).length;
 
-    // ==========================================================
-    // LÓGICA DE CHIPS DE FUNCIONES
-    // ==========================================================
+
 
     function inicializarChipsFunciones(fila) {
         const contenedorChips = fila.querySelector(".funciones-chips-container");
@@ -276,9 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     container.querySelectorAll(".experiencia-fila").forEach(inicializarChipsFunciones);
 
-    // ==========================================================
-    // NUEVO: MOSTRAR/OCULTAR MOTIVO Y FECHA DE SALIDA SEGÚN "ACTUAL"
-    // ==========================================================
+
 
     function actualizarVisibilidadSalida(fila) {
         const checkboxActual = fila.querySelector(".campo-actual");
@@ -311,9 +307,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     container.querySelectorAll(".experiencia-fila").forEach(inicializarToggleActual);
 
-    // ==========================================================
-    // AGREGAR NUEVO REGISTRO
-    // ==========================================================
+
 
     btnAgregar.addEventListener("click", function () {
 
@@ -331,15 +325,13 @@ document.addEventListener("DOMContentLoaded", function () {
         container.appendChild(nuevaFila);
 
         inicializarChipsFunciones(nuevaFila);
-        inicializarToggleActual(nuevaFila);   // <-- NUEVO
+        inicializarToggleActual(nuevaFila);  
 
         contador++;
 
     });
 
-    // ==========================================================
-    // ELIMINAR REGISTRO
-    // ==========================================================
+ 
 
     container.addEventListener("click", function (e) {
 

@@ -9,13 +9,18 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
   <div class="contenedor-formulario" style="max-width: 900px;">
 
     <div class="card-header">
-        <span class="card-title">Expediente del postulante</span>
+        <span class="card-title">Hoja de vida del postulante</span>
+        <div class="logo-principal">
+            <img src="{{  url_for('static',filename='img/logo_color.png')}}" alt="">
+        </div>
+        <!----
         <div class="card-actions">
             <a href="{{ url_for('admin.listar_postulantes', id=post.id_vacante) }}"
                class="btn-secondary">
                 Volver a postulantes
             </a>
         </div>
+        -->
     </div>
 
     <!-- Encabezado -->
@@ -232,6 +237,25 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
             </div>
         </div>
 
+
+        <div class="campo campo-completo">
+            <br>
+            <label class="form-label">Notas extras</label>
+
+            <div class="tabs-notas">
+                <button type="button" class="tab-btn active" data-tab="psicologia">Psicología</button>
+                <button type="button" class="tab-btn" data-tab="talento_humano">Gestión Humana</button>
+            </div>
+
+            <div class="tab-content active" id="tab-psicologia">
+                <textarea name="notas_psicologia" class="form-control">{{ post.notas_psicologia or '' }}</textarea>
+            </div>
+
+            <div class="tab-content" id="tab-talento_humano">
+                <textarea name="notas_talento_humano" class="form-control">{{ post.notas_talento_humano or '' }}</textarea>
+            </div>
+        </div>
+
         <div class="form-botones">
             <button type="submit" class="btn-primary">Guardar cambios</button>
         </div>
@@ -239,4 +263,54 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
 
   </div>
 </div>
+
+
+<style>
+    .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e5e9;
+    flex-wrap: wrap;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    order: 1;
+}
+
+.logo-principal {
+    order: 2;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.logo-principal img {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+.card-actions {
+    order: 3;
+}
+</style>
+<script>
+document.querySelectorAll('.tabs-notas .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+
+        document.querySelectorAll('.tabs-notas .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.campo-completo .tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+    });
+});
+</script>
 {% endblock %}

@@ -10,6 +10,7 @@ from flask import (
 from sqlalchemy import exists
 from sqlalchemy import case
 from sqlalchemy import func
+from weasyprint import HTML
 from datetime import date,timedelta
 from flask_login import current_user, login_required
 from datetime import datetime
@@ -26,6 +27,7 @@ from app.models.referencias import Referencias
 from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
 from app.forms.experiencia import experienciaForm
+from app.models.funcion_experiencia import FuncionExperiencia
 
 
 from . import admin_bp
@@ -167,7 +169,8 @@ def crear_vacante():
                 salario=form.salario.data,
                 estado=form.estado.data,
                 fecha_publicacion=form.fecha_publicacion.data,
-                fecha_cierre=form.fecha_cierre.data,    
+                fecha_cierre=form.fecha_cierre.data,  
+                requiere_video=form.requiere_video.data,
                 id_usuario_creador=current_user.id
             )
             db.session.add(nueva_vacante)
@@ -225,9 +228,7 @@ def listar_postulantes(id):
     if estado:
         query = query.filter(Postulacion.estado == estado)
 
-    # ------------------------------------------------------
-    # EXPERIENCIA MÍNIMA (años totales por candidato)
-    # ------------------------------------------------------
+
     if experiencia_minima:
         try:
             experiencia_minima_float = float(experiencia_minima)
@@ -256,9 +257,7 @@ def listar_postulantes(id):
         except ValueError:
             pass
 
-    # ------------------------------------------------------
-    # NIVEL DE ESTUDIOS (coincidencia exacta — viene de un select)
-    # ------------------------------------------------------
+
     if nivel_estudios:
         subq_nivel = db.session.query(
             Info_academica.id_usuario
@@ -270,9 +269,6 @@ def listar_postulantes(id):
             Postulacion.id_usuario.in_(db.session.query(subq_nivel.c.id_usuario))
         )
 
-    # ------------------------------------------------------
-    # TÍTULO / CARRERA (coincidencia parcial — texto libre)
-    # ------------------------------------------------------
     if titulo_estudios:
         subq_titulo = db.session.query(
             Info_academica.id_usuario
@@ -284,9 +280,7 @@ def listar_postulantes(id):
             Postulacion.id_usuario.in_(db.session.query(subq_titulo.c.id_usuario))
         )
 
-    # ------------------------------------------------------
-    # FUNCIONES (coincidencia parcial — texto libre)
-    # ------------------------------------------------------
+
     if funcion_buscar:
         subq_funcion = db.session.query(
             Experiencia.id_usuario
@@ -304,7 +298,7 @@ def listar_postulantes(id):
     postulaciones = query.order_by(Postulacion.fecha_postulacion.desc()).all()
 
     return render_template(
-        "admin/postulantes_vacantes.html",
+        "admin/listar_postulantes.html",
         vacante=vacante,
         postulaciones=postulaciones,
         estado_seleccionado=estado,
@@ -315,35 +309,6 @@ def listar_postulantes(id):
     )
 
 
-@admin_bp.route("/vacantes/<int:id>/postulantes", methods=["GET"])
-@login_required
-def listar_postulantes(id):
-    if(session["rol"] == "admin"):
-        vacante = Vacante.query.get_or_404(id)
-        estado = request.args.get('estado', '')
-
-        query = db.session.query(
-            Postulacion,
-            Personal
-        ).join(
-            Personal,
-            Personal.id_usuario == Postulacion.id_usuario
-        ).filter(
-            Postulacion.id_vacante == id
-        )
-
-        if estado:
-            query = query.filter(Postulacion.estado == estado)
-
-        postulaciones = query.order_by(Postulacion.fecha_postulacion.desc()).all()
-
-        return render_template(
-            "admin/postulantes_vacantes.html",
-            vacante=vacante,
-            postulaciones=postulaciones
-        )
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
     
 
 @admin_bp.route('/hojas-de-vida')
@@ -394,56 +359,14 @@ def actualizar_postulacion(id):
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
     
-
-@admin_bp.route("/postulaciones")
+@admin_bp.route("/admin/postulantes/<int:id>/descargar-expediente")
 @login_required
-def listar_postulaciones():
+def descargar_expedientes(id):
     if(session["rol"] == "admin"):
-        q = request.args.get('q', '').strip()
-        nivel = request.args.get('nivel', '')
-        area = request.args.get('area', '')
-        estado = request.args.get('estado', '')
-
-        query = db.session.query(
-            Postulacion, Personal, Vacante
-        ).join(
-            Personal, Personal.id_usuario == Postulacion.id_usuario
-        ).join(
-            Vacante, Vacante.id == Postulacion.id_vacante
-        )
-
-        if q:
-            query = query.filter(
-                db.or_(
-                    Personal.nombres.ilike(f'%{q}%'),
-                    Personal.apellidos.ilike(f'%{q}%')
-                )
-            )
-
-        if nivel:
-            query = query.filter(
-                exists().where(   # <-- acá se usa exists
-                    (Info_academica.id_usuario == Postulacion.id_usuario) &
-                    (Info_academica.nivel == nivel)
-                )
-            )
-
-        if area:
-            query = query.filter(Vacante.area == area)
-
-        if estado:
-            query = query.filter(Postulacion.estado == estado)
-
-        resultados = query.order_by(Postulacion.fecha_postulacion.desc()).all()
-
-        return render_template(
-            "admin/listar_postulantes.html",
-            resultados=resultados
-        )
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+        
 
 
+    
 
 #### confirmaciones
 

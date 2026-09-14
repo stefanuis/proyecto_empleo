@@ -4695,7 +4695,46 @@ form + .btn-postular {
     display: none;
 }
 
+/****  dinamica *****/
 
+.tabs-notas {
+    display: flex;
+    gap: 4px;
+    margin-bottom: -1px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    border-bottom: none;
+    background: #f1f1f1;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.tab-btn.active {
+    background: #fff;
+    color: #000;
+    font-weight: 600;
+    border-bottom: 1px solid #fff;
+}
+
+.tab-content {
+    display: none;
+    border: 1px solid #ccc;
+    border-radius: 0 6px 6px 6px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-content .form-control {
+    border: none;
+    width: 100%;
+}
 
 @media (max-width: 640px) {
     .perfil {
