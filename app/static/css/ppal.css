@@ -4483,7 +4483,7 @@ form + .btn-postular {
     padding: 24px;
     transition: box-shadow 0.2s ease;
     background-color: #fff;
-}x|
+}
 
 .beneficio-card:hover {
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
@@ -4514,6 +4514,199 @@ form + .btn-postular {
 @media (max-width: 900px) {
     .beneficios-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.perfil {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background-color: var(--primary);
+    color: #ffffff;
+    padding: 24px 28px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    -webkit-border-radius: 14px;
+    -moz-border-radius: 14px;
+    -ms-border-radius: 14px;
+    -o-border-radius: 14px;
+}
+
+.perfil::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.perfil::after {
+    content: "";
+    position: absolute;
+    bottom: -60px;
+    right: 60px;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+}
+
+.perfil .texto {
+    position: relative;
+    z-index: 1;
+}
+
+.perfil .texto h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+
+.perfil .texto p {
+    font-size: 14px;
+    margin: 0;
+    opacity: 0.9;
+    max-width: 420px;
+    color: #fff;
+}
+
+.perfil a {
+    position: relative;
+    z-index: 1;
+    background: #ffffff;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.perfil a:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+.campo-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.campo-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.campo-checkbox label {
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.campo-completo {
+    grid-column: 1 / -1;
+}
+
+.funciones-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    min-height: 20px;
+}
+
+.chip-funcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f0f0f5;
+    color: #333;
+    border-radius: 20px;
+    padding: 6px 8px 6px 14px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.chip-funcion-quitar {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 50%;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.chip-funcion-quitar:hover {
+    background-color: #e0455e;
+    color: #fff;
+}
+
+.funciones-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.funcion-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.funcion-input:focus {
+    outline: none;
+    border-color: #d81b60;
+}
+
+.btn-agregar-funcion {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #d81b60;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+}
+
+.btn-agregar-funcion:hover {
+    background-color: #b8154f;
+}
+
+.funciones-lista-hidden {
+    display: none;
+}
+
+
+
+@media (max-width: 640px) {
+    .perfil {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 14px;
+    }
+
+    .perfil a {
+        align-self: flex-start;
     }
 }
 

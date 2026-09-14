@@ -1,13 +1,10 @@
 {% extends 'usuario/base.html' %}
 
-{% block titulo %}
-Competencias Profesionales
-{% endblock %}
-
 {% block contenido %}
 
 <div class="contenedor-padre">
     <div class="contenedor-formulario">
+        <h2>Competencias Profesionales</h2>
 
         {% include "usuario/barra_progreso.html" with context %}
 
@@ -23,7 +20,7 @@ Competencias Profesionales
             {% endif %}
         {% endwith %}
 
-        <form method="POST" novalidate>
+        <form method="POST" id="form-wizard" novalidate>
 
             {{ form.hidden_tag() }}
 
@@ -76,18 +73,15 @@ Competencias Profesionales
             <div class="form-botones">
 
                 <button type="submit"
-                        name="accion"
-                        value="anterior"
-                        class="btn-secondary">
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
                     Anterior
                 </button>
 
-                <button type="submit"
-                        name="accion"
-                        value="continuar"
-                        class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
 
             </div>
 

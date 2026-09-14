@@ -4,101 +4,107 @@
 Principal Usuario
 {% endblock %}
 
-{% block  contenido %}
+{% block contenido %}
 
 <div class="content">
- 
-    <!-- Encabezado de bienvenida -->
-    <div class="encabezado">
-      <div>
-        <p class="fecha">{{ fecha_hoy }}</p>
-        <h1>Hola, {{ current_user.nombres }} {{ current_user.apellidos }}</h1>
-        <p class="subtitulo">Tienes 2 vacantes nuevas que coinciden con tu perfil.</p>
-      </div>
-      <div class="badge-perfil">Perfil al 70%</div>
-    </div>
 
-      <!-- Progreso de perfil -->
-    <div class="perfil ">
-      <div class="texto">
-        <h3>Beneficios de trabajar en la clinica panamericana</h3>
-        <div class="barra-progreso">
-          <div class="barra-progreso-relleno"></div>
-        </div>
-      </div>
-      <a href="{{ url_for('usuario.beneficios')}}">ver mas</a>
+  <!-- Encabezado de bienvenida -->
+  <div class="encabezado">
+    <div>
+      <p class="fecha">{{ fecha_hoy }}</p>
+      <h1>Hola, {{ current_user.nombres }} {{ current_user.apellidos }}</h1>
+      <p class="subtitulo">Tienes 2 vacantes nuevas que coinciden con tu perfil.</p>
     </div>
-
-    <!-- Tarjetas de resumen -->
-    <div class="kpis">
-      <div class="kpi-card">
-        <div class="kpi-icono"></div>
-        <div>
-          <div class="kpi-valor">{{ total_vacantes }}</div>
-          <div class="kpi-label">Vacantes disponibles</div>
-        </div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icono"></div>
-        <div>
-          <div class="kpi-valor">{{ total_postulaciones }}</div>
-          <div class="kpi-label">Mis postulaciones</div>
-        </div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icono"></div>
-        <div>
-          <div class="kpi-valor">2</div>
-          <div class="kpi-label">En entrevista</div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Progreso de perfil -->
-    <div class="perfil-banner">
-      <div class="texto">
-        <h3>Completa tu perfil</h3>
-        <p>Te falta adjuntar tu hoja de vida y certificaciones.</p>
-        <div class="barra-progreso">
-          <div class="barra-progreso-relleno"></div>
-        </div>
-      </div>
-      <button class="btn-completar">Completar perfil</button>
-    </div>
- 
-    <!-- Vacantes recomendadas -->
-    <div class="seccion-titulo">
-      <h2>Vacantes para ti</h2>
-      <a href="#">Ver todas →</a>
-    </div>
- 
-    <div class="vacantes">
-      <div class="vacante-card">
-        <div>
-          <div class="vacante-titulo">Enfermera Jefe – Urgencias</div>
-          <div class="vacante-detalle">Sede Norte · Tiempo completo</div>
-        </div>
-        <button class="btn-postular">✓ Postularme</button>
-      </div>
- 
-      <div class="vacante-card">
-        <div>
-          <div class="vacante-titulo">Auxiliar de Facturación</div>
-          <div class="vacante-detalle">Sede Centro · Tiempo completo</div>
-        </div>
-        <button class="btn-postular">✓ Postularme</button>
-      </div>
- 
-      <div class="vacante-card">
-        <div>
-          <div class="vacante-titulo">Técnico en Laboratorio Clínico</div>
-          <div class="vacante-detalle">Sede Norte · Medio tiempo</div>
-        </div>
-        <button class="btn-postular">✓ Postularme</button>
-      </div>
-    </div>
- 
+    <div class="badge-perfil">Perfil al {{ completitud.porcentaje }}%</div>
   </div>
- 
+
+  <!-- Beneficios de trabajar en la clínica -->
+  <div class="perfil">
+    <div class="texto">
+      <h3>Beneficios de trabajar en la Clínica Panamericana</h3>
+      <p>Conoce todo lo que tenemos para ti como parte de nuestro equipo.</p>
+    </div>
+    <a href="{{ url_for('usuario.beneficios') }}">Ver más</a>
+  </div>
+
+  <!-- Tarjetas de resumen -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-icono"></div>
+      <div>
+        <div class="kpi-valor">{{ total_vacantes }}</div>
+        <div class="kpi-label">Vacantes disponibles</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icono"></div>
+      <div>
+        <div class="kpi-valor">{{ total_postulaciones }}</div>
+        <div class="kpi-label">Mis postulaciones</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icono"></div>
+      <div>
+        <div class="kpi-valor">2</div>
+        <div class="kpi-label">En entrevista</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progreso de perfil -->
+  {% if completitud.porcentaje < 100 %}
+  <div class="perfil-banner">
+    <div class="texto">
+      <h3>Completa tu perfil</h3>
+      <p>
+        Te falta
+        {% if completitud.faltantes|length > 1 %}
+          {{ completitud.faltantes[:-1]|join(', ') }} y {{ completitud.faltantes[-1] }}
+        {% else %}
+          {{ completitud.faltantes[0] }}
+        {% endif %}.
+      </p>
+      <div class="barra-progreso">
+        <div class="barra-progreso-relleno" style="width: {{ completitud.porcentaje }}%;"></div>
+      </div>
+    </div>
+    <a href="{{ url_for('usuario.' ~ completitud.primer_paso_faltante) }}" class="btn-completar">Completar perfil</a>
+  </div>
+  {% endif %}
+
+  <!-- Vacantes recomendadas -->
+  <div class="seccion-titulo">
+    <h2>Vacantes para ti</h2>
+    <a href="#">Ver todas →</a>
+  </div>
+
+  <div class="vacantes">
+    <div class="vacante-card">
+      <div>
+        <div class="vacante-titulo">Enfermera Jefe – Urgencias</div>
+        <div class="vacante-detalle">Sede Norte · Tiempo completo</div>
+      </div>
+      <button class="btn-postular">✓ Postularme</button>
+    </div>
+
+    <div class="vacante-card">
+      <div>
+        <div class="vacante-titulo">Auxiliar de Facturación</div>
+        <div class="vacante-detalle">Sede Centro · Tiempo completo</div>
+      </div>
+      <button class="btn-postular">✓ Postularme</button>
+    </div>
+
+    <div class="vacante-card">
+      <div>
+        <div class="vacante-titulo">Técnico en Laboratorio Clínico</div>
+        <div class="vacante-detalle">Sede Norte · Medio tiempo</div>
+      </div>
+      <button class="btn-postular">✓ Postularme</button>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}

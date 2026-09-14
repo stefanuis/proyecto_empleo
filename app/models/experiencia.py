@@ -19,7 +19,8 @@ class Experiencia(db.Model):
     pais = db.Column(db.String(50))
     departamento = db.Column(db.String(50))
     municipio = db.Column(db.String(50))
-    funciones_realizadas = db.Column(db.String(500)) #Cambiar esto a Texto.
+    funciones = db.relationship("FuncionExperiencia",backref="experiencia",cascade="all, delete-orphan"
+)
     ruta_soporte = db.Column(db.String(240))
     fecha_registro = db.Column(db.DateTime, default=datetime.now)
 

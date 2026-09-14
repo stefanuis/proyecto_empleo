@@ -10,17 +10,11 @@ Vacantes
       method="GET"
       action="{{ url_for('admin.listar_vacantes') }}">
 
-
-<div class="input-buscar" style="flex: 1;">
+<div class="input-buscar buscador-vacantes">
 
     <i class="ti ti-search"></i>
 
-    <input
-        type="text"
-        name="q"
-        placeholder="Buscar por nombre"
-        value="{{ q }}"
-    >
+    <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}" >
 
     <button
         type="submit"
@@ -33,72 +27,35 @@ Vacantes
 
 </div>
 
+<div class="vac-filtros-info">
 
-
-<div style="
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 14px;
-">
-
-    <p style="
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin: 0;
-    ">
+    <p class="vac-filtros-info-texto">
 
     </p>
 
 </div>
 
-
 <div
     class="filtros-avanzados-panel"
-    style="
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 8px;
-        margin-bottom: 16px;
-    "
 >
 
     <div
         class="filtros-avanzados-grupos"
-        style="
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        "
     >
 
-        <!-- ================================================= -->
-        <!-- VACANTE -->
-        <!-- ================================================= -->
+        
 
-        <div class="filtro-grupo">
+        <div class="vac-filtro-grupo">
 
             <p
                 class="filtro-grupo-titulo"
-                style="
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: .03em;
-                    margin: 0 0 8px;
-                "
             >
                 Vacante
             </p>
 
+            
 
-            <!-- Área de aplicación -->
-
-            <select
-                name="area_aplicacion"
-                style="width: 100%; margin-bottom: 8px;"
-            >
+            <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area" >
 
                 <option value="">
                     Todas las áreas de aplicación
@@ -123,13 +80,9 @@ Vacantes
 
             </select>
 
+            
 
-            <!-- Vacante -->
-
-            <select
-                name="vacantes"
-                style="width: 100%;"
-            >
+            <select name="vacantes" class="vac-filtro-select" >
 
                 <option value="">
                     Todas las vacantes
@@ -150,7 +103,6 @@ Vacantes
 
             </select>
 
-
             <p style="
                 font-size: 11px;
                 color: var(--text-muted);
@@ -161,33 +113,19 @@ Vacantes
 
         </div>
 
+        
 
-        <!-- ================================================= -->
-        <!-- REQUISITOS DEL PUESTO -->
-        <!-- ================================================= -->
-
-        <div class="filtro-grupo">
+        <div class="vac-filtro-grupo">
 
             <p
                 class="filtro-grupo-titulo"
-                style="
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: .03em;
-                    margin: 0 0 8px;
-                "
             >
                 Requisitos del puesto
             </p>
 
+            
 
-            <!-- Nivel académico -->
-
-            <select
-                name="nivel"
-                style="width: 100%; margin-bottom: 8px;"
-            >
+            <select name="nivel" class="vac-filtro-select" >
 
                 <option value="">
                     Todos los niveles
@@ -258,94 +196,21 @@ Vacantes
 
             </select>
 
-
-            <!-- Experiencia -->
-
-            <select
-                name="experiencia_minima"
-                style="width: 100%;"
-            >
-
-                <option value="">
-                    Cualquier experiencia
-                </option>
-
-                <option
-                    value="0"
-                    {% if experiencia_seleccionada == '0' %}
-                        selected
-                    {% endif %}
-                >
-                    Sin experiencia
-                </option>
-
-                <option
-                    value="1"
-                    {% if experiencia_seleccionada == '1' %}
-                        selected
-                    {% endif %}
-                >
-                    1+ año
-                </option>
-
-                <option
-                    value="2"
-                    {% if experiencia_seleccionada == '2' %}
-                        selected
-                    {% endif %}
-                >
-                    2+ años
-                </option>
-
-                <option
-                    value="3"
-                    {% if experiencia_seleccionada == '3' %}
-                        selected
-                    {% endif %}
-                >
-                    3+ años
-                </option>
-
-                <option
-                    value="5"
-                    {% if experiencia_seleccionada == '5' %}
-                        selected
-                    {% endif %}
-                >
-                    5+ años
-                </option>
-
-            </select>
-
         </div>
 
+        
 
-        <!-- ================================================= -->
-        <!-- ESTADO Y FECHAS -->
-        <!-- ================================================= -->
-
-        <div class="filtro-grupo">
+        <div class="vac-filtro-grupo">
 
             <p
                 class="filtro-grupo-titulo"
-                style="
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    text-transform: uppercase;
-                    letter-spacing: .03em;
-                    margin: 0 0 8px;
-                "
             >
                 Estado y fechas
             </p>
 
+            
 
-            <!-- Estado -->
-
-            <select
-                name="estado"
-                style="width: 100%; margin-bottom: 8px;"
-            >
+            <select name="estado" class="vac-filtro-select vac-filtro-select-estado" >
 
                 <option value="">
                     Estados
@@ -371,53 +236,27 @@ Vacantes
 
             </select>
 
+            
 
-            <!-- Fechas -->
-
-            <div style="
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            ">
+            <div class="vac-filtro-fechas">
 
                 <div>
 
-                    <label style="
-                        font-size: 11px;
-                        color: var(--text-muted);
-                        display: block;
-                        margin-bottom: 3px;
-                    ">
+                    <label class="vac-filtro-label">
                         Publicada desde
                     </label>
 
-                    <input
-                        type="date"
-                        name="fecha_publicacion_desde"
-                        value="{{ fecha_publicacion_valor }}"
-                        style="width: 100%;"
-                    >
+                    <input type="date" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}" >
 
                 </div>
 
-
                 <div>
 
-                    <label style="
-                        font-size: 11px;
-                        color: var(--text-muted);
-                        display: block;
-                        margin-bottom: 3px;
-                    ">
+                    <label class="vac-filtro-label">
                         Publicada hasta
                     </label>
 
-                    <input
-                        type="date"
-                        name="fecha_publicacion_hasta"
-                        value="{{ fecha_cierre_valor }}"
-                        style="width: 100%;"
-                    >
+                    <input type="date" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}" >
 
                 </div>
 
@@ -427,21 +266,9 @@ Vacantes
 
     </div>
 
+    
 
-    <!-- ================================================= -->
-    <!-- BOTONES -->
-    <!-- ================================================= -->
-
-    <div style="
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 16px;
-        padding-top: 14px;
-        border-top: 1px solid var(--border);
-    ">
-
-        <!-- Restablecer -->
+    <div class="vac-filtros-acciones">
 
         <button
             type="button"
@@ -451,8 +278,7 @@ Vacantes
             Restablecer
         </button>
 
-
-        <!-- Aplicar filtros -->
+        
 
         <button
             type="submit"
@@ -467,15 +293,11 @@ Vacantes
 
 </div>
 
-
 </form>
 
-<!---tabla -->
+<div class="vac-tabla-container">
 
-<div class="tabla-container">
-
-
-<table class="tabla-vacantes">
+<table class="vac-tabla">
 
     <thead>
 
@@ -505,21 +327,17 @@ Vacantes
 
     </thead>
 
-
     <tbody>
 
         {% for vacante in vacantes %}
 
             <tr>
 
-                <!-- ID -->
-
                 <td>
                     {{ vacante.id }}
                 </td>
 
-
-                <!-- Título -->
+                
 
                 <td>
                     <strong>
@@ -527,48 +345,43 @@ Vacantes
                     </strong>
                 </td>
 
-
-                <!-- Área -->
+                
 
                 <td>
                     {{ vacante.area or 'No especificada' }}
                 </td>
 
-
-                <!-- Área de aplicación -->
+                
 
                 <td>
                     {{ vacante.area_aplicacion or 'No especificada' }}
                 </td>
 
-
-                <!-- Nivel académico -->
+                
 
                 <td>
                     {{ vacante.nivel_academico or 'No especificado' }}
                 </td>
 
-
-                <!-- Salario -->
+                
 
                 <td>
                     {{ vacante.salario or 'No especificado' }}
                 </td>
 
-
-                <!-- Estado -->
+                
 
                 <td>
 
                     {% if vacante.estado == 'Activa' %}
 
-                        <span class="estado-activa">
+                        <span class="vac-estado-activa">
                             Activa
                         </span>
 
                     {% elif vacante.estado == 'Cerrada' %}
 
-                        <span class="estado-cerrada">
+                        <span class="vac-estado-cerrada">
                             Cerrada
                         </span>
 
@@ -580,8 +393,7 @@ Vacantes
 
                 </td>
 
-
-                <!-- Fecha publicación -->
+                
 
                 <td>
 
@@ -597,14 +409,27 @@ Vacantes
 
                 </td>
 
-
-                <!-- Fecha cierre -->
+                
 
                 <td>
 
                     {% if vacante.fecha_cierre %}
 
                         {{ vacante.fecha_cierre.strftime('%d/%m/%Y') }}
+
+                        {% set dias = vacante.dias_para_cierre %}
+
+                        {% if dias is not none %}
+
+                            {% if dias < 0 %}
+                                <span class="vac-badge-vencida">Vencida</span>
+                            {% elif dias <= 7 %}
+                                <span class="vac-badge-por-vencer">
+                                    {{ dias }} día{{ 's' if dias != 1 else '' }}
+                                </span>
+                            {% endif %}
+
+                        {% endif %}
 
                     {% else %}
 
@@ -614,26 +439,25 @@ Vacantes
 
                 </td>
 
-
-                <!-- Acciones -->
+                
 
                 <td>
 
-                    <div class="acciones-vacante">
+                    <div class="vac-acciones">
 
-                        <button
-                            type="button"
+                        <a
+                            href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}"
                             class="btn-secondary btn-sm"
                         >
-                        <a href=" {{  url_for('admin.listar_postulaciones') }}"> Ver postulantes</a>
-                        </button>
+                            Ver postulantes
+                        </a>
 
-                        <button
-                            type="button"
+                        <a
+                            href="{{ url_for('admin.editar_vacante', id=vacante.id) }}"
                             class="btn-primary btn-sm"
                         >
                             Editar
-                        </button>
+                        </a>
 
                     </div>
 
@@ -641,14 +465,12 @@ Vacantes
 
             </tr>
 
-
         {% else %}
 
             <tr>
 
                 <td
-                    colspan="10"
-                    style="text-align: center; padding: 30px;"
+                    colspan="10" class="vac-tabla-vacia"
                 >
                     No se encontraron vacantes.
                 </td>
@@ -660,8 +482,248 @@ Vacantes
     </tbody>
 
 </table>
-
-
 </div>
+
+<style>
+.buscador-vacantes {
+    flex: 1;
+}
+
+.vac-filtros-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+}
+
+.vac-filtros-info-texto {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.filtros-avanzados-panel {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+.filtros-avanzados-grupos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.filtro-grupo-titulo {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin: 0 0 8px;
+}
+
+.vac-filtro-select {
+    width: 100%;
+}
+
+.vac-filtro-select-area,
+.vac-filtro-select-estado {
+    margin-bottom: 8px;
+}
+
+.vac-filtro-ayuda {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 6px 0 0;
+}
+
+.vac-filtro-fechas {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vac-filtro-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 3px;
+}
+
+.vac-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.vac-tabla-vacia {
+    text-align: center;
+    padding: 30px;
+}
+
+.vac-filtro-grupo select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+}
+
+.vac-filtro-grupo select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.vac-filtro-grupo select:hover {
+    border-color: var(--primary-mid);
+}
+
+.vac-filtro-grupo input[type="date"] {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.vac-filtro-grupo input[type="date"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.filtros-vacantes-admin .input-buscar {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.filtros-vacantes-admin .input-buscar input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.filtros-vacantes-admin .input-buscar .btn-secondary {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.vac-tabla-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.vac-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: auto;
+}
+
+.vac-tabla thead {
+    background: var(--primary);
+}
+
+.vac-tabla thead th {
+    color: #fff;
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-tabla tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.vac-tabla tbody tr:hover {
+    background: var(--bg-hover, #fafafa);
+}
+
+.vac-tabla tbody td {
+    padding: 14px 16px;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+.vac-estado-activa {
+    display: inline-block;
+    background: #d1f5e0;
+    color: #157347;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-estado-cerrada {
+    display: inline-block;
+    background: #f1f1f1;
+    color: #666;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-badge-por-vencer {
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
+.vac-badge-vencida {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 6px;
+    white-space: nowrap;
+}
+
+.vac-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+</style>
 
 {% endblock %}

@@ -37,7 +37,7 @@
         {% endwith %}
 
 
-        <form method="POST" novalidate>
+        <form method="POST" id="form-wizard" novalidate>
 
             {{ form.hidden_tag() }}
 
@@ -118,10 +118,13 @@
             <div class="form-botones">
 
                 {% if paso_anterior %}
-                    <a href="{{ url_for('usuario.' + paso_anterior) }}"
-                       class="btn-secondary">
+                    <button type="submit"
+                            form="form-wizard"
+                            name="ir_a_paso"
+                            value="{{ paso_anterior }}"
+                            class="btn-secondary">
                         Anterior
-                    </a>
+                    </button>
                 {% endif %}
 
                 {{ form.submit(class="btn-primary") }}

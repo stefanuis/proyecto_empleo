@@ -3,6 +3,7 @@
 {% block contenido %}
 <div class="contenedor-padre">
     <div class="contenedor-formulario">
+        <h2>Formación Académica</h2>
 
         {% include "usuario/barra_progreso.html" with context %}
 
@@ -12,7 +13,7 @@
             {% endfor %}
         {% endwith %}
 
-        <form method="POST" novalidate>
+        <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
             <div id="academica-container">
@@ -28,7 +29,7 @@
                         </div>
                         <div class="campo">
                             {{ entry.estado.label }}
-                            {{ entry.estado(class="form-control") }}
+                            {{ entry.estado(class="form-control campo-estado") }}
                         </div>
                         <div class="campo">
                             {{ entry.area.label }}
@@ -46,33 +47,34 @@
                             {{ entry.pais_institucion.label }}
                             {{ entry.pais_institucion(class="form-control") }}
                         </div>
-                        <div class="campo">
+                        <div class="campo campo-finalizacion">
+                            {{ entry.mes_finalizacion.label }}
+                            {{ entry.mes_finalizacion(class="form-control") }}
+                        </div>
+                        <div class="campo campo-finalizacion">
                             {{ entry.anno_finalizacion.label }}
                             {{ entry.anno_finalizacion(class="form-control") }}
                         </div>
                     </div>
-                    
+
                  <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                 </div>
                 {% endfor %}
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
-              
-            <div class="form-botones"> 
-                    <button type="submit"
-                        name="accion"
-                        value="anterior"
-                        class="btn-secondary">
-                      Anterior
-                    </button>
 
-                    <button type="submit"
-                            name="accion"
-                            value="continuar"
-                            class="btn-primary">
-                        Guardar y continuar
-                    </button>  
+            <div class="form-botones">
+                <button type="submit"
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
+                    Anterior
+                </button>
+
+                {{ form.submit(class="btn-primary") }}
             </div>
         </form>
     </div>
@@ -96,10 +98,10 @@
                   <option value="maestria">Maestría</option>
                   <option value="doctorado">doctorado</option>
               </select>
-            </div>  
+            </div>
             <div class="campo">
             <label>Estado académico</label>
-               <select class="form-control" name="Info_academica-__INDEX__-estado">
+               <select class="form-control campo-estado" name="Info_academica-__INDEX__-estado">
                    <option value="" disabled selected>Estado academico</option>
                    <option value="en_curso">En curso</option>
                    <option value="finalizado">Finalizado</option>
@@ -114,7 +116,6 @@
                     <option value="" disabled selected>
                         Selecciona un área
                     </option>
-
                     <option value="Administrativo">Administrativo</option>
                     <option value="Admisiones">Admisiones</option>
                     <option value="Archivo y Gestión Documental">Archivo y Gestión Documental</option>
@@ -160,7 +161,11 @@
                 <label>País institución</label>
                 <input class="form-control" name="Info_academica-__INDEX__-pais_institucion">
             </div>
-            <div class="campo">
+             <div class="campo campo-finalizacion">
+                <label>Mes finalización</label>
+                <input type="number" class="form-control" name="Info_academica-__INDEX__-mes_finalizacion">
+            </div>
+            <div class="campo campo-finalizacion">
                 <label>Año finalización</label>
                 <input type="number" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion">
             </div>
@@ -168,6 +173,7 @@
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
     </div>
 </template>
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -187,6 +193,41 @@ document.addEventListener("DOMContentLoaded", function () {
     ).length;
 
     // ==========================================================
+    // MOSTRAR/OCULTAR CAMPOS DE FINALIZACIÓN SEGÚN ESTADO
+    // ==========================================================
+
+    function actualizarVisibilidadFinalizacion(fila) {
+        const selectEstado = fila.querySelector(".campo-estado");
+        const camposFinalizacion = fila.querySelectorAll(".campo-finalizacion");
+
+        if (!selectEstado) return;
+
+        const mostrar = selectEstado.value === "finalizado";
+
+        camposFinalizacion.forEach(function (campo) {
+            campo.style.display = mostrar ? "" : "none";
+
+            const input = campo.querySelector("input, select");
+            if (input) {
+                input.disabled = !mostrar;
+            }
+        });
+    }
+
+    function inicializarToggleEstado(fila) {
+        const selectEstado = fila.querySelector(".campo-estado");
+        if (!selectEstado) return;
+
+        actualizarVisibilidadFinalizacion(fila);
+
+        selectEstado.addEventListener("change", function () {
+            actualizarVisibilidadFinalizacion(fila);
+        });
+    }
+
+    container.querySelectorAll(".academica-fila").forEach(inicializarToggleEstado);
+
+    // ==========================================================
     // AGREGAR NUEVO REGISTRO
     // ==========================================================
 
@@ -201,9 +242,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         div.innerHTML = html;
 
-        container.appendChild(
-            div.firstElementChild
-        );
+        const nuevaFila = div.firstElementChild;
+
+        container.appendChild(nuevaFila);
+
+        inicializarToggleEstado(nuevaFila);
 
         contador++;
 

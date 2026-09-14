@@ -1,13 +1,10 @@
 {% extends 'usuario/base.html' %}
 
-{% block titulo %}
-Discapacidades
-{% endblock %}
-
 {% block contenido %}
 
 <div class="contenedor-padre">
     <div class="contenedor-formulario">
+        <h2>Discapacidades</h2>
 
         {% include "usuario/barra_progreso.html" with context %}
 
@@ -26,7 +23,7 @@ Discapacidades
             {% endif %}
         {% endwith %}
 
-        <form method="POST" enctype="multipart/form-data" novalidate>
+        <form method="POST" id="form-wizard" enctype="multipart/form-data" novalidate>
 
             {{ form.hidden_tag() }}
 
@@ -57,8 +54,14 @@ Discapacidades
                             {% endfor %}
                         </div>
 
+                        <!-- Checkbox: tiene certificado -->
+                        <div class="campo campo-checkbox">
+                            {{ entry.tiene_certificado(class="campo-tiene-certificado") }}
+                            {{ entry.tiene_certificado.label }}
+                        </div>
+
                         <!-- Certificado -->
-                        <div class="campo">
+                        <div class="campo campo-certificado">
                             {{ entry.ruta_certificado.label }}
                             {{ entry.ruta_certificado(class="form-control") }}
                             {% for error in entry.ruta_certificado.errors %}
@@ -79,18 +82,15 @@ Discapacidades
             <div class="form-botones">
 
                 <button type="submit"
-                        name="accion"
-                        value="anterior"
-                        class="btn-secondary">
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
                     Anterior
                 </button>
 
-                <button type="submit"
-                        name="accion"
-                        value="continuar"
-                        class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
 
             </div>
 
@@ -121,9 +121,13 @@ Discapacidades
                 <label>Descripción de la discapacidad</label>
                 <textarea class="form-control" name="Info_discapacidades-__INDEX__-descripcion"></textarea>
             </div>
-            <div class="campo">
+            <div class="campo campo-checkbox">
+                <input type="checkbox" class="campo-tiene-certificado" name="Info_discapacidades-__INDEX__-tiene_certificado">
+                <label>Tengo certificado de discapacidad</label>
+            </div>
+            <div class="campo campo-certificado">
                 <label>Certificado de discapacidad</label>
-                <input type="file" class="form-control" name="Info_discapacidades-__INDEX__-ruta_certificado">
+                <input type="file" class="form-control" name="Info_discapacidades-__INDEX__-ruta_certificado" disabled>
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
@@ -134,18 +138,47 @@ Discapacidades
 document.addEventListener("DOMContentLoaded", function () {
 
     const container = document.getElementById("discapacidades-container");
+    const plantilla = document.getElementById("plantilla-discapacidad-vacia");
+    const btnAgregar = document.getElementById("btn-agregar-discapacidad");
 
-    const plantilla = document.getElementById(
-        "plantilla-discapacidad-vacia"
-    );
+    let contador = container.querySelectorAll(".discapacidad-fila").length;
 
-    const btnAgregar = document.getElementById(
-        "btn-agregar-discapacidad"
-    );
+    // ==========================================================
+    // HABILITAR/DESHABILITAR CERTIFICADO SEGÚN CHECKBOX
+    // ==========================================================
 
-    let contador = container.querySelectorAll(
-        ".discapacidad-fila"
-    ).length;
+    function actualizarVisibilidadCertificado(fila) {
+        const checkbox = fila.querySelector(".campo-tiene-certificado");
+        const campoCertificado = fila.querySelector(".campo-certificado");
+
+        if (!checkbox || !campoCertificado) return;
+
+        const inputArchivo = campoCertificado.querySelector("input[type='file']");
+
+        if (checkbox.checked) {
+            campoCertificado.style.display = "";
+            if (inputArchivo) inputArchivo.disabled = false;
+        } else {
+            campoCertificado.style.display = "none";
+            if (inputArchivo) {
+                inputArchivo.disabled = true;
+                inputArchivo.value = "";
+            }
+        }
+    }
+
+    function inicializarToggleCertificado(fila) {
+        const checkbox = fila.querySelector(".campo-tiene-certificado");
+        if (!checkbox) return;
+
+        actualizarVisibilidadCertificado(fila);
+
+        checkbox.addEventListener("change", function () {
+            actualizarVisibilidadCertificado(fila);
+        });
+    }
+
+    container.querySelectorAll(".discapacidad-fila").forEach(inicializarToggleCertificado);
 
     // ==========================================================
     // AGREGAR NUEVO REGISTRO
@@ -153,18 +186,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     btnAgregar.addEventListener("click", function () {
 
-        const html = plantilla.innerHTML.replaceAll(
-            "__INDEX__",
-            contador
-        );
-
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
         const div = document.createElement("div");
-
         div.innerHTML = html;
 
-        container.appendChild(
-            div.firstElementChild
-        );
+        const nuevaFila = div.firstElementChild;
+        container.appendChild(nuevaFila);
+
+        inicializarToggleCertificado(nuevaFila);
 
         contador++;
 
@@ -176,58 +205,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     container.addEventListener("click", function (e) {
 
-        if (
-            !e.target.classList.contains(
-                "btn-eliminar-fila"
-            )
-        ) {
-
+        if (!e.target.classList.contains("btn-eliminar-fila")) {
             return;
-
         }
 
-        const fila = e.target.closest(
-            ".discapacidad-fila"
-        );
-
+        const fila = e.target.closest(".discapacidad-fila");
         if (!fila) {
-
             return;
-
         }
 
-        const registroId = fila.querySelector(
-            'input[name$="-registro_id"]'
-        );
+        const registroId = fila.querySelector('input[name$="-registro_id"]');
+        const campoEliminar = fila.querySelector(".campo-eliminar");
 
-        const campoEliminar = fila.querySelector(
-            ".campo-eliminar"
-        );
-
-        // ======================================================
-        // REGISTRO EXISTENTE
-        // ======================================================
-
-        if (
-            registroId &&
-            registroId.value &&
-            campoEliminar
-        ) {
-
+        if (registroId && registroId.value && campoEliminar) {
             campoEliminar.value = "1";
-
             fila.style.display = "none";
-
-        }
-
-        // ======================================================
-        // REGISTRO NUEVO
-        // ======================================================
-
-        else {
-
+        } else {
             fila.remove();
-
         }
 
     });

@@ -13,7 +13,7 @@
             {% endfor %}
         {% endwith %}
 
-        <form method="POST" novalidate>
+        <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
             <div id="cursos-container">
@@ -54,18 +54,15 @@
 
             <div class="form-botones">
                 <button type="submit"
-                        name="accion"
-                        value="anterior"
-                        class="btn-secondary">
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
                     Anterior
                 </button>
 
-                <button type="submit"
-                        name="accion"
-                        value="continuar"
-                        class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
             </div>
         </form>
     </div>

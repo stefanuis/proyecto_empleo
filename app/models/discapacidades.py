@@ -10,6 +10,7 @@ class Discapacidades(db.Model):
     id_usuario = db.Column(db.Integer)
     categoria  = db.Column(db.String(50))
     descripcion = db.Column(db.String(250))
+    tiene_certificado = db.Column(db.Boolean, default=False)
     ruta_certificado = db.Column(db.String(240))
     fecha_registro = db.Column(db.DateTime, default=datetime.now)
 

@@ -16,17 +16,17 @@
     </div>
   </div>
 
-
   <div class="pasos-indicador">
     {% for i in range(1, total_pasos + 1) %}
-      <div class="paso-punto {% if i < paso_actual %}completado{% elif i == paso_actual %}activo{% endif %}">
-      </div>
+      <button type="submit"
+              form="form-wizard"
+              name="ir_a_paso"
+              value="{{ pasos_rutas[i - 1] }}"
+              title="{{ nombres_cortos_pasos[pasos_rutas[i - 1]] }}"
+              class="paso-punto {% if i < paso_actual %}completado{% elif i == paso_actual %}activo{% endif %}"
+              {% if i > paso_actual %}disabled{% endif %}>
+      </button>
     {% endfor %}
   </div>
 
 </div>
-
-<style>
- 
-  
-</style>

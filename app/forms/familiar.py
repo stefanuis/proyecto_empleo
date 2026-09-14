@@ -28,4 +28,4 @@ class familiarForm(FlaskForm):
         ]
     )
 
-    submit = SubmitField("Guardar información familiar")
+    submit = SubmitField("Guardar y continuar")

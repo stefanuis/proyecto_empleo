@@ -57,4 +57,4 @@ class ContactoForm(FlaskForm):
     )
 
 
-    submit = SubmitField("Guardar")
+    submit = SubmitField("Guardar y continuar")

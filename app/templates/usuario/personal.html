@@ -26,7 +26,7 @@ Principal Usuario
                 {% endif %}
             {% endwith %}
 
-            <form method="POST" novalidate>
+            <form method="POST" id="form-wizard"  novalidate>
 
                 {{ form.hidden_tag() }}
 
@@ -193,23 +193,25 @@ Principal Usuario
                 </div>
 
                 <div class="form-botones">
-
                     {% if paso_anterior %}
-                        <a href="{{ url_for('usuario.' + paso_anterior) }}" class="btn-secondary">
+                        <button type="submit"
+                                form="form-wizard"
+                                name="ir_a_paso"
+                                value="{{ paso_anterior }}"
+                                class="btn-secondary">
                             Anterior
-                        </a>
+                        </button>
                     {% else %}
-                        <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                        <a href="{{ url_for('usuario.principal') }}" class="btn-secondary">
                             Anterior
                         </a>
                     {% endif %}
 
-                    <button type="submit" class="btn-primary">
-                        Guardar y continuar
-                    </button>
+                        <button type="submit" class="btn-primary">
+                            Guardar y continuar
+                        </button> 
 
                 </div>
-
             </form>
 
         </div>

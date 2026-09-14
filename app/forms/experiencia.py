@@ -51,7 +51,7 @@ class experienciaItemForm(Form):
     )
 
     actual = BooleanField(
-        "Actualmente trabajo aquí",
+        "Trabajando actualmente",
         validators=[Optional()]
     )
 
@@ -114,13 +114,8 @@ class experienciaItemForm(Form):
         ]
     )
 
-    funciones_realizadas = TextAreaField(
-        "Funciones realizadas",
-        validators=[
-            Optional(),
-            Length(max=500)
-        ]
-    )
+    funciones_lista = HiddenField()
+    
 
     ruta_soporte = FileField(
         "Documento soporte",

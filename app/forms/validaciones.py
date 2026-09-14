@@ -114,32 +114,25 @@ def validar_academica(entry):
         errores= []
         
         if not entry.nivel.data:
-            errores.append(
-                "El nivel académico es obligatorio."
-            )
+            errores.append("El nivel académico es obligatorio.")
 
         if not entry.estado.data:
-            errores.append(
-                "El estado académico es obligatorio."
-            )
+            errores.append("El estado académico es obligatorio.")
 
         if not entry.titulo.data:
-            errores.append(
-                "El título es obligatorio."
-            )
+            errores.append("El título es obligatorio.")
 
         if not entry.institucion.data:
-                errores.append(
-                    "La institución es obligatoria."
-                )
-        if not entry.mes_finalizacion.data:
-                errores.append(
-                  "El mes de finalización es obligatorio."
-                )
-        if not entry.anno_finalizacion.data:
-                errores.append(
-                "El año de finalización es obligatorio."
-                )
+            errores.append("La institución es obligatoria.")
+
+    # Solo exigir mes/año de finalización si el estado es "finalizado"
+        if entry.estado.data == "finalizado":
+
+            if not entry.mes_finalizacion.data:
+                errores.append("El mes de finalización es obligatorio.")
+
+            if not entry.anno_finalizacion.data:
+                errores.append("El año de finalización es obligatorio.")
 
         return errores       
         
@@ -148,37 +141,30 @@ def validar_experiencia(entry):
         errores= []
         
         if not entry.entidad.data:
-            errores.append(
-                "El nombre de la entidad/empresa es obligatorio."
-            )
+            errores.append("El nombre de la entidad/empresa es obligatorio.")
 
         if not entry.area.data:
-            errores.append(
-                "El área de trabajo es obligatoria."
-            )
+            errores.append("El área de trabajo es obligatoria.")
 
         if not entry.cargo.data:
-            errores.append(
-                "El cargo es obligatorio."
-            )
+            errores.append("El cargo es obligatorio.")
 
-        if not entry.motivo.data:
-                errores.append(
-                    "El motivo de salida es obligatorio."
-                )
         if not entry.fecha_ingreso.data:
-                errores.append(
-                  "La fecha de ingreso es obligatoria."
-                )
-        if not entry.fecha_salida .data:
-                errores.append(
-                "La fecha de salida es obligatoria."
-                )
+            errores.append("La fecha de ingreso es obligatoria.")
+
+    # Solo exigir motivo y fecha de salida si NO trabaja actualmente ahí
+        if not entry.actual.data:
+            if not entry.motivo.data:
+                errores.append("El motivo de salida es obligatorio.")
+
+            if not entry.fecha_salida.data:
+                errores.append("La fecha de salida es obligatoria.")
 
         return errores       
      
 
 def validar_cursos(entry):
+
 
         errores= []
 
@@ -202,13 +188,14 @@ def validar_competencias(entry):
                 "La competencia es obligatoria."
             )
 
-        if not entry.nivel .data:
+        if not entry.nivel.data:
             errores.append(
                 "El nivel es obligatorio."
             )
         return errores     
 
 def validar_referencias(entry):
+    
         
         errores= []
 
@@ -233,6 +220,31 @@ def validar_referencias(entry):
                 )
         return errores     
     
+def validar_referencias_personales(entry):
+
+    errores = []
+
+    if not entry.nombres.data:
+        errores.append(
+            "El nombre de la referencia personal es obligatorio."
+        )
+
+    if not entry.apellidos.data:
+        errores.append(
+            "Los apellidos de la referencia personal son obligatorios."
+        )
+
+    if not entry.parentesco.data:
+        errores.append(
+            "El parentesco es obligatorio."
+        )
+
+    if not entry.telefono.data:
+        errores.append(
+            "El teléfono de la referencia personal es obligatorio."
+        )
+
+    return errores
 
 def validar_discapacidades(entry):
         errores= []

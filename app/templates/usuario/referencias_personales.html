@@ -1,0 +1,144 @@
+{% extends 'usuario/base.html' %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <div class="contenedor-formulario">
+        <h2>Referencias Personales</h2>
+
+        {% include "usuario/barra_progreso.html" with context %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" id="form-wizard" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div id="referencias-personales-container">
+                {% for entry in form.Info_referencias_personales %}
+                <div class="referencias-personales-fila" data-index="{{ loop.index0 }}">
+                    {{ entry.registro_id }}
+                    {{ entry.eliminar(class="campo-eliminar", value="0") }}
+
+                    <div class="form-grid">
+                        <div class="campo">
+                            {{ entry.nombres.label }}
+                            {{ entry.nombres(class="form-control") }}
+                            {% for error in entry.nombres.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="campo">
+                            {{ entry.apellidos.label }}
+                            {{ entry.apellidos(class="form-control") }}
+                            {% for error in entry.apellidos.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="campo">
+                            {{ entry.parentesco.label }}
+                            {{ entry.parentesco(class="form-control") }}
+                            {% for error in entry.parentesco.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="campo">
+                            {{ entry.telefono.label }}
+                            {{ entry.telefono(class="form-control") }}
+                            {% for error in entry.telefono.errors %}
+                                <span class="error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="button" class="btn-secondary" id="btn-agregar-referencia-personal">+ Agregar</button>
+
+            <div class="form-botones">
+                <button type="submit"
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
+                    Anterior
+                </button>
+
+                {{ form.submit(class="btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- plantilla oculta para clonar filas nuevas -->
+<template id="plantilla-referencias-personales-vacia">
+    <div class="referencias-personales-fila" data-index="__INDEX__">
+        <input type="hidden" name="Info_referencias_personales-__INDEX__-registro_id" value="">
+        <input type="hidden" class="campo-eliminar" name="Info_referencias_personales-__INDEX__-eliminar" value="0">
+        <div class="form-grid">
+            <div class="campo">
+                <label>Nombres</label>
+                <input class="form-control" name="Info_referencias_personales-__INDEX__-nombres">
+            </div>
+            <div class="campo">
+                <label>Apellidos</label>
+                <input class="form-control" name="Info_referencias_personales-__INDEX__-apellidos">
+            </div>
+            <div class="campo">
+                <label>Parentesco/Relación</label>
+                <input class="form-control" name="Info_referencias_personales-__INDEX__-parentesco">
+            </div>
+            <div class="campo">
+                <label>Teléfono</label>
+                <input class="form-control" name="Info_referencias_personales-__INDEX__-telefono">
+            </div>
+        </div>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("referencias-personales-container");
+    const plantilla = document.getElementById("plantilla-referencias-personales-vacia");
+    const btnAgregar = document.getElementById("btn-agregar-referencia-personal");
+
+    let contador = container.querySelectorAll(".referencias-personales-fila").length;
+
+    btnAgregar.addEventListener("click", function () {
+        const html = plantilla.innerHTML.replaceAll("__INDEX__", contador);
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        container.appendChild(div.firstElementChild);
+        contador++;
+    });
+
+    container.addEventListener("click", function (e) {
+        if (!e.target.classList.contains("btn-eliminar-fila")) {
+            return;
+        }
+
+        const fila = e.target.closest(".referencias-personales-fila");
+        if (!fila) {
+            return;
+        }
+
+        const registroId = fila.querySelector('input[name$="-registro_id"]');
+        const campoEliminar = fila.querySelector(".campo-eliminar");
+
+        if (registroId && registroId.value && campoEliminar) {
+            campoEliminar.value = "1";
+            fila.style.display = "none";
+        } else {
+            fila.remove();
+        }
+    });
+});
+</script>
+{% endblock %}

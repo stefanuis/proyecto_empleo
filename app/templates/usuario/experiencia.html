@@ -12,7 +12,7 @@
             {% endfor %}
         {% endwith %}
 
-        <form method="POST" novalidate>
+        <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
             <div id="experiencia-container">
@@ -34,7 +34,15 @@
                             {{ entry.cargo.label }}
                             {{ entry.cargo(class="form-control") }}
                         </div>
-                        <div class="campo">
+
+
+                        <div class="campo campo-checkbox">
+                            {{ entry.actual(class="campo-actual") }}
+                            {{ entry.actual.label }}
+                        </div>
+
+
+                        <div class="campo campo-motivo-salida">
                             {{ entry.motivo.label }}
                             {{ entry.motivo(class="form-control") }}
                         </div>
@@ -42,7 +50,7 @@
                             {{ entry.fecha_ingreso.label }}
                             {{ entry.fecha_ingreso(class="form-control") }}
                         </div>
-                        <div class="campo">
+                        <div class="campo campo-motivo-salida">
                             {{ entry.fecha_salida.label }}
                             {{ entry.fecha_salida(class="form-control") }}
                         </div>
@@ -58,10 +66,21 @@
                             {{ entry.municipio.label }}
                             {{ entry.municipio(class="form-control") }}
                         </div>
-                        <div class="campo">
-                            {{ entry.funciones_realizadas.label }}
-                            {{ entry.funciones_realizadas(class="form-control") }}
+
+                        <div class="campo campo-completo">
+                            <label>Funciones realizadas</label>
+
+                            <div class="funciones-chips-container"></div>
+
+                            <div class="funciones-input-row">
+                                <input type="text" class="funcion-input" placeholder="Escribe una función y presiona agregar">
+                                <button type="button" class="btn-agregar-funcion">+ Agregar</button>
+                            </div>
+
+                            {{ entry.funciones_lista(class="funciones-lista-hidden") }}
                         </div>
+
+
                     </div>
 
 
@@ -74,18 +93,15 @@
 
             <div class="form-botones">
                 <button type="submit"
-                        name="accion"
-                        value="anterior"
-                        class="btn-secondary">
+                        form="form-wizard"
+                        name="ir_a_paso"
+                        value="{{ paso_anterior }}"
+                        class="btn-secondary"
+                        {% if not paso_anterior %}disabled{% endif %}>
                     Anterior
                 </button>
 
-                <button type="submit"
-                        name="accion"
-                        value="continuar"
-                        class="btn-primary">
-                    Guardar y continuar
-                </button>
+                {{ form.submit(class="btn-primary") }}
             </div>
         </form>
     </div>
@@ -109,7 +125,15 @@
                 <label>Cargo</label>
                 <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
             </div>
-            <div class="campo">
+
+            <!-- ============ NUEVO: checkbox en la plantilla clonable ============ -->
+            <div class="campo campo-checkbox">
+                <input type="checkbox" class="campo-actual" name="Info_experiencia-__INDEX__-actual">
+                <label>Trabajo actualmente </label>
+            </div>
+            <!-- =================================================================== -->
+
+            <div class="campo campo-motivo-salida">
                 <label>Motivo de salida</label>
                 <select class="form-control" name="Info_experiencia-__INDEX__-motivo">
                     <option value="" disabled selected>Motivo de salida</option>
@@ -125,7 +149,7 @@
                 <label>Fecha ingreso</label>
                 <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_ingreso">
             </div>
-            <div class="campo">
+            <div class="campo campo-motivo-salida">
                 <label>Fecha salida</label>
                 <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_salida">
             </div>
@@ -141,16 +165,22 @@
                 <label>Municipio</label>
                 <input class="form-control" name="Info_experiencia-__INDEX__-municipio">
             </div>
-            <div class="campo">
+
+            <!-- ============ chips de funciones en la plantilla clonable ============ -->
+            <div class="campo campo-completo">
                 <label>Funciones realizadas</label>
-                <textarea
-                   class="form-control"
-                   name="Info_experiencia-__INDEX__-funciones_realizadas"
-                   rows="5"
-                   maxlength="500"
-                   placeholder="Describe las principales funciones realizadas">
-               </textarea>
+
+                <div class="funciones-chips-container"></div>
+
+                <div class="funciones-input-row">
+                    <input type="text" class="funcion-input" placeholder="Escribe una función y presiona Enter">
+                    <button type="button" class="btn-agregar-funcion">+ Agregar</button>
+                </div>
+
+                <input type="hidden" class="funciones-lista-hidden" name="Info_experiencia-__INDEX__-funciones_lista" value="">
             </div>
+            <!-- ============================================================================= -->
+
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
     </div>
@@ -174,6 +204,114 @@ document.addEventListener("DOMContentLoaded", function () {
     ).length;
 
     // ==========================================================
+    // LÓGICA DE CHIPS DE FUNCIONES
+    // ==========================================================
+
+    function inicializarChipsFunciones(fila) {
+        const contenedorChips = fila.querySelector(".funciones-chips-container");
+        const input = fila.querySelector(".funcion-input");
+        const btnAgregarFuncion = fila.querySelector(".btn-agregar-funcion");
+        const campoOculto = fila.querySelector(".funciones-lista-hidden");
+
+        if (!contenedorChips || !input || !btnAgregarFuncion || !campoOculto) {
+            return;
+        }
+
+        function obtenerFunciones() {
+            return campoOculto.value
+                ? campoOculto.value.split("|")
+                : [];
+        }
+
+        function guardarFunciones(funciones) {
+            campoOculto.value = funciones.join("|");
+        }
+
+        function renderizarChips() {
+            contenedorChips.innerHTML = "";
+            obtenerFunciones().forEach(function (funcion, index) {
+                const chip = document.createElement("span");
+                chip.className = "chip-funcion";
+                chip.textContent = funcion;
+
+                const btnQuitar = document.createElement("button");
+                btnQuitar.type = "button";
+                btnQuitar.className = "chip-funcion-quitar";
+                btnQuitar.textContent = "×";
+                btnQuitar.addEventListener("click", function () {
+                    const funciones = obtenerFunciones();
+                    funciones.splice(index, 1);
+                    guardarFunciones(funciones);
+                    renderizarChips();
+                });
+
+                chip.appendChild(btnQuitar);
+                contenedorChips.appendChild(chip);
+            });
+        }
+
+        function agregarFuncion() {
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            const funciones = obtenerFunciones();
+            funciones.push(texto);
+            guardarFunciones(funciones);
+            renderizarChips();
+
+            input.value = "";
+            input.focus();
+        }
+
+        btnAgregarFuncion.addEventListener("click", agregarFuncion);
+        input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                agregarFuncion();
+            }
+        });
+
+        renderizarChips();
+    }
+
+    container.querySelectorAll(".experiencia-fila").forEach(inicializarChipsFunciones);
+
+    // ==========================================================
+    // NUEVO: MOSTRAR/OCULTAR MOTIVO Y FECHA DE SALIDA SEGÚN "ACTUAL"
+    // ==========================================================
+
+    function actualizarVisibilidadSalida(fila) {
+        const checkboxActual = fila.querySelector(".campo-actual");
+        const camposSalida = fila.querySelectorAll(".campo-motivo-salida");
+
+        if (!checkboxActual) return;
+
+        const ocultar = checkboxActual.checked;
+
+        camposSalida.forEach(function (campo) {
+            campo.style.display = ocultar ? "none" : "";
+            const input = campo.querySelector("input, select");
+            if (input) {
+                input.disabled = ocultar;
+                if (ocultar) input.value = "";
+            }
+        });
+    }
+
+    function inicializarToggleActual(fila) {
+        const checkboxActual = fila.querySelector(".campo-actual");
+        if (!checkboxActual) return;
+
+        actualizarVisibilidadSalida(fila);
+
+        checkboxActual.addEventListener("change", function () {
+            actualizarVisibilidadSalida(fila);
+        });
+    }
+
+    container.querySelectorAll(".experiencia-fila").forEach(inicializarToggleActual);
+
+    // ==========================================================
     // AGREGAR NUEVO REGISTRO
     // ==========================================================
 
@@ -188,9 +326,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         div.innerHTML = html;
 
-        container.appendChild(
-            div.firstElementChild
-        );
+        const nuevaFila = div.firstElementChild;
+
+        container.appendChild(nuevaFila);
+
+        inicializarChipsFunciones(nuevaFila);
+        inicializarToggleActual(nuevaFila);   // <-- NUEVO
 
         contador++;
 
@@ -230,10 +371,6 @@ document.addEventListener("DOMContentLoaded", function () {
             ".campo-eliminar"
         );
 
-        // ======================================================
-        // REGISTRO EXISTENTE
-        // ======================================================
-
         if (
             registroId &&
             registroId.value &&
@@ -245,10 +382,6 @@ document.addEventListener("DOMContentLoaded", function () {
             fila.style.display = "none";
 
         }
-
-        // ======================================================
-        // REGISTRO NUEVO
-        // ======================================================
 
         else {
 

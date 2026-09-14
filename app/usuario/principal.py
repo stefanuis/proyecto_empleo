@@ -28,58 +28,41 @@ from app.forms.academica import InforAcademicaForm
 from app.models.academica import Info_academica
 from app.forms.experiencia import experienciaForm
 from app.models.experiencia import Experiencia
-from app.forms.experiencia import experienciaForm
+from app.models.funcion_experiencia import  FuncionExperiencia
 from app.models.cursos import Cursos
 from app.forms.cursos import CursoForm
 from app.forms.competencias import CompetenciasForm
 from app.models.competencias import  Competencias 
 from app.forms.referencias import referenciasForm
 from app.models.referencias import Referencias
-from app.forms.discapacidades import discapacidadesForm
+from app.models.referencias_personales import ReferenciasPersonales
+from app.forms.referencias_personales import referenciasPersonalesForm
+from app.forms.discapacidades import discapacidadForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
 from app.models.docs import OtrosDocumentos
 from app.models.vacante import Vacante
 from app.models.postulacion import Postulacion
-from app.forms.validaciones import validar_academica
-from app.forms.validaciones import validar_experiencia
-from app.forms.validaciones import validar_cursos
-from app.forms.validaciones import validar_competencias
+from app.utils.perfil import calcular_completitud_perfil
+from app.forms.validaciones import fila_vacia, validar_personal
+from app.forms.validaciones import fila_vacia, validar_contacto
+from app.forms.validaciones import fila_vacia, validar_familiar
+from app.forms.validaciones import fila_vacia, validar_academica
+from app.forms.validaciones import fila_vacia ,validar_experiencia
+from app.forms.validaciones import fila_vacia,validar_cursos
+from app.forms.validaciones import fila_vacia, validar_competencias
+from app.forms.validaciones import fila_vacia, validar_referencias
+from app.forms.validaciones import fila_vacia, validar_referencias_personales
+from app.forms.validaciones import fila_vacia, validar_discapacidades
+from .constantes import PASOS_seguimiento, NOMBRES_PASO, DESCRIPCIONES_PASO, TOTAL_PASOS
+from app.utils.perfil import calcular_completitud_perfil
+
 
 
 from . import usuario_bp
 
-#eso me ayudara a saber por donde voy
 
-PASOS_seguimiento = [
-    "personal",
-    "contacto",
-    "familiar",
-    "academica",
-    "experiencia",
-    "cursos",
-    "competencias",
-    "referencias",
-    "discapacidades",
-    "documentos",
-]
 
-TOTAL_PASOS = len(PASOS_seguimiento)
-
-NOMBRES_PASO = {
-    "personal": "Información básica de identificación del candidato.",
-    "contacto": "Información contacto de emergencia.",
-    "familiar": "Informacion familiar: cónyuge, hijos y personas a cargo.",
-    "academica": "Formación académica: nivel educativo, institución, título obtenido y año de graduación.",
-    "experiencia":"Experiencia Laboral:Empresas donde ha trabajado, cargos desempeñados, funciones.",
-    "cursos": "Cursos:Diplomados, certificaciones y formación complementaria con institución y fecha de obtención.",
-    "Competencias:": "Competencias:conocimientos técnicos, manejo de herramientas específicas y habilidades blandas",
-    "referencias": "Referencias Laborales:Datos de contacto de jefes o compañeros anteriores que puedan validar su desempeño laboral.",
-    "discapacidades": "Discapacidades:Condición de discapacidad, tipo y ajustes razonables requeridos, en caso de aplicar.",
-    "documentos": "Documentos:Hoja de vida, cédula, diplomas y demás soportes requeridos para la postulación.",
-}
-
-#
 @usuario_bp.context_processor
 def inject_progreso():
     endpoint = request.endpoint.split('.')[-1]
@@ -87,18 +70,35 @@ def inject_progreso():
         idx = PASOS_seguimiento.index(endpoint)
         return dict(
             nombre_paso=NOMBRES_PASO[endpoint],
+            descripcion_paso=DESCRIPCIONES_PASO[endpoint],
             paso_actual=idx + 1,
             total_pasos=TOTAL_PASOS,
-            paso_anterior=PASOS_seguimiento[idx - 1] if idx > 0 else None
+            paso_anterior=PASOS_seguimiento[idx - 1] if idx > 0 else None,
+            paso_siguiente=PASOS_seguimiento[idx + 1] if idx < TOTAL_PASOS - 1 else None,
+            pasos_rutas=PASOS_seguimiento,
+            nombres_cortos_pasos=NOMBRES_PASO,
         )
     return {}
+
+
+def redirigir_paso_wizard(paso_actual):
+    destino = request.form.get("ir_a_paso")
+    if destino and destino in PASOS_seguimiento:
+        return redirect(url_for(f"usuario.{destino}"))
+
+    idx = PASOS_seguimiento.index(paso_actual)
+    siguiente = PASOS_seguimiento[idx + 1] if idx < TOTAL_PASOS - 1 else None
+    if siguiente:
+        return redirect(url_for(f"usuario.{siguiente}"))
+
+    return redirect(url_for("usuario.resumen"))
+
 
 
 @usuario_bp.route("/")
 @login_required
 def principal():
-
-    #print("----hOL ")
+    # --- KPIs ---
     total_postulaciones = Postulacion.query.filter_by(
         estado="Activa",
         id_usuario=current_user.id
@@ -108,32 +108,32 @@ def principal():
         estado="Activa"
     ).count()
 
+    # --- Fecha de hoy en español ---
+    hoy = datetime.now()
+
+    dias = [
+        "Lunes", "Martes", "Miércoles", "Jueves",
+        "Viernes", "Sábado", "Domingo"
+    ]
+
+    meses = [
+        "enero", "febrero", "marzo", "abril",
+        "mayo", "junio", "julio", "agosto",
+        "septiembre", "octubre", "noviembre", "diciembre"
+    ]
+
+    fecha_hoy = f"{dias[hoy.weekday()]}, {hoy.day} de {meses[hoy.month - 1]}"
+
+    # --- Completitud del perfil ---
+    completitud = calcular_completitud_perfil(current_user.id)
+
     return render_template(
         "usuario/principal.html",
         total_postulaciones=total_postulaciones,
-        total_vacantes=total_vacantes
+        total_vacantes=total_vacantes,
+        fecha_hoy=fecha_hoy,
+        completitud=completitud
     )
-
-
-@usuario_bp.route("/", methods=["GET"])
-@login_required
-def inicial():
-        hoy = datetime.now()
-        
-        dias = [
-                "Lunes", "Martes", "Miércoles", "Jueves",
-                "Viernes", "Sábado", "Domingo"
-            ]
-        
-        meses = [
-                "enero", "febrero", "marzo", "abril",
-                "mayo", "junio", "julio", "agosto",
-                "septiembre", "octubre", "noviembre", "diciembre"
-            ]
-        
-        fecha_hoy = f"{dias[hoy.weekday()]}, {hoy.day} de {meses[hoy.month - 1]}"
-    
-        return render_template("usuario/principal.html", fecha_hoy=fecha_hoy)
 
 ##----configuracion
 @usuario_bp.route("/beneficios", methods=["GET", "POST"])
@@ -146,48 +146,54 @@ def beneficios():
 def configuracion():
     return render_template("usuario/configuracion.html")
 
-
 @usuario_bp.route("/personal", methods=["GET", "POST"])
 @login_required
 def personal():
+
+    PASO_ACTUAL = "personal"
     form = InfoPersonalForm()
 
     registro = Personal.query.filter_by(
         id_usuario=current_user.id
     ).first()
 
-    if form.validate_on_submit():
-        if not registro:
-            registro = Personal(id_usuario=current_user.id)
-            db.session.add(registro)
+    if request.method == "POST":
 
-        registro.nombres = form.nombres.data
-        registro.apellidos = form.apellidos.data
-        registro.tipo_doc = form.tipo_doc.data
-        registro.num_doc = form.num_doc.data
-        registro.fecha_exp_doc = form.fecha_exp_doc.data
-        registro.fecha_nacimiento = form.fecha_nacimiento.data
-        registro.genero = form.genero.data
-        registro.email = form.email.data
-        registro.num_cel = form.num_cel.data
-        registro.num_cel_dos = form.num_cel_dos.data
-        registro.grupo_etnico = form.grupo_etnico.data
-        registro.departamento = form.departamento.data
-        registro.municipio = form.municipio.data
-        registro.barrio = form.barrio.data
-        registro.direccion = form.direccion.data
-        registro.nacionalidad = form.nacionalidad.data
-        registro.vive_rural = form.vive_rural.data
-        registro.estado_civil = form.estado_civil.data
-        registro.personas_cargo = form.personas_cargo.data
+        if form.validate():
 
-        db.session.commit()
+            if not registro:
+                registro = Personal(id_usuario=current_user.id)
+                db.session.add(registro)
 
+            registro.nombres = form.nombres.data
+            registro.apellidos = form.apellidos.data
+            registro.tipo_doc = form.tipo_doc.data
+            registro.num_doc = form.num_doc.data
+            registro.fecha_exp_doc = form.fecha_exp_doc.data
+            registro.fecha_nacimiento = form.fecha_nacimiento.data
+            registro.genero = form.genero.data
+            registro.email = form.email.data
+            registro.num_cel = form.num_cel.data
+            registro.num_cel_dos = form.num_cel_dos.data
+            registro.grupo_etnico = form.grupo_etnico.data
+            registro.departamento = form.departamento.data
+            registro.municipio = form.municipio.data
+            registro.barrio = form.barrio.data
+            registro.direccion = form.direccion.data
+            registro.nacionalidad = form.nacionalidad.data
+            registro.vive_rural = form.vive_rural.data
+            registro.estado_civil = form.estado_civil.data
+            registro.personas_cargo = form.personas_cargo.data
 
-        return redirect(url_for("usuario.contacto"))
+            db.session.commit()
 
-    if registro:
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
+        else:
+            print("ERRORES:", form.errors)
+
+    elif registro:
+        # Solo precargamos en GET (evita pisar lo que el usuario acaba de escribir si hubo error)
         form.nombres.data = registro.nombres
         form.apellidos.data = registro.apellidos
         form.tipo_doc.data = registro.tipo_doc
@@ -208,14 +214,13 @@ def personal():
         form.estado_civil.data = registro.estado_civil
         form.personas_cargo.data = registro.personas_cargo
 
-
     return render_template("usuario/personal.html", form=form)
-
 
 @usuario_bp.route('/contacto', methods=['GET', 'POST'])
 @login_required
 def contacto():
 
+    PASO_ACTUAL = "contacto"
     form = ContactoForm()
 
     registro = Contacto.query.filter_by(
@@ -235,7 +240,9 @@ def contacto():
       registro.tel = form.tel.data
       registro.num_residencia = form.num_residencia.data
       db.session.commit()
-      return redirect(url_for("usuario.familiar"))
+
+      return redirigir_paso_wizard(PASO_ACTUAL)
+    
     
       # Precargar 
     if registro:
@@ -252,6 +259,7 @@ def contacto():
 @login_required
 def familiar():
 
+    PASO_ACTUAL = "familiar"
     form = familiarForm()
 
     registro = Familiar.query.filter_by(
@@ -275,8 +283,8 @@ def familiar():
 
         db.session.commit()
 
+        return redirigir_paso_wizard(PASO_ACTUAL)
 
-        return redirect(url_for("usuario.academica"))
 
     # Precargar datos existentes
     if registro:
@@ -290,18 +298,16 @@ def familiar():
 @login_required
 def academica():
 
+    PASO_ACTUAL = "academica"
     form = InforAcademicaForm()
 
     if request.method == "GET":
-
         registros = Info_academica.query.filter_by(
             id_usuario=current_user.id
         ).all()
 
         for registro in registros:
-
             form.Info_academica.append_entry({
-
                 "registro_id": registro.id,
                 "nivel": registro.nivel,
                 "estado": registro.estado,
@@ -316,79 +322,54 @@ def academica():
                 "ruta_soporte": registro.ruta_soporte,
                 "intensidad_horaria": registro.intensidad_horaria,
                 "eliminar": "0",
-
             })
-
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
-
-
+        campos = ["nivel", "estado", "titulo", "institucion", "mes_finalizacion", "anno_finalizacion"]
+        errores_negocio = []
 
         for entry in form.Info_academica:
 
-            registro_id = entry.registro_id.data
+            marcado_para_eliminar = entry.eliminar.data == "1"
+            if marcado_para_eliminar:
+                continue
 
-            marcado_para_eliminar = (
-                entry.eliminar.data == "1"
-            )
+            if fila_vacia(entry, campos):
+                continue
 
+            errores_fila = validar_academica(entry)
+            errores_negocio.extend(errores_fila)
 
-            if registro_id and marcado_para_eliminar:
+        if errores_negocio:
 
-                registro = Info_academica.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            for error in errores_negocio:
+                flash(error, "danger")
 
-
-                if registro:
-
-                    db.session.delete(registro)
-
-
-        if accion == "anterior":
-
-            db.session.commit()
-
-            return redirect(
-                url_for("usuario.familiar")
-            )
-
-
-
-        if form.validate():
+        else:
 
             for entry in form.Info_academica:
-
                 registro_id = entry.registro_id.data
-
-                marcado_para_eliminar = (
-                    entry.eliminar.data == "1"
-                )
-
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
-
+                marcado_para_eliminar = entry.eliminar.data == "1"
                 registro = None
 
-
                 if registro_id:
-
                     registro = Info_academica.query.filter_by(
                         id=registro_id,
                         id_usuario=current_user.id
                     ).first()
 
+                if marcado_para_eliminar:
+                    if registro:
+                        db.session.delete(registro)
+                    continue
 
+                if fila_vacia(entry, campos):
+                    if registro:
+                        db.session.delete(registro)
+                    continue
 
                 if registro:
-
                     registro.nivel = entry.nivel.data
                     registro.estado = entry.estado.data
                     registro.periodos_cursados = entry.periodos_cursados.data
@@ -400,12 +381,8 @@ def academica():
                     registro.mes_finalizacion = entry.mes_finalizacion.data
                     registro.anno_finalizacion = entry.anno_finalizacion.data
                     registro.intensidad_horaria = entry.intensidad_horaria.data
-
-
                 else:
-
                     nuevo = Info_academica(
-
                         id_usuario=current_user.id,
                         nivel=entry.nivel.data,
                         estado=entry.estado.data,
@@ -417,44 +394,31 @@ def academica():
                         convalidacion=entry.convalidacion.data,
                         mes_finalizacion=entry.mes_finalizacion.data,
                         anno_finalizacion=entry.anno_finalizacion.data,
-                        intensidad_horaria=entry.intensidad_horaria.data
-
+                        intensidad_horaria=entry.intensidad_horaria.data,
                     )
-
                     db.session.add(nuevo)
 
-
             db.session.commit()
+           
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
-            return redirect(
-                url_for("usuario.experiencia")
-            )
+    return render_template("usuario/academica.html", form=form)
 
-
-        else:
-
-            print("ERRORES:", form.errors)
-
-
-    return render_template(
-        "usuario/academica.html",
-        form=form
-    )
-
-
-@usuario_bp.route("/experiencia", methods=["GET", "POST"])
+@usuario_bp.route('/experiencia', methods=['GET', 'POST'])
 @login_required
 def experiencia():
 
+    PASO_ACTUAL = "experiencia"
     form = experienciaForm()
 
     if request.method == "GET":
-
         registros = Experiencia.query.filter_by(
             id_usuario=current_user.id
         ).all()
 
         for registro in registros:
+            funciones_texto = "|".join(f.funcion for f in registro.funciones)
+
             form.Info_experiencia.append_entry({
                 "registro_id": registro.id,
                 "entidad": registro.entidad,
@@ -462,119 +426,120 @@ def experiencia():
                 "cargo": registro.cargo,
                 "actual": registro.actual,
                 "motivo": registro.motivo,
-                "otro": registro.otro,
                 "fecha_ingreso": registro.fecha_ingreso,
                 "fecha_salida": registro.fecha_salida,
                 "pais": registro.pais,
                 "departamento": registro.departamento,
                 "municipio": registro.municipio,
-                "funciones_realizadas": registro.funciones_realizadas,
+                "funciones_lista": funciones_texto,
                 "eliminar": "0",
             })
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
+        campos = ["entidad", "area", "cargo", "motivo", "fecha_ingreso", "fecha_salida"]  # ajusta a los campos obligatorios reales
+        errores_negocio = []
 
         for entry in form.Info_experiencia:
 
-            registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
+            if marcado_para_eliminar:
+                continue
 
-            if registro_id and marcado_para_eliminar:
+            if fila_vacia(entry, campos):
+                continue
 
-                registro = Experiencia.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            errores_fila = validar_experiencia(entry)
+            errores_negocio.extend(errores_fila)
 
-                if registro:
+        if errores_negocio:
 
-                    db.session.delete(registro)
+            for error in errores_negocio:
+                flash(error, "danger")
 
-        if accion == "anterior":
-
-            db.session.commit()
-
-            return redirect(
-                url_for("usuario.academica")
-            )
-
-        if form.validate():
+        else:
 
             for entry in form.Info_experiencia:
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
                 registro = None
 
                 if registro_id:
-
                     registro = Experiencia.query.filter_by(
                         id=registro_id,
                         id_usuario=current_user.id
                     ).first()
 
-                if registro:
+                if marcado_para_eliminar:
+                    if registro:
+                        db.session.delete(registro)
+                    continue
 
-                    # Editar existente
+                if fila_vacia(entry, campos):
+                    if registro:
+                        db.session.delete(registro)
+                    continue
+
+                if registro:
+                    # --- Actualizar registro existente ---
                     registro.entidad = entry.entidad.data
                     registro.area = entry.area.data
                     registro.cargo = entry.cargo.data
-                    registro.actual = entry.actual.data
-                    registro.motivo = entry.motivo.data
-                    registro.otro = entry.otro.data
+                    registro.actual = entry.actual.data     
+                    registro.motivo = entry.motivo.data if not entry.actual.data else None 
                     registro.fecha_ingreso = entry.fecha_ingreso.data
-                    registro.fecha_salida = entry.fecha_salida.data
+                    registro.fecha_salida = entry.fecha_salida.data if not entry.actual.data else None
                     registro.pais = entry.pais.data
                     registro.departamento = entry.departamento.data
                     registro.municipio = entry.municipio.data
-                    registro.funciones_realizadas = entry.funciones_realizadas.data
 
                 else:
-
-                    # Crear nuevo
-                    nuevo = Experiencia(
+                    # --- Crear registro nuevo ---
+                    registro = Experiencia(
                         id_usuario=current_user.id,
                         entidad=entry.entidad.data,
                         area=entry.area.data,
                         cargo=entry.cargo.data,
-                        actual=entry.actual.data,
-                        motivo=entry.motivo.data,
-                        otro=entry.otro.data,
+                        actual=entry.actual.data, 
+                        motivo=entry.motivo.data if not entry.actual.data else None,   
                         fecha_ingreso=entry.fecha_ingreso.data,
-                        fecha_salida=entry.fecha_salida.data,
+                        fecha_salida=entry.fecha_salida.data if not entry.actual.data else None,
                         pais=entry.pais.data,
                         departamento=entry.departamento.data,
                         municipio=entry.municipio.data,
-                        funciones_realizadas=entry.funciones_realizadas.data,
-                        fecha_registro=datetime.now()
                     )
+                    db.session.add(registro)
+                    db.session.flush()  # necesario para obtener registro.id antes de crear sus funciones
 
-                    db.session.add(nuevo)
+
+                FuncionExperiencia.query.filter_by(id_experiencia=registro.id).delete()
+
+                funciones_texto = entry.funciones_lista.data or ""
+                for funcion in funciones_texto.split("|"):
+                    funcion = funcion.strip()
+                    if funcion:
+                        db.session.add(FuncionExperiencia(
+                            id_experiencia=registro.id,
+                            funcion=funcion
+                        ))
+
 
             db.session.commit()
 
-            return redirect(url_for("usuario.cursos"))
-
-        else:
-
-            print("ERRORES:", form.errors)
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
     return render_template(
-        "usuario/experiencia.html", form=form)
+        "usuario/experiencia.html",
+        form=form
+    )
 
 
-@usuario_bp.route("/cursos", methods=["GET", "POST"])
+@usuario_bp.route('/cursos', methods=['GET', 'POST'])
 @login_required
 def cursos():
 
+    PASO_ACTUAL = "cursos"
     form = CursoForm()
 
     if request.method == "GET":
@@ -595,44 +560,32 @@ def cursos():
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
+        campos = ["nombre", "institucion", "area", "horas", "fecha_realizacion"]
+        errores_negocio = []
 
         for entry in form.Info_curso:
 
-            registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
+            if marcado_para_eliminar:
+                continue
 
-            if registro_id and marcado_para_eliminar:
+            if fila_vacia(entry, campos):
+                continue
 
-                registro = Cursos.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            errores_fila = validar_cursos(entry)
+            errores_negocio.extend(errores_fila)
 
-                if registro:
+        if errores_negocio:
 
-                    db.session.delete(registro)
+            for error in errores_negocio:
+                flash(error, "danger")
 
-        if accion == "anterior":
-
-            db.session.commit()
-
-            return redirect(
-                url_for("usuario.experiencia")
-            )
-
-        if form.validate():
+        else:
 
             for entry in form.Info_curso:
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
                 registro = None
 
                 if registro_id:
@@ -642,6 +595,22 @@ def cursos():
                         id_usuario=current_user.id
                     ).first()
 
+                if marcado_para_eliminar:
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if fila_vacia(entry, campos):
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
                 if registro:
                     # Editar existente
                     registro.nombre = entry.nombre.data
@@ -649,7 +618,6 @@ def cursos():
                     registro.area = entry.area.data
                     registro.horas = entry.horas.data
                     registro.fecha_realizacion = entry.fecha_realizacion.data
-                    # certificado ya no se toca al editar
 
                 else:
                     # Crear nuevo
@@ -660,31 +628,26 @@ def cursos():
                         area=entry.area.data,
                         horas=entry.horas.data,
                         fecha_realizacion=entry.fecha_realizacion.data,
-                        certificado=False,  # valor por defecto, el usuario ya no lo llena
+                        certificado=False,
                     )
 
                     db.session.add(nuevo)
 
             db.session.commit()
 
-            return redirect(url_for("usuario.competencias"))
-
-        else:
-
-            print("ERRORES:", form.errors)
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
     return render_template(
         "usuario/cursos.html", form=form)
-
 
 @usuario_bp.route('/competencias', methods=['GET', 'POST'])
 @login_required
 def competencias():
 
+    PASO_ACTUAL = "competencias"
     form = CompetenciasForm()
 
     if request.method == "GET":
-
         registros = Competencias.query.filter_by(
             id_usuario=current_user.id
         ).all()
@@ -700,44 +663,33 @@ def competencias():
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
+        campos = ["competencia", "nivel"]
+        errores_negocio = []
 
         for entry in form.Info_competencias:
 
-            registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            if registro_id and marcado_para_eliminar:
+            if marcado_para_eliminar:
+                continue
 
-                registro = Competencias.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            if fila_vacia(entry, campos):
+                continue
 
-                if registro:
+            errores_fila = validar_competencias(entry)
+            errores_negocio.extend(errores_fila)
 
-                    db.session.delete(registro)
+        if errores_negocio:
 
-        if accion == "anterior":
+            for error in errores_negocio:
+                flash(error, "danger")
 
-            db.session.commit()
-
-            return redirect(
-                url_for("usuario.cursos")
-            )
-
-        if form.validate():
+        else:
 
             for entry in form.Info_competencias:
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
                 registro = None
 
                 if registro_id:
@@ -747,17 +699,29 @@ def competencias():
                         id_usuario=current_user.id
                     ).first()
 
-                if registro:
+                if marcado_para_eliminar:
 
-                    # Editar existente
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if fila_vacia(entry, campos):
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if registro:
                     registro.competencia = entry.competencia.data
                     registro.nivel = entry.nivel.data
                     registro.experiencia = entry.experiencia.data
                     registro.fecha_actualizacion = datetime.now()
 
                 else:
-
-                    # Crear nuevo
                     nuevo = Competencias(
                         id_usuario=current_user.id,
                         competencia=entry.competencia.data,
@@ -769,12 +733,8 @@ def competencias():
                     db.session.add(nuevo)
 
             db.session.commit()
-
-            return redirect(url_for("usuario.referencias"))
-
-        else:
-
-            print("ERRORES:", form.errors)
+            flash("Guardado con éxito.", "success")
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
     return render_template(
         "usuario/competencias.html", form=form)
@@ -784,10 +744,10 @@ def competencias():
 @login_required
 def referencias():
 
+    PASO_ACTUAL = "referencias"
     form = referenciasForm()
 
     if request.method == "GET":
-
         registros = Referencias.query.filter_by(
             id_usuario=current_user.id
         ).all()
@@ -806,44 +766,41 @@ def referencias():
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
+        campos = [
+            "nombres",
+            "apellidos",
+            "empresa",
+            "telefono",
+            "ciudad",
+            "autoriza"
+        ]
+
+        errores_negocio = []
 
         for entry in form.Info_referencias:
 
-            registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            if registro_id and marcado_para_eliminar:
+            if marcado_para_eliminar:
+                continue
 
-                registro = Referencias.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            if fila_vacia(entry, campos):
+                continue
 
-                if registro:
+            errores_fila = validar_referencias(entry)
+            errores_negocio.extend(errores_fila)
 
-                    db.session.delete(registro)
+        if errores_negocio:
 
-        if accion == "anterior":
+            for error in errores_negocio:
+                flash(error, "danger")
 
-            db.session.commit()
-
-            return redirect(
-                url_for("usuario.competencias")
-            )
-
-        if form.validate():
+        else:
 
             for entry in form.Info_referencias:
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
                 registro = None
 
                 if registro_id:
@@ -853,9 +810,23 @@ def referencias():
                         id_usuario=current_user.id
                     ).first()
 
-                if registro:
+                if marcado_para_eliminar:
 
-                    # Editar existente
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if fila_vacia(entry, campos):
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if registro:
                     registro.nombres = entry.nombres.data
                     registro.apellidos = entry.apellidos.data
                     registro.empresa = entry.empresa.data
@@ -864,8 +835,6 @@ def referencias():
                     registro.autoriza = entry.autoriza.data
 
                 else:
-
-                    # Crear nuevo
                     nuevo = Referencias(
                         id_usuario=current_user.id,
                         nombres=entry.nombres.data,
@@ -880,23 +849,131 @@ def referencias():
                     db.session.add(nuevo)
 
             db.session.commit()
-
-            return redirect(url_for("usuario.discapacidades"))
-
-        else:
-
-            print("ERRORES:", form.errors)
+            flash("Guardado con éxito.", "success")
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
     return render_template(
         "usuario/referencias.html",
-        form=form)
+        form=form
+    )
 
 
+
+
+@usuario_bp.route('/referencias_personales', methods=['GET', 'POST'])
+@login_required
+def referencias_personales():
+
+    PASO_ACTUAL = "referencias_personales"
+    form = referenciasPersonalesForm()
+
+    if request.method == "GET":
+        registros = ReferenciasPersonales.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
+
+        for registro in registros:
+            form.Info_referencias_personales.append_entry({
+                "registro_id": registro.id,
+                "nombres": registro.nombres,
+                "apellidos": registro.apellidos,
+                "parentesco": registro.parentesco,
+                "telefono": registro.telefono,
+                "eliminar": "0",
+            })
+
+    if request.method == "POST":
+
+        campos = [
+            "nombres",
+            "apellidos",
+            "parentesco",
+            "telefono"
+        ]
+
+        errores_negocio = []
+
+        for entry in form.Info_referencias_personales:
+
+            marcado_para_eliminar = entry.eliminar.data == "1"
+
+            if marcado_para_eliminar:
+                continue
+
+            if fila_vacia(entry, campos):
+                continue
+
+            errores_fila = validar_referencias_personales(entry)
+            errores_negocio.extend(errores_fila)
+
+        if errores_negocio:
+
+            for error in errores_negocio:
+                flash(error, "danger")
+
+        else:
+
+            for entry in form.Info_referencias_personales:
+
+                registro_id = entry.registro_id.data
+                marcado_para_eliminar = entry.eliminar.data == "1"
+                registro = None
+
+                if registro_id:
+
+                    registro = ReferenciasPersonales.query.filter_by(
+                        id=registro_id,
+                        id_usuario=current_user.id
+                    ).first()
+
+                if marcado_para_eliminar:
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if fila_vacia(entry, campos):
+
+                    if registro:
+
+                        db.session.delete(registro)
+
+                    continue
+
+                if registro:
+                    registro.nombres = entry.nombres.data
+                    registro.apellidos = entry.apellidos.data
+                    registro.parentesco = entry.parentesco.data
+                    registro.telefono = entry.telefono.data
+
+                else:
+                    nuevo = ReferenciasPersonales(
+                        id_usuario=current_user.id,
+                        nombres=entry.nombres.data,
+                        apellidos=entry.apellidos.data,
+                        parentesco=entry.parentesco.data,
+                        telefono=entry.telefono.data,
+                    )
+
+                    db.session.add(nuevo)
+
+            db.session.commit()
+            flash("Guardado con éxito.", "success")
+            return redirigir_paso_wizard(PASO_ACTUAL)
+
+    return render_template(
+        "usuario/referencias_personales.html",
+        form=form
+    )
 
 @usuario_bp.route('/discapacidades', methods=['GET', 'POST'])
 @login_required
 def discapacidades():
-    form = discapacidadesForm()
+
+    PASO_ACTUAL = "discapacidades"
+    form = discapacidadForm()
 
     if request.method == "GET":
         registros = Discapacidades.query.filter_by(
@@ -908,81 +985,129 @@ def discapacidades():
                 "registro_id": registro.id,
                 "categoria": registro.categoria,
                 "descripcion": registro.descripcion,
+                "tiene_certificado": registro.tiene_certificado,
                 "eliminar": "0",
             })
 
     if request.method == "POST":
 
-        accion = request.form.get("accion")
+        campos = [
+            "categoria",
+            "descripcion",
+            "tiene_certificado"
+        ]
+
+        errores_negocio = []
 
         for entry in form.Info_discapacidades:
 
-            registro_id = entry.registro_id.data
             marcado_para_eliminar = entry.eliminar.data == "1"
 
-            if registro_id and marcado_para_eliminar:
+            if marcado_para_eliminar:
+                continue
 
-                registro = Discapacidades.query.filter_by(
-                    id=registro_id,
-                    id_usuario=current_user.id
-                ).first()
+            if fila_vacia(entry, campos):
+                continue
 
-                if registro:
+            errores_fila = validar_discapacidades(entry)
+            errores_negocio.extend(errores_fila)
 
-                    db.session.delete(registro)
+        if errores_negocio:
 
-        if accion == "anterior":
+            for error in errores_negocio:
+                flash(error, "danger")
 
-            db.session.commit()
+        else:
 
-            return redirect(
-                url_for("usuario.referencias")
-            )
-
-        if form.validate():
-
-            for entry in form.Info_discapacidades:
+            for i, entry in enumerate(form.Info_discapacidades):
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
-
-                # Ya fue procesado arriba
-                if marcado_para_eliminar:
-
-                    continue
-
                 registro = None
 
                 if registro_id:
-
                     registro = Discapacidades.query.filter_by(
                         id=registro_id,
                         id_usuario=current_user.id
                     ).first()
 
+                if marcado_para_eliminar:
+
+                    if registro:
+                        db.session.delete(registro)
+
+                    continue
+
+                if fila_vacia(entry, campos):
+
+                    if registro:
+                        db.session.delete(registro)
+
+                    continue
+
                 if registro:
-                    # Editar existente
                     registro.categoria = entry.categoria.data
                     registro.descripcion = entry.descripcion.data
+                    registro.tiene_certificado = entry.tiene_certificado.data
+
                 else:
-                    # Crear nuevo
-                    nuevo = Discapacidades(
+                    registro = Discapacidades(
                         id_usuario=current_user.id,
                         categoria=entry.categoria.data,
                         descripcion=entry.descripcion.data,
+                        tiene_certificado=entry.tiene_certificado.data,
                         fecha_registro=datetime.now(),
                     )
-                    db.session.add(nuevo)
+
+                    db.session.add(registro)
+                    db.session.flush()
+
+                nombre_campo_archivo = (
+                    f"Info_discapacidades-{i}-ruta_certificado"
+                )
+
+                archivo = request.files.get(nombre_campo_archivo)
+
+                if archivo and archivo.filename:
+                    nombre_seguro = secure_filename(archivo.filename)
+
+                    nombre_final = (
+                        f"discapacidad_{registro.id}_{nombre_seguro}"
+                    )
+
+                    ruta_carpeta = os.path.join(
+                        "app",
+                        "static",
+                        "uploads",
+                        "discapacidades"
+                    )
+
+                    os.makedirs(ruta_carpeta, exist_ok=True)
+
+                    ruta_archivo = os.path.join(
+                        ruta_carpeta,
+                        nombre_final
+                    )
+
+                    archivo.save(ruta_archivo)
+
+                    registro.ruta_certificado = (
+                        f"uploads/discapacidades/{nombre_final}"
+                    )
+
+                if not entry.tiene_certificado.data:
+                    registro.ruta_certificado = None
 
             db.session.commit()
+            flash("Guardado con éxito.", "success")
+            return redirigir_paso_wizard(PASO_ACTUAL)
 
-            return redirect(url_for("usuario.documentos"))
+    return render_template(
+        "usuario/discapacidades.html",
+        form=form
+    )
 
-        else:
 
-            print("ERRORES:", form.errors)
-
-    return render_template("usuario/discapacidades.html", form=form)
 
 
 @usuario_bp.route('/documentos', methods=['GET', 'POST'])
