@@ -5,12 +5,13 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash
+    flash,
+    send_file
 )
+import os
 from sqlalchemy import exists
 from sqlalchemy import case
 from sqlalchemy import func
-from weasyprint import HTML
 from datetime import date,timedelta
 from flask_login import current_user, login_required
 from datetime import datetime
@@ -28,6 +29,7 @@ from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
 from app.forms.experiencia import experienciaForm
 from app.models.funcion_experiencia import FuncionExperiencia
+from app.utils.generar_pdf import generar_pdf_expediente
 
 
 from . import admin_bp
@@ -359,12 +361,41 @@ def actualizar_postulacion(id):
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
     
-@admin_bp.route("/admin/postulantes/<int:id>/descargar-expediente")
+@admin_bp.route('/admin/postulantes/<int:id>/descargar-expediente')
 @login_required
-def descargar_expedientes(id):
-    if(session["rol"] == "admin"):
-        
+def descargar_expediente(id):
 
+     post = Postulacion.query.get_or_404(id)
+
+     personal = Personal.query.filter_by(
+            id_usuario=post.id_usuario
+        ).first_or_404()
+
+     vacante = Vacante.query.get_or_404(
+            post.id_vacante
+        )
+
+     contacto = Contacto.query.filter_by(
+            id_usuario=post.id_usuario
+        ).first()
+
+     academica = Info_academica.query.filter_by(
+                 id_usuario=post.id_usuario
+             ).first()
+
+     buffer = generar_pdf_expediente(personal, vacante, post, contacto, academica)
+
+     return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=f'expediente_{personal.nombres}_{personal.apellidos}.pdf',
+        mimetype='application/pdf'
+    )
+
+@admin_bp.route('/admin/hoja-de-vida/')
+@login_required
+def listar_hojas_de_vida():
+    
 
     
 

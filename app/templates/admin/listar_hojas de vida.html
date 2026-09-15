@@ -1,0 +1,172 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}
+Expedientes — {{ vacante.titulo }}
+{% endblock %}
+
+{% block contenido %}
+
+<div class="post-header">
+    <div>
+        <h2 class="post-titulo">Expedientes</h2>
+        <p class="post-subtitulo">{{ vacante.titulo }} — {{ vacante.area or 'Sin área' }}</p>
+    </div>
+    <a href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}" class="btn-secondary btn-sm">
+        Volver a postulantes
+    </a>
+</div>
+
+<form method="GET" action="{{ url_for('admin.listar_expedientes', id=vacante.id) }}">
+
+    <div class="filtros-avanzados-panel post-filtros-panel">
+
+        <div class="post-filtros-grid-3">
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Estado</p>
+                <select name="estado">
+                    <option value="">Todos los estados</option>
+                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado')] %}
+                        <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="post-filtros-acciones">
+            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
+                Restablecer
+            </button>
+            <button type="submit" class="btn-primary btn-sm">
+                Aplicar filtro
+            </button>
+        </div>
+
+    </div>
+
+</form>
+
+<div class="post-filtros-info" style="display:flex; justify-content:space-between; align-items:center; margin:16px 0;">
+    <p style="color:var(--text-secondary); font-size:13.5px; margin:0;">
+        Mostrando {{ postulantes|length }} postulante{{ 's' if postulantes|length != 1 else '' }}
+    </p>
+
+    <button type="button" id="btn-descargar-zip" class="btn-primary btn-sm" disabled>
+        Descargar todo en ZIP
+    </button>
+</div>
+
+<form id="form-descargar-zip" method="GET" action="{{ url_for('admin.descargar_expedientes_zip', id=vacante.id) }}">
+
+<div class="vac-tabla-container">
+    <table class="vac-tabla">
+        <thead>
+            <tr>
+                <th style="width:36px;">
+                    <input type="checkbox" id="chk-todos">
+                </th>
+                <th>Nombre</th>
+                <th>Fecha de postulación</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for post in postulantes %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="ids" value="{{ post.id }}" class="chk-postulante">
+                    </td>
+
+                    <td>
+                        <strong>{{ post.personal.nombres }} {{ post.personal.apellidos }}</strong>
+                    </td>
+
+                    <td>
+                        {% if post.fecha_postulacion %}
+                            {{ post.fecha_postulacion.strftime('%d/%m/%Y') }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if post.estado == 'postulado' %}
+                            <span class="badge badge-pink">Postulado</span>
+                        {% elif post.estado == 'revision' %}
+                            <span class="badge badge-blue">En revisión</span>
+                        {% elif post.estado == 'entrevista' %}
+                            <span class="badge badge-orange">Entrevista</span>
+                        {% elif post.estado == 'contratado' %}
+                            <span class="badge badge-green">Contratado</span>
+                        {% elif post.estado == 'rechazado' %}
+                            <span class="badge badge-red">Rechazado</span>
+                        {% else %}
+                            <span class="badge badge-gray">{{ post.estado }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="vac-acciones">
+                            <a href="{{ url_for('admin.ver_expediente', id=post.id) }}" target="_blank" class="btn-secondary btn-sm">
+                                Ver CV
+                            </a>
+                            <a href="{{ url_for('admin.descargar_expediente', id=post.id) }}" class="btn-primary btn-sm">
+                                Descargar
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5" class="vac-tabla-vacia">No se encontraron postulantes.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</form>
+
+<script>
+const chkTodos = document.getElementById('chk-todos');
+const chksPostulante = document.querySelectorAll('.chk-postulante');
+const btnZip = document.getElementById('btn-descargar-zip');
+const formZip = document.getElementById('form-descargar-zip');
+
+function actualizarBotonZip() {
+    const marcados = document.querySelectorAll('.chk-postulante:checked').length;
+    btnZip.disabled = marcados === 0;
+    btnZip.textContent = marcados > 0
+        ? `Descargar seleccionados (${marcados})`
+        : 'Descargar todo en ZIP';
+}
+
+chkTodos.addEventListener('change', () => {
+    chksPostulante.forEach(chk => chk.checked = chkTodos.checked);
+    actualizarBotonZip();
+});
+
+chksPostulante.forEach(chk => {
+    chk.addEventListener('change', () => {
+        if (!chk.checked) chkTodos.checked = false;
+        actualizarBotonZip();
+    });
+});
+
+btnZip.addEventListener('click', () => {
+    const marcados = document.querySelectorAll('.chk-postulante:checked').length;
+
+    if (marcados === 0) {
+        // Ninguno seleccionado: se descargan todos los de la tabla
+        chksPostulante.forEach(chk => chk.checked = true);
+    }
+
+    formZip.submit();
+});
+</script>
+
+{% endblock %}

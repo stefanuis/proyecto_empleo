@@ -126,7 +126,9 @@ Postulantes - {{ vacante.titulo }}
                         </a>
                     </td>
                     <td>
-                        <a href="{{  url_for('admin.descargar_expediente',id=p.id) }}"></a>
+                        <a href="{{  url_for('admin.descargar_expediente', id=postulacion.id ) }}" class="btn btn-primary" target="_blank">
+                            <span class="icon icon-briefcase"></span>
+                        </a>
                     </td>
                 </tr>
             {% else %}
