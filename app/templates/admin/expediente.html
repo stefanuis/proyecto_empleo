@@ -224,11 +224,12 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
             <div class="campo">
                 <label class="form-label">Estado</label>
                 <select name="estado" class="form-control">
-                    <option value="postulado" {% if post.estado == 'postulado' %}selected{% endif %}>Postulado</option>
-                    <option value="revision" {% if post.estado == 'revision' %}selected{% endif %}>En revisión</option>
-                    <option value="entrevista" {% if post.estado == 'entrevista' %}selected{% endif %}>Entrevista</option>
-                    <option value="contratado" {% if post.estado == 'contratado' %}selected{% endif %}>Contratado</option>
-                    <option value="rechazado" {% if post.estado == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                    <option value="postulado" {% if post.estado == 'Postulado' %}selected{% endif %}>Postulado</option>
+                    <option value="revision" {% if post.estado ==  'Revision' %}selected{% endif %}>Revision</option>
+                    <option value="entrevista" {% if post.estado == 'Stock' %}selected{% endif %}>Stock</option>
+                    <option value="entrevista" {% if post.estado == 'Entrevista' %}selected{% endif %}>Entrevista</option>
+                    <option value="contratado" {% if post.estado == 'Contratado' %}selected{% endif %}>Contratado</option>
+                    <option value="rechazado" {% if post.estado == 'Rechazado' %}selected{% endif %}>Rechazado</option>
                 </select>
             </div>
             <div class="campo campo-completo">

@@ -6,8 +6,13 @@ from flask import (
     redirect,
     url_for,
     flash,
-    send_file
+    send_file,
+    abort
+    
 )
+
+import io
+import zipfile
 import os
 from sqlalchemy import exists
 from sqlalchemy import case
@@ -23,6 +28,7 @@ from app.models.postulacion import Postulacion
 from app.models.personal import Personal
 from app.models.contacto import Contacto
 from app.models.academica import Info_academica
+from app.models.personal import Personal
 from app.models.familiar import Familiar
 from app.models.referencias import Referencias
 from app.forms.postulacion import PostulacionForm
@@ -84,6 +90,7 @@ def listar_vacantes():
     estado = request.args.get("estado", "").strip()
     fecha_desde = request.args.get("fecha_publicacion_desde", "").strip()
     fecha_hasta = request.args.get("fecha_publicacion_hasta", "").strip()
+    
 
     todas_las_vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
 
@@ -172,6 +179,7 @@ def crear_vacante():
                 estado=form.estado.data,
                 fecha_publicacion=form.fecha_publicacion.data,
                 fecha_cierre=form.fecha_cierre.data,  
+                 numero_plazas=form.numero_plazas.data,
                 requiere_video=form.requiere_video.data,
                 id_usuario_creador=current_user.id
             )
@@ -392,12 +400,88 @@ def descargar_expediente(id):
         mimetype='application/pdf'
     )
 
-@admin_bp.route('/admin/hoja-de-vida/')
+@admin_bp.route('/admin/hoja-de-vida')
 @login_required
-def listar_hojas_de_vida():
-    
+def listar_hoja_vida():
 
-    
+    # 1. Filtros que llegan por la URL
+    vacante_id = request.args.get('vacante_id')
+    estado = request.args.get('estado')
+
+    # 2. Obtener todas las vacantes
+    vacantes = Vacante.query.all()
+
+    # 3. Consulta de postulaciones
+    query = Postulacion.query
+
+    if vacante_id:
+        query = query.filter(
+            Postulacion.id_vacante == int(vacante_id)
+        )
+
+    if estado:
+        query = query.filter(
+            Postulacion.estado == estado
+        )
+
+    # 4. Obtener las postulaciones
+    postulantes = query.order_by(
+        Postulacion.fecha_postulacion.desc()
+    ).all()
+
+    # 5. Asociar la información personal a cada postulación
+    for post in postulantes:
+
+        post.personal = Personal.query.filter_by(
+            id_usuario=post.id_usuario
+        ).first()
+
+    # 6. Enviar los datos a la plantilla
+    return render_template(
+        'listar_hojas de vida.html',
+        vacantes=vacantes,
+        postulantes=postulantes,
+        vacante_seleccionada=vacante_id,
+        estado_seleccionado=estado
+    )
+
+@admin_bp.route('/admin/expedientes/descargar-zip')
+@login_required
+def descargar_expedientes_zip():
+    # El template envía varios checkboxes con name="ids", así que
+    # llegan como ?ids=3&ids=7&ids=12
+    ids = [int(i) for i in request.args.getlist('ids') if i.isdigit()]
+
+    if not ids:
+        abort(400, description='No se seleccionaron postulantes.')
+
+    postulantes = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for post in postulantes:
+            personal = post.personal
+            vacante = post.vacante
+            contacto = getattr(post, 'contacto', None)
+            academica = getattr(post, 'academica', None)
+            familiar = getattr(post, 'familiar', None)
+            referencias = getattr(post, 'referencias', None)
+
+            pdf_buffer = generar_pdf_expediente(
+                personal, vacante, post, contacto, academica, familiar, referencias
+            )
+
+            nombre_archivo = f"expediente_{personal.nombres}_{personal.apellidos}_{post.id}.pdf"
+            zf.writestr(nombre_archivo, pdf_buffer.read())
+
+    zip_buffer.seek(0)
+
+    return send_file(
+        zip_buffer,
+        as_attachment=True,
+        download_name='expedientes.zip',
+        mimetype='application/zip',
+    )
 
 #### confirmaciones
 

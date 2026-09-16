@@ -26,7 +26,7 @@ Postulantes - {{ vacante.titulo }}
                 <p class="filtro-grupo-titulo">Estado</p>
                 <select name="estado">
                     <option value="">Todos los estados</option>
-                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado')] %}
+                    {% for valor, etiqueta in [('Postulado', 'Postulado'), ('Revision', 'Revision'), ('Entrevista', 'Entrevista'), ('Contratado', 'Contratado'), ('Rechazado', 'Rechazado')] %}
                         <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>
                             {{ etiqueta }}
                         </option>
@@ -87,10 +87,20 @@ Postulantes - {{ vacante.titulo }}
 
 </form>
 
+<!-----seleccionados-->
+<div class="post-seleccion-acciones">
+    <div class="post-seleccion-info">
+         <span id="contador-seleccionados"> 0 postulantes seleccionados</span>
+    </div>
+</div>
+ <button type="button" id="btn-citar-seleccionados" class="btn-primary btn-sm" disabled>  Citar seleccionados </button>
 <div class="vac-tabla-container">
     <table class="vac-tabla">
         <thead>
             <tr>
+                <th>
+                <input type="checkbox" id="seleccionar-todos">
+            </th>
                 <th>Candidato</th>
                 <th>Documento</th>
                 <th>Estado</th>
@@ -102,18 +112,19 @@ Postulantes - {{ vacante.titulo }}
         <tbody>
             {% for postulacion, candidato in postulaciones %}
                 <tr>
+                    <td><input type="checkbox"  name="postulaciones_seleccionadas" value="{{ postulacion.id }}" class="checkbox-postulante"></td>
                     <td><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></td>
                     <td>{{ candidato.numero_documento or '—' }}</td>
                     <td>
-                        {% if postulacion.estado == 'postulado' %}
+                        {% if postulacion.estado == 'Postulado' %}
                             <span class="badge badge-pink">Postulado</span>
-                        {% elif postulacion.estado == 'revision' %}
-                            <span class="badge badge-blue">En revisión</span>
-                        {% elif postulacion.estado == 'entrevista' %}
+                        {% elif postulacion.estado == 'Revision' %}
+                            <span class="badge badge-blue">Revision</span>
+                        {% elif postulacion.estado == 'Entrevista' %}
                             <span class="badge badge-orange">Entrevista</span>
-                        {% elif postulacion.estado == 'contratado' %}
+                        {% elif postulacion.estado == 'Contratado' %}
                             <span class="badge badge-green">Contratado</span>
-                        {% elif postulacion.estado == 'rechazado' %}
+                        {% elif postulacion.estado == 'Rechazado' %}
                             <span class="badge badge-red">Rechazado</span>
                         {% else %}
                             <span class="badge badge-gray">{{ postulacion.estado }}</span>

@@ -1,26 +1,32 @@
 {% extends 'admin/base.html' %}
 
-{% block titulo %}
-Expedientes — {{ vacante.titulo }}
-{% endblock %}
 
 {% block contenido %}
 
 <div class="post-header">
     <div>
-        <h2 class="post-titulo">Expedientes</h2>
-        <p class="post-subtitulo">{{ vacante.titulo }} — {{ vacante.area or 'Sin área' }}</p>
+        <h2 class="post-titulo">Hojas de vida / Expedientes</h2>
+        <p class="post-subtitulo">Auditoría y descarga masiva de todos los postulantes</p>
     </div>
-    <a href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}" class="btn-secondary btn-sm">
-        Volver a postulantes
-    </a>
 </div>
 
-<form method="GET" action="{{ url_for('admin.listar_expedientes', id=vacante.id) }}">
+<form method="GET" action="{{ url_for('admin.listar_hoja_vida') }}">
 
     <div class="filtros-avanzados-panel post-filtros-panel">
 
         <div class="post-filtros-grid-3">
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Vacante</p>
+                <select name="vacante_id">
+                    <option value="">Todas las vacantes</option>
+                    {% for v in vacantes %}
+                        <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
+                            {{ v.titulo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
             <div class="vac-filtro-grupo">
                 <p class="filtro-grupo-titulo">Estado</p>
@@ -59,7 +65,7 @@ Expedientes — {{ vacante.titulo }}
     </button>
 </div>
 
-<form id="form-descargar-zip" method="GET" action="{{ url_for('admin.descargar_expedientes_zip', id=vacante.id) }}">
+<form id="form-descargar-zip" method="GET" action="{{ url_for('admin.descargar_expedientes_zip') }}">
 
 <div class="vac-tabla-container">
     <table class="vac-tabla">
@@ -69,6 +75,7 @@ Expedientes — {{ vacante.titulo }}
                     <input type="checkbox" id="chk-todos">
                 </th>
                 <th>Nombre</th>
+                <th>Vacante</th>
                 <th>Fecha de postulación</th>
                 <th>Estado</th>
                 <th>Acciones</th>
@@ -86,6 +93,10 @@ Expedientes — {{ vacante.titulo }}
                     </td>
 
                     <td>
+                        {{ post.vacante.titulo if post.vacante else '—' }}
+                    </td>
+
+                    <td>
                         {% if post.fecha_postulacion %}
                             {{ post.fecha_postulacion.strftime('%d/%m/%Y') }}
                         {% else %}
@@ -94,15 +105,15 @@ Expedientes — {{ vacante.titulo }}
                     </td>
 
                     <td>
-                        {% if post.estado == 'postulado' %}
+                        {% if post.estado == 'Postulado' %}
                             <span class="badge badge-pink">Postulado</span>
-                        {% elif post.estado == 'revision' %}
-                            <span class="badge badge-blue">En revisión</span>
-                        {% elif post.estado == 'entrevista' %}
+                        {% elif post.estado == 'Revision' %}
+                            <span class="badge badge-blue">Revision</span>
+                        {% elif post.estado == 'Entrevista' %}
                             <span class="badge badge-orange">Entrevista</span>
-                        {% elif post.estado == 'contratado' %}
+                        {% elif post.estado == 'Contratado' %}
                             <span class="badge badge-green">Contratado</span>
-                        {% elif post.estado == 'rechazado' %}
+                        {% elif post.estado == 'Rechazado' %}
                             <span class="badge badge-red">Rechazado</span>
                         {% else %}
                             <span class="badge badge-gray">{{ post.estado }}</span>
@@ -122,7 +133,7 @@ Expedientes — {{ vacante.titulo }}
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="5" class="vac-tabla-vacia">No se encontraron postulantes.</td>
+                    <td colspan="6" class="vac-tabla-vacia">No se encontraron postulantes.</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -130,6 +141,214 @@ Expedientes — {{ vacante.titulo }}
 </div>
 
 </form>
+
+<style>
+
+.filtros-avanzados-panel {
+    background: #fff;
+    border: 1px solid #e2e5e9;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* === Grids === */
+.post-filtros-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.post-filtros-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* === Grupo individual de filtro === */
+.vac-filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filtro-grupo-titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin: 0;
+}
+
+/* === Inputs y selects === */
+.vac-filtro-grupo select,
+.vac-filtro-grupo input[type="text"] {
+    padding: 9px 12px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #222;
+    background-color: #fafbfc;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+}
+
+.vac-filtro-grupo select:focus,
+.vac-filtro-grupo input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+.vac-filtro-grupo input[type="text"]::placeholder {
+    color: #9aa1a8;
+}
+
+/* === Acciones (botones) === */
+.post-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #eef0f2;
+}
+
+/* === Botones === */
+.btn-primary,
+.btn-secondary {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.btn-sm {
+    padding: 9px 18px;
+    font-size: 13px;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary);
+}
+
+.btn-secondary {
+    background-color: #f1f3f5;
+    color: #444;
+    border: 1px solid #d5d9dd;
+}
+
+.btn-secondary:hover {
+    background-color: #fff;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* === Header de la página === */
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.post-titulo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.post-subtitulo {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+
+.vac-tabla-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.vac-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: auto;
+}
+
+.vac-tabla thead {
+    background: var(--primary);
+}
+
+.vac-tabla thead th {
+    color: #fff;
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-tabla tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+
+
+.vac-tabla tbody td {
+    padding: 14px 16px;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+
+
+
+/* === Responsive === */
+@media (max-width: 900px) {
+    .post-filtros-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .post-filtros-grid-3,
+    .post-filtros-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .post-filtros-acciones {
+        flex-direction: column-reverse;
+    }
+
+    .post-filtros-acciones .btn-primary,
+    .post-filtros-acciones .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+
 
 <script>
 const chkTodos = document.getElementById('chk-todos');

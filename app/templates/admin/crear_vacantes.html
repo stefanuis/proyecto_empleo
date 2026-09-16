@@ -131,6 +131,15 @@ Principal Usuario
                         <span class="error">{{ error }}</span>
                     {% endfor %}
                 </div>
+                
+                 <div class="campo">
+                    {{ form.numero_plazas.label }}
+                    {{ form.numero_plazas(class="form-control") }}
+                <div class="campo">
+                    {% for error in form.numero_plazas.errors %}
+                        <span class="error">{{ error }}</span>
+                    {% endfor %}
+                </div>
 
                 <div class="campo campo-completo">
                     <label class="form-label">

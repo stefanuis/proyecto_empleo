@@ -131,7 +131,7 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
     """
     Genera el PDF del expediente (Parte 1: encabezado + personal + contacto)
     y devuelve un BytesIO listo para enviar con send_file().
-    """
+    """                
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,

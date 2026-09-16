@@ -4,12 +4,14 @@ from wtforms import (
     SelectField,
     SubmitField,
     TextAreaField,
+    IntegerField,
     BooleanField,
     DateField
 )
 from wtforms.validators import (
     DataRequired,
     Optional,
+    NumberRange,
     Length
 )
 
@@ -142,6 +144,15 @@ class VacanteForm(FlaskForm):
         validators=[DataRequired()]
     )
 
+    
+    numero_plazas= IntegerField(
+        "numero de plazas",
+        validators=[
+            Optional(),
+            NumberRange(min=0, max=70)
+        ],
+        render_kw={"placeholder": "Ej: 1"}
+    )
     
     requiere_video = BooleanField(
         "requiere video de presentacion",

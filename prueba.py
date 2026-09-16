@@ -8,7 +8,7 @@ datos = {
 
 "model": "qwen3:14b",
 
-"prompt": "¿Qué ventajas tiene Python para automatización?",
+"prompt": "¿que es un  agujero negro?",
 
 "stream": False
 

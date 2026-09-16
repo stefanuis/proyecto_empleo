@@ -24,14 +24,17 @@ class PostulacionForm(FlaskForm):
         "Estado de la postulación",
         choices=[
             ("", "Selecciona un estado"),
-            ("Pendiente", "Pendiente"),
-            ("En revisión", "En revisión"),
-            ("Aceptado", "Aceptado"),
-            ("Rechazado", "Rechazado"),
-            ("Retirada", "Retirada")
+            ("Postulado", "Postulado"),
+            ("Revision", "Revision"),
+            ("Entrevista", "Entrevista"),
+            ("Stock", "Stock"),
+            ("Contratado", "Contratado"),
+            ("Rechazado", "Rechazado")
         ],
         validators=[Optional()]
     )
+
+    
 
     notas_reclutador = TextAreaField(
         "Notas del reclutador",

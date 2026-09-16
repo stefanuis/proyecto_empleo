@@ -1,487 +1,183 @@
 {% extends 'admin/base.html' %}
 
-{% block titulo %}
-Vacantes
-{% endblock %}
-
 {% block contenido %}
 
-<form class="filtros-vacantes-admin"
-      method="GET"
-      action="{{ url_for('admin.listar_vacantes') }}">
-
-<div class="input-buscar buscador-vacantes">
-
+<form class="filtros-vacantes-admin" method="GET" action="{{ url_for('admin.listar_vacantes') }}">
+ 
+  <div class="input-buscar buscador-vacantes">
     <i class="ti ti-search"></i>
-
-    <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}" >
-
-    <button
-        type="submit"
-        name="accion"
-        value="buscar"
-        class="btn-secondary btn-sm"
-    >
-        Buscar
+    <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
+    <button type="submit" name="accion" value="buscar" class="btn-secondary btn-sm">
+      Buscar
     </button>
-
-</div>
-
-<div class="vac-filtros-info">
-
-    <p class="vac-filtros-info-texto">
-
-    </p>
-
-</div>
-
-<div
-    class="filtros-avanzados-panel"
->
-
-    <div
-        class="filtros-avanzados-grupos"
-    >
-
-        
-
-        <div class="vac-filtro-grupo">
-
-            <p
-                class="filtro-grupo-titulo"
-            >
-                Vacante
-            </p>
-
-            
-
-            <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area" >
-
-                <option value="">
-                    Todas las áreas de aplicación
-                </option>
-
-                {% for value, label in areas %}
-
-                    {% if value %}
-
-                        <option
-                            value="{{ value }}"
-                            {% if area_aplicacion_seleccionada == value %}
-                                selected
-                            {% endif %}
-                        >
-                            {{ label }}
-                        </option>
-
-                    {% endif %}
-
-                {% endfor %}
-
-            </select>
-
-            
-
-            <select name="vacantes" class="vac-filtro-select" >
-
-                <option value="">
-                    Todas las vacantes
-                </option>
-
-                {% for v in todas_las_vacantes %}
-
-                    <option
-                        value="{{ v.id }}"
-                        {% if vacante_seleccionada == v.id|string %}
-                            selected
-                        {% endif %}
-                    >
-                        {{ v.titulo }}
-                    </option>
-
-                {% endfor %}
-
-            </select>
-
-            <p style="
-                font-size: 11px;
-                color: var(--text-muted);
-                margin: 6px 0 0;
-            ">
-                Selecciona el área o la vacante que deseas filtrar.
-            </p>
-
+  </div>
+ 
+  <div class="vac-filtros-info">
+    <p class="vac-filtros-info-texto"></p>
+  </div>
+ 
+  <div class="filtros-avanzados-panel">
+ 
+    <div class="filtros-avanzados-grupos">
+ 
+      <!-- Grupo: Vacante -->
+      <div class="vac-filtro-grupo">
+        <p class="filtro-grupo-titulo">Vacante</p>
+ 
+        <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
+          <option value="">Todas las áreas de aplicación</option>
+          {% for value, label in areas %}
+            {% if value %}
+              <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endif %}
+          {% endfor %}
+        </select>
+ 
+        <select name="vacantes" class="vac-filtro-select">
+          <option value="">Todas las vacantes</option>
+          {% for v in todas_las_vacantes %}
+            <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
+              {{ v.titulo }}
+            </option>
+          {% endfor %}
+        </select>
+ 
+        <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">
+          Selecciona el área o la vacante que deseas filtrar.
+        </p>
+      </div>
+ 
+      <!-- Grupo: Requisitos del puesto -->
+      <div class="vac-filtro-grupo">
+        <p class="filtro-grupo-titulo">Requisitos del puesto</p>
+ 
+        <select name="nivel" class="vac-filtro-select">
+          <option value="">Todos los niveles</option>
+          <option value="Bachillerato"    {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
+          <option value="tecnico"         {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
+          <option value="tecnologo"       {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
+          <option value="universitario"   {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
+          <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
+          <option value="maestria"        {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
+          <option value="doctorado"       {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
+        </select>
+      </div>
+ 
+      <!-- Grupo: Estado y fechas -->
+      <div class="vac-filtro-grupo">
+        <p class="filtro-grupo-titulo">Estado y fechas</p>
+ 
+        <select name="estado" class="vac-filtro-select vac-filtro-select-estado">
+          <option value="">Estados</option>
+          <option value="Activa"  {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
+          <option value="Cerrada" {% if estado_seleccionado == 'Cerrada' %}selected{% endif %}>Cerrada</option>
+        </select>
+ 
+        <div class="vac-filtro-fechas">
+          <div>
+            <label class="vac-filtro-label">Publicada desde</label>
+            <input type="date" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}">
+          </div>
+          <div>
+            <label class="vac-filtro-label">Publicada hasta</label>
+            <input type="date" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}">
+          </div>
         </div>
-
-        
-
-        <div class="vac-filtro-grupo">
-
-            <p
-                class="filtro-grupo-titulo"
-            >
-                Requisitos del puesto
-            </p>
-
-            
-
-            <select name="nivel" class="vac-filtro-select" >
-
-                <option value="">
-                    Todos los niveles
-                </option>
-
-                <option
-                    value="Bachillerato"
-                    {% if nivel_seleccionado == 'Bachillerato' %}
-                        selected
-                    {% endif %}
-                >
-                    Bachillerato
-                </option>
-
-                <option
-                    value="tecnico"
-                    {% if nivel_seleccionado == 'tecnico' %}
-                        selected
-                    {% endif %}
-                >
-                    Técnico
-                </option>
-
-                <option
-                    value="tecnologo"
-                    {% if nivel_seleccionado == 'tecnologo' %}
-                        selected
-                    {% endif %}
-                >
-                    Tecnólogo
-                </option>
-
-                <option
-                    value="universitario"
-                    {% if nivel_seleccionado == 'universitario' %}
-                        selected
-                    {% endif %}
-                >
-                    Universitario
-                </option>
-
-                <option
-                    value="especializacion"
-                    {% if nivel_seleccionado == 'especializacion' %}
-                        selected
-                    {% endif %}
-                >
-                    Especialización
-                </option>
-
-                <option
-                    value="maestria"
-                    {% if nivel_seleccionado == 'maestria' %}
-                        selected
-                    {% endif %}
-                >
-                    Maestría
-                </option>
-
-                <option
-                    value="doctorado"
-                    {% if nivel_seleccionado == 'doctorado' %}
-                        selected
-                    {% endif %}
-                >
-                    Doctorado
-                </option>
-
-            </select>
-
-        </div>
-
-        
-
-        <div class="vac-filtro-grupo">
-
-            <p
-                class="filtro-grupo-titulo"
-            >
-                Estado y fechas
-            </p>
-
-            
-
-            <select name="estado" class="vac-filtro-select vac-filtro-select-estado" >
-
-                <option value="">
-                    Estados
-                </option>
-
-                <option
-                    value="Activa"
-                    {% if estado_seleccionado == 'Activa' %}
-                        selected
-                    {% endif %}
-                >
-                    Activa
-                </option>
-
-                <option
-                    value="Cerrada"
-                    {% if estado_seleccionado == 'Cerrada' %}
-                        selected
-                    {% endif %}
-                >
-                    Cerrada
-                </option>
-
-            </select>
-
-            
-
-            <div class="vac-filtro-fechas">
-
-                <div>
-
-                    <label class="vac-filtro-label">
-                        Publicada desde
-                    </label>
-
-                    <input type="date" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}" >
-
-                </div>
-
-                <div>
-
-                    <label class="vac-filtro-label">
-                        Publicada hasta
-                    </label>
-
-                    <input type="date" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}" >
-
-                </div>
-
-            </div>
-
-        </div>
-
+      </div>
+ 
     </div>
-
-    
-
+ 
     <div class="vac-filtros-acciones">
-
-        <button
-            type="button"
-            class="btn-secondary btn-sm"
-            onclick="window.location.href=window.location.pathname"
-        >
-            Restablecer
-        </button>
-
-        
-
-        <button
-            type="submit"
-            name="accion"
-            value="filtrar"
-            class="btn-primary btn-sm"
-        >
-            Aplicar filtros
-        </button>
-
+      <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
+        Restablecer
+      </button>
+      <button type="submit" name="accion" value="filtrar" class="btn-primary btn-sm">
+        Aplicar filtros
+      </button>
     </div>
-
-</div>
-
+ 
+  </div>
+ 
 </form>
-
+ 
 <div class="vac-tabla-container">
-
-<table class="vac-tabla">
-
+  <table class="vac-tabla">
     <thead>
-
-        <tr>
-
-            <th>ID</th>
-
-            <th>Vacante</th>
-
-            <th>Área</th>
-
-            <th>Área de aplicación</th>
-
-            <th>Nivel académico</th>
-
-            <th>Salario</th>
-
-            <th>Estado</th>
-
-            <th>Publicación</th>
-
-            <th>Cierre</th>
-
-            <th>Acciones</th>
-
-        </tr>
-
+      <tr>
+        <th>ID</th>
+        <th>Vacante</th>
+        <th>Área</th>
+        <th>Área de aplicación</th>
+        <th>Nivel académico</th>
+        <th>Salario</th>
+        <th>Estado</th>
+        <th>Publicación</th>
+        <th>Cierre</th>
+        <th>Acciones</th>
+      </tr>
     </thead>
-
     <tbody>
-
-        {% for vacante in vacantes %}
-
-            <tr>
-
-                <td>
-                    {{ vacante.id }}
-                </td>
-
-                
-
-                <td>
-                    <strong>
-                        {{ vacante.titulo }}
-                    </strong>
-                </td>
-
-                
-
-                <td>
-                    {{ vacante.area or 'No especificada' }}
-                </td>
-
-                
-
-                <td>
-                    {{ vacante.area_aplicacion or 'No especificada' }}
-                </td>
-
-                
-
-                <td>
-                    {{ vacante.nivel_academico or 'No especificado' }}
-                </td>
-
-                
-
-                <td>
-                    {{ vacante.salario or 'No especificado' }}
-                </td>
-
-                
-
-                <td>
-
-                    {% if vacante.estado == 'Activa' %}
-
-                        <span class="vac-estado-activa">
-                            Activa
-                        </span>
-
-                    {% elif vacante.estado == 'Cerrada' %}
-
-                        <span class="vac-estado-cerrada">
-                            Cerrada
-                        </span>
-
-                    {% else %}
-
-                        {{ vacante.estado or 'Sin estado' }}
-
-                    {% endif %}
-
-                </td>
-
-                
-
-                <td>
-
-                    {% if vacante.fecha_publicacion %}
-
-                        {{ vacante.fecha_publicacion.strftime('%d/%m/%Y') }}
-
-                    {% else %}
-
-                        —
-
-                    {% endif %}
-
-                </td>
-
-                
-
-                <td>
-
-                    {% if vacante.fecha_cierre %}
-
-                        {{ vacante.fecha_cierre.strftime('%d/%m/%Y') }}
-
-                        {% set dias = vacante.dias_para_cierre %}
-
-                        {% if dias is not none %}
-
-                            {% if dias < 0 %}
-                                <span class="vac-badge-vencida">Vencida</span>
-                            {% elif dias <= 7 %}
-                                <span class="vac-badge-por-vencer">
-                                    {{ dias }} día{{ 's' if dias != 1 else '' }}
-                                </span>
-                            {% endif %}
-
-                        {% endif %}
-
-                    {% else %}
-
-                        —
-
-                    {% endif %}
-
-                </td>
-
-                
-
-                <td>
-
-                    <div class="vac-acciones">
-
-                        <a
-                            href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}"
-                            class="btn-secondary btn-sm"
-                        >
-                            Ver postulantes
-                        </a>
-
-                        <a
-                            href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}"
-                            class="btn-primary btn-sm"
-                        >
-                            Editar
-                        </a>
-
-                    </div>
-
-                </td>
-
-            </tr>
-
-        {% else %}
-
-            <tr>
-
-                <td
-                    colspan="10" class="vac-tabla-vacia"
-                >
-                    No se encontraron vacantes.
-                </td>
-
-            </tr>
-
-        {% endfor %}
-
+      {% for vacante in vacantes %}
+        <tr>
+          <td>{{ vacante.id }}</td>
+          <td><strong>{{ vacante.titulo }}</strong></td>
+          <td>{{ vacante.area or 'No especificada' }}</td>
+          <td>{{ vacante.area_aplicacion or 'No especificada' }}</td>
+          <td>{{ vacante.nivel_academico or 'No especificado' }}</td>
+          <td>{{ vacante.salario or 'No especificado' }}</td>
+          <td>
+            {% if vacante.estado == 'Activa' %}
+              <span class="vac-estado-activa">Activa</span>
+            {% elif vacante.estado == 'Cerrada' %}
+              <span class="vac-estado-cerrada">Cerrada</span>
+            {% else %}
+              {{ vacante.estado or 'Sin estado' }}
+            {% endif %}
+          </td>
+          <td>
+            {% if vacante.fecha_publicacion %}
+              {{ vacante.fecha_publicacion.strftime('%d/%m/%Y') }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if vacante.fecha_cierre %}
+              {{ vacante.fecha_cierre.strftime('%d/%m/%Y') }}
+              {% set dias = vacante.dias_para_cierre %}
+              {% if dias is not none %}
+                {% if dias < 0 %}
+                  <span class="vac-badge-vencida">Vencida</span>
+                {% elif dias <= 7 %}
+                  <span class="vac-badge-por-vencer">{{ dias }} día{{ 's' if dias != 1 else '' }}</span>
+                {% endif %}
+              {% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            <div class="vac-acciones">
+              <a href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}" class="btn-secondary btn-sm">
+                Ver postulantes
+              </a>
+              <a href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}" class="btn-primary btn-sm">
+                Editar
+              </a>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="10" class="vac-tabla-vacia">No se encontraron vacantes.</td>
+        </tr>
+      {% endfor %}
     </tbody>
 
-</table>
+  </table>
+
 </div>
 
 <style>
