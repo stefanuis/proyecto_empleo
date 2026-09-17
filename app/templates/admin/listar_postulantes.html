@@ -11,25 +11,18 @@ Postulantes - {{ vacante.titulo }}
         <h2 class="post-titulo">Postulantes</h2>
         <p class="post-subtitulo">{{ vacante.titulo }} — {{ vacante.area or 'Sin área' }}</p>
     </div>
-    <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary btn-sm">
-        Volver a vacantes
-    </a>
+    <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary btn-sm">Volver a vacantes</a>
 </div>
 
 <form method="GET" action="{{ url_for('admin.listar_postulantes', id=vacante.id) }}">
-
     <div class="filtros-avanzados-panel post-filtros-panel">
-
         <div class="post-filtros-grid-3">
-
             <div class="vac-filtro-grupo">
                 <p class="filtro-grupo-titulo">Estado</p>
                 <select name="estado">
                     <option value="">Todos los estados</option>
                     {% for valor, etiqueta in [('Postulado', 'Postulado'), ('Revision', 'Revision'), ('Entrevista', 'Entrevista'), ('Contratado', 'Contratado'), ('Rechazado', 'Rechazado')] %}
-                        <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>
-                            {{ etiqueta }}
-                        </option>
+                        <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -39,9 +32,7 @@ Postulantes - {{ vacante.titulo }}
                 <select name="experiencia_minima">
                     <option value="">Cualquier experiencia</option>
                     {% for valor, etiqueta in [('0', 'Sin experiencia'), ('1', '1+ año'), ('2', '2+ años'), ('3', '3+ años'), ('5', '5+ años')] %}
-                        <option value="{{ valor }}" {% if experiencia_seleccionada == valor %}selected{% endif %}>
-                            {{ etiqueta }}
-                        </option>
+                        <option value="{{ valor }}" {% if experiencia_seleccionada == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -51,17 +42,13 @@ Postulantes - {{ vacante.titulo }}
                 <select name="nivel_estudios">
                     <option value="">Todos los niveles</option>
                     {% for valor, etiqueta in [('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'), ('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'), ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado')] %}
-                        <option value="{{ valor }}" {% if nivel_estudios_seleccionado == valor %}selected{% endif %}>
-                            {{ etiqueta }}
-                        </option>
+                        <option value="{{ valor }}" {% if nivel_estudios_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
             </div>
-
         </div>
 
         <div class="post-filtros-grid-2">
-
             <div class="vac-filtro-grupo">
                 <p class="filtro-grupo-titulo">Título o carrera</p>
                 <input type="text" name="titulo_estudios" placeholder="Ej: Ingeniero, Enfermería..." value="{{ titulo_estudios_seleccionado }}">
@@ -71,90 +58,109 @@ Postulantes - {{ vacante.titulo }}
                 <p class="filtro-grupo-titulo">Función desempeñada</p>
                 <input type="text" name="funcion" placeholder="Ej: atención al cliente, facturación..." value="{{ funcion_seleccionada }}">
             </div>
-
         </div>
 
         <div class="post-filtros-acciones">
-            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
-                Restablecer
-            </button>
-            <button type="submit" class="btn-primary btn-sm">
-                Aplicar filtros
-            </button>
+            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
+            <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
         </div>
-
     </div>
-
 </form>
 
-<!-----seleccionados-->
-<div class="post-seleccion-acciones">
-    <div class="post-seleccion-info">
-         <span id="contador-seleccionados"> 0 postulantes seleccionados</span>
+<form id="form-citar" method="POST" action="{{ url_for('admin.citar_seleccionados', id=vacante.id) }}">
+    <input type="hidden" name="postulaciones_seleccionadas" id="input-ids-seleccionados">
+
+    <div class="post-seleccion-acciones" style="display:flex; align-items:center; justify-content:space-between; margin:16px 0;">
+        <div class="post-seleccion-info">
+            <span id="contador-seleccionados">0 postulantes seleccionados</span>
+        </div>
+        <button type="button" class="btn-postular" id="btn-citar-seleccionados">
+            Citar seleccionados
+        </button>
     </div>
-</div>
- <button type="button" id="btn-citar-seleccionados" class="btn-primary btn-sm" disabled>  Citar seleccionados </button>
-<div class="vac-tabla-container">
-    <table class="vac-tabla">
-        <thead>
-            <tr>
-                <th>
-                <input type="checkbox" id="seleccionar-todos">
-            </th>
-                <th>Candidato</th>
-                <th>Documento</th>
-                <th>Estado</th>
-                <th>Postulado</th>
-                <th>Acciones</th>
-                <th>Descargar Cv</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for postulacion, candidato in postulaciones %}
+
+    <div class="vac-tabla-container">
+        <table class="vac-tabla">
+            <thead>
                 <tr>
-                    <td><input type="checkbox"  name="postulaciones_seleccionadas" value="{{ postulacion.id }}" class="checkbox-postulante"></td>
-                    <td><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></td>
-                    <td>{{ candidato.numero_documento or '—' }}</td>
-                    <td>
-                        {% if postulacion.estado == 'Postulado' %}
-                            <span class="badge badge-pink">Postulado</span>
-                        {% elif postulacion.estado == 'Revision' %}
-                            <span class="badge badge-blue">Revision</span>
-                        {% elif postulacion.estado == 'Entrevista' %}
-                            <span class="badge badge-orange">Entrevista</span>
-                        {% elif postulacion.estado == 'Contratado' %}
-                            <span class="badge badge-green">Contratado</span>
-                        {% elif postulacion.estado == 'Rechazado' %}
-                            <span class="badge badge-red">Rechazado</span>
-                        {% else %}
-                            <span class="badge badge-gray">{{ postulacion.estado }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ postulacion.fecha_postulacion.strftime('%d/%m/%Y') if postulacion.fecha_postulacion else '—' }}</td>
-                    <td>
-                        <a href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}" class="btn-secondary btn-sm">
-                            Ver expediente
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{  url_for('admin.descargar_expediente', id=postulacion.id ) }}" class="btn btn-primary" target="_blank">
-                            <span class="icon icon-briefcase"></span>
-                        </a>
-                    </td>
+                    <th><input type="checkbox" id="seleccionar-todos"></th>
+                    <th>Candidato</th>
+                    <th>Documento</th>
+                    <th>Estado</th>
+                    <th>Postulado</th>
+                    <th>Acciones</th>
+                    <th>Descargar Cv</th>
                 </tr>
-            {% else %}
-                <tr>
-                    <td colspan="5" class="post-tabla-vacia">
-                        No hay postulantes que coincidan con los filtros.
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for postulacion, candidato in postulaciones %}
+                    <tr>
+                        <td><input type="checkbox" data-id="{{ postulacion.id }}" class="checkbox-postulante"></td>
+                        <td><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></td>
+                        <td>{{ candidato.numero_documento or '—' }}</td>
+                        <td>
+                            {% if postulacion.estado == 'Postulado' %}
+                                <span class="badge badge-pink">Postulado</span>
+                            {% elif postulacion.estado == 'Revision' %}
+                                <span class="badge badge-blue">Revision</span>
+                            {% elif postulacion.estado == 'Entrevista' %}
+                                <span class="badge badge-orange">Entrevista</span>
+                            {% elif postulacion.estado == 'Contratado' %}
+                                <span class="badge badge-green">Contratado</span>
+                            {% elif postulacion.estado == 'Rechazado' %}
+                                <span class="badge badge-red">Rechazado</span>
+                            {% else %}
+                                <span class="badge badge-gray">{{ postulacion.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ postulacion.fecha_postulacion.strftime('%d/%m/%Y') if postulacion.fecha_postulacion else '—' }}</td>
+                        <td><a href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}" class="btn-secondary btn-sm">Ver expediente</a></td>
+                        <td><a href="{{ url_for('admin.descargar_expediente', id=postulacion.id) }}" class="btn btn-primary" target="_blank"><span class="icon icon-briefcase"></span></a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="post-tabla-vacia">No hay postulantes que coincidan con los filtros.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+
+<div id="modal-citar" class="vacante-modal-overlay" style="display:none;">
+    <div class="vacante-modal-caja">
+        <button type="button" class="modal-cerrar" id="modal-cerrar">&times;</button>
+        <h2 id="modal-citar-titulo">Citar a entrevista</h2>
+        <p class="modal-meta" id="modal-resumen">Se enviará un correo a 0 postulante(s).</p>
+
+        <div class="campo campo-completo">
+            <label class="form-label" for="modal-fecha">Fecha de la entrevista</label>
+            <input type="date" id="modal-fecha" class="form-control" required>
+        </div>
+
+        <div class="campo campo-completo">
+            <label class="form-label" for="modal-hora">Hora</label>
+            <input type="time" id="modal-hora" class="form-control" required>
+        </div>
+
+        <div class="campo campo-completo">
+            <label class="form-label" for="modal-lugar">Lugar o enlace (opcional)</label>
+            <input type="text" id="modal-lugar" class="form-control" placeholder="Oficina principal / Enlace de videollamada...">
+        </div>
+
+        <div class="campo campo-completo">
+            <label class="form-label" for="modal-mensaje">Mensaje adicional (opcional)</label>
+            <textarea id="modal-mensaje" class="form-control" rows="3" placeholder="Instrucciones adicionales para el candidato..."></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+            <button type="button" class="btn-secondary btn-sm" id="modal-cancelar">Cancelar</button>
+            <button type="button" class="btn-primary btn-sm" id="modal-confirmar">Enviar citación</button>
+        </div>
+    </div>
 </div>
 
 <style>
-
 .filtros-avanzados-panel {
     background: #fff;
     border: 1px solid #e2e5e9;
@@ -164,7 +170,6 @@ Postulantes - {{ vacante.titulo }}
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* === Grids === */
 .post-filtros-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -179,7 +184,6 @@ Postulantes - {{ vacante.titulo }}
     margin-bottom: 16px;
 }
 
-/* === Grupo individual de filtro === */
 .vac-filtro-grupo {
     display: flex;
     flex-direction: column;
@@ -193,7 +197,6 @@ Postulantes - {{ vacante.titulo }}
     margin: 0;
 }
 
-/* === Inputs y selects === */
 .vac-filtro-grupo select,
 .vac-filtro-grupo input[type="text"] {
     padding: 9px 12px;
@@ -217,7 +220,6 @@ Postulantes - {{ vacante.titulo }}
     color: #9aa1a8;
 }
 
-/* === Acciones (botones) === */
 .post-filtros-acciones {
     display: flex;
     justify-content: flex-end;
@@ -226,7 +228,6 @@ Postulantes - {{ vacante.titulo }}
     border-top: 1px solid #eef0f2;
 }
 
-/* === Botones === */
 .btn-primary,
 .btn-secondary {
     border: none;
@@ -265,7 +266,6 @@ Postulantes - {{ vacante.titulo }}
     transform: scale(0.98);
 }
 
-/* === Header de la página === */
 .post-header {
     display: flex;
     justify-content: space-between;
@@ -285,7 +285,6 @@ Postulantes - {{ vacante.titulo }}
     color: #6b7280;
     margin: 0;
 }
-
 
 .vac-tabla-container {
     width: 100%;
@@ -318,18 +317,52 @@ Postulantes - {{ vacante.titulo }}
     transition: var(--transition);
 }
 
-
-
 .vac-tabla tbody td {
     padding: 14px 16px;
     color: var(--text-main);
     vertical-align: middle;
 }
 
+.vacante-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+}
 
+.vacante-modal-caja {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+}
 
+.modal-cerrar {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+}
 
-/* === Responsive === */
+.modal-cerrar:hover {
+    color: #222;
+}
+
 @media (max-width: 900px) {
     .post-filtros-grid-3 {
         grid-template-columns: repeat(2, 1fr);
@@ -357,7 +390,99 @@ Postulantes - {{ vacante.titulo }}
         width: 100%;
         text-align: center;
     }
+
+    .vacante-modal-caja {
+        width: 95%;
+        padding: 20px;
+    }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const chkTodos = document.getElementById('seleccionar-todos');
+    const chksPostulante = document.querySelectorAll('.checkbox-postulante');
+    const contador = document.getElementById('contador-seleccionados');
+    const btnCitar = document.getElementById('btn-citar-seleccionados');
+    const modal = document.getElementById('modal-citar');
+    const modalResumen = document.getElementById('modal-resumen');
+    const modalCerrar = document.getElementById('modal-cerrar');
+    const modalCancelar = document.getElementById('modal-cancelar');
+    const modalConfirmar = document.getElementById('modal-confirmar');
+    const inputIds = document.getElementById('input-ids-seleccionados');
+    const form = document.getElementById('form-citar');
+
+    function idsSeleccionados() {
+        return Array.from(document.querySelectorAll('.checkbox-postulante:checked'))
+            .map(chk => chk.dataset.id);
+    }
+
+    function actualizarContador() {
+        const marcados = idsSeleccionados().length;
+        contador.textContent = `${marcados} postulante${marcados !== 1 ? 's' : ''} seleccionado${marcados !== 1 ? 's' : ''}`;
+    }
+
+    chkTodos.addEventListener('change', () => {
+        chksPostulante.forEach(chk => chk.checked = chkTodos.checked);
+        actualizarContador();
+    });
+
+    chksPostulante.forEach(chk => {
+        chk.addEventListener('change', () => {
+            if (!chk.checked) chkTodos.checked = false;
+            actualizarContador();
+        });
+    });
+
+    btnCitar.addEventListener('click', () => {
+        const ids = idsSeleccionados();
+
+        if (ids.length === 0) {
+            alert('Debes seleccionar al menos un postulante.');
+            return;
+        }
+
+        modalResumen.textContent = `Se enviará un correo a ${ids.length} postulante(s).`;
+        modal.style.display = 'flex';
+    });
+
+    modalCerrar.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    modalCancelar.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+
+    modalConfirmar.addEventListener('click', () => {
+        const ids = idsSeleccionados();
+        const fecha = document.getElementById('modal-fecha').value;
+        const hora = document.getElementById('modal-hora').value;
+        const lugar = document.getElementById('modal-lugar').value;
+        const mensaje = document.getElementById('modal-mensaje').value;
+
+        if (ids.length === 0) {
+            alert('Debes seleccionar al menos un postulante.');
+            return;
+        }
+
+        if (!fecha || !hora) {
+            alert('Por favor completa la fecha y la hora de la entrevista.');
+            return;
+        }
+
+        const datos = { ids, fecha, hora, lugar, mensaje };
+
+        inputIds.value = JSON.stringify(datos);
+        form.submit();
+    });
+});
+</script>
 
 {% endblock %}

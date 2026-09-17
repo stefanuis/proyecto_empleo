@@ -14,6 +14,7 @@ from flask import (
 import io
 import zipfile
 import os
+import json
 from sqlalchemy import exists
 from sqlalchemy import case
 from sqlalchemy import func
@@ -36,9 +37,12 @@ from app.models.experiencia import Experiencia
 from app.forms.experiencia import experienciaForm
 from app.models.funcion_experiencia import FuncionExperiencia
 from app.utils.generar_pdf import generar_pdf_expediente
+from flask_mail import Message
+from app.extensions import db, mail
 
 
 from . import admin_bp
+
 
 
 @admin_bp.route("/principal", methods=["GET"])
@@ -483,9 +487,83 @@ def descargar_expedientes_zip():
         mimetype='application/zip',
     )
 
-#### confirmaciones
+#### Gestion de envio de citaciones ########
 
-@admin_bp.route("/citaciones", methods=["GET", "POST"])
+def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje):
+    try:
+        msg = Message(
+            subject='Has sido citado a entrevista',
+            sender='noresponder@clinpanamericana.com',  # ajusta al remitente real
+            recipients=[email]
+        )
+        msg.attach(
+            filename="logo_color.png",
+            content_type="image/png",
+            data=open("app/static/img/logo_color.png", "rb").read(),
+            disposition="inline",
+            headers={"Content-ID": "<logo_color>"}
+        )
+        msg.html = render_template("citacion.html", nombres=nombres, fecha=fecha, hora=hora, lugar=lugar,mensaje=mensaje,)
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print("ERROR SMTP al enviar citación:")
+        print(type(e))
+        print(str(e))
+        return False
+
+    
+@admin_bp.route('/admin/vacantes/<int:id>/citar-seleccionados', methods=['POST'])
 @login_required
-def citaciones():
-    return render_template("admin/citaciones.html")
+def citar_seleccionados(id):
+    datos_raw = request.form.get('postulaciones_seleccionadas')
+ 
+    if not datos_raw:
+        flash('No seleccionaste ningún postulante.', 'error')
+        return redirect(url_for('admin.listar_postulantes', id=id))
+ 
+    datos = json.loads(datos_raw)
+    ids = datos.get('ids', [])
+    fecha = datos.get('fecha')
+    hora = datos.get('hora')
+    lugar = datos.get('lugar') or 'Por confirmar'
+    mensaje = datos.get('mensaje') or ''
+ 
+    if not ids or not fecha or not hora:
+        flash('Faltan datos para citar (fecha, hora o postulantes).', 'error')
+        return redirect(url_for('admin.listar_postulantes', id=id))
+ 
+    postulaciones = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
+ 
+    enviados = 0
+    fallidos = 0
+ 
+    for post in postulaciones:
+        candidato = post.candidato  
+ 
+        exito = enviar_correo_citacion(
+            email=candidato.correo,        
+            nombres=candidato.nombres,
+            fecha=fecha,
+            hora=hora,
+            lugar=lugar,
+            mensaje=mensaje,
+        )
+ 
+        if exito:
+            post.estado = 'Entrevista'
+            enviados += 1
+        else:
+            fallidos += 1
+ 
+    db.session.commit()
+ 
+    if fallidos == 0:
+        flash(f'Se citó a {enviados} postulante(s) correctamente.', 'success')
+    else:
+        flash(f'Se citó a {enviados} postulante(s). {fallidos} correo(s) no se pudieron enviar.', 'warning')
+ 
+    return redirect(url_for('admin.listar_postulantes', id=id))
+ 
+
+

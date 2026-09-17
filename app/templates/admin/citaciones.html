@@ -1,93 +1,79 @@
 {% extends 'admin/base.html' %}
 {% block titulo %}Postulaciones{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/citaciones.css') }}">
+{% endblock %}
+
 {% block contenido %}
 
-
 <div class="contenedor-padre">
-    <div class="contenedor-formulario" style="max-width: none; width: 100%;">
+    <div class="contenedor-formulario contenedor-full">
 
         <div class="card-header">
             <span class="card-title">Confirmaciones de asistencia</span>
         </div>
 
-        <!-- Barra de búsqueda simple, siempre visible: input + botón Buscar, nada más -->
-        <form class="filtros-vacantes-admin">
-            <div class="input-buscar" style="flex: 1;">
+        <form method="GET" action="{{ url_for('admin.listar_citaciones') }}" class="filtros-vacantes-admin">
+            <div class="input-buscar input-buscar-flex">
                 <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por nombre">
+                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q or '' }}">
             </div>
-
             <button type="submit" class="btn-secondary btn-sm">Buscar</button>
         </form>
 
+        <div class="filtros-avanzados-panel citaciones-panel">
 
-        <!-- Panel de filtros avanzados (agrupados/anidados). Solo visual: siempre abierto aquí,
-             en tu lógica real este bloque se muestra/oculta con un toggle. -->
-        <div class="filtros-avanzados-panel" style="border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 8px; margin-bottom: 16px;">
+            <div class="filtros-avanzados-grupos citaciones-grupos">
 
-            <div class="filtros-avanzados-grupos" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-
-                <!-- Grupo 1: Vacante y área (anidado: el área filtra las vacantes disponibles) -->
                 <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Vacante</p>
+                    <p class="filtro-grupo-titulo">Vacante</p>
 
-                    <select name="area" style="width: 100%; margin-bottom: 8px;">
-                        <option value="">Todas las áreas</option>
-                        <option value="administrativa">Administrativa</option>
-                        <option value="asistencial">Asistencial</option>
-                    </select>
-
-                    <select name="vacante" style="width: 100%;">
+                    <select name="vacante_id" class="filtro-select-full">
                         <option value="">Todas las vacantes</option>
-                        <option value="analista">Analista de operaciones</option>
-                        <option value="auxiliar">Auxiliar administrativo</option>
+                        {% for v in vacantes %}
+                            <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
+                                {{ v.titulo }}
+                            </option>
+                        {% endfor %}
                     </select>
-                    <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">Se filtra según el área elegida.</p>
                 </div>
 
-                <!-- Grupo 2: Estado y entrevistador -->
                 <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Estado de la cita</p>
+                    <p class="filtro-grupo-titulo">Estado de la cita</p>
 
-                    <div class="filtro-checks" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-                            <input type="checkbox" name="estado" value="confirmado" checked> Confirmado
+                    <div class="filtro-checks">
+                        <label class="filtro-check-label">
+                            <input type="checkbox" name="estado" value="confirmada" {% if 'confirmada' in estados_seleccionados %}checked{% endif %}> Confirmado
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-                            <input type="checkbox" name="estado" value="pendiente" checked> Pendiente
+                        <label class="filtro-check-label">
+                            <input type="checkbox" name="estado" value="rechazada" {% if 'rechazada' in estados_seleccionados %}checked{% endif %}> Rechazado
                         </label>
-                        <label style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-                            <input type="checkbox" name="estado" value="sin_responder"> Sin responder
+                        <label class="filtro-check-label">
+                            <input type="checkbox" name="estado" value="sin_responder" {% if 'sin_responder' in estados_seleccionados %}checked{% endif %}> Sin responder
                         </label>
                     </div>
-
-                    <select name="entrevistador" style="width: 100%;">
-                        <option value="">Todos los entrevistadores</option>
-                        <option value="laura">Laura Gómez</option>
-                        <option value="diego">Diego Ruiz</option>
-                    </select>
                 </div>
 
-                <!-- Grupo 3: Rango de fechas -->
                 <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo" style="font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .03em; margin: 0 0 8px;">Rango de fecha de la cita</p>
+                    <p class="filtro-grupo-titulo">Rango de fecha de la cita</p>
 
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="filtro-fechas-col">
                         <div>
-                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Desde</label>
-                            <input type="date" name="fecha_desde" style="width: 100%;">
+                            <label class="filtro-fecha-label">Desde</label>
+                            <input type="date" name="fecha_desde" value="{{ fecha_desde or '' }}" class="filtro-input-full">
                         </div>
                         <div>
-                            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px;">Hasta</label>
-                            <input type="date" name="fecha_hasta" style="width: 100%;">
+                            <label class="filtro-fecha-label">Hasta</label>
+                            <input type="date" name="fecha_hasta" value="{{ fecha_hasta or '' }}" class="filtro-input-full">
                         </div>
                     </div>
                 </div>
 
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);">
-                <button type="button" class="btn-secondary btn-sm">Restablecer</button>
+            <div class="citaciones-acciones">
+                <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
                 <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
             </div>
 
@@ -100,77 +86,147 @@
                         <th>Nombre</th>
                         <th>Vacante</th>
                         <th>Fecha y hora</th>
-                        <th>Entrevistador</th>
                         <th>Estado</th>
                         <th>Respondió</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-
-                    <tr>
-                        <td>Mariana Torres</td>
-                        <td>Analista de operaciones</td>
-                        <td>15 sep, 10:00 a.m.</td>
-                        <td>Laura Gómez</td>
-                        <td><span class="badge badge-green">Confirmado</span></td>
-                        <td>hace 2 días</td>
-                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Julián Restrepo</td>
-                        <td>Analista de operaciones</td>
-                        <td>15 sep, 11:00 a.m.</td>
-                        <td>Laura Gómez</td>
-                        <td><span class="badge badge-green">Confirmado</span></td>
-                        <td>hace 1 día</td>
-                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Camila Pérez</td>
-                        <td>Auxiliar administrativo</td>
-                        <td>15 sep, 2:00 p.m.</td>
-                        <td>Diego Ruiz</td>
-                        <td><span class="badge badge-orange">Pendiente</span></td>
-                        <td>—</td>
-                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Andrés Londoño</td>
-                        <td>Auxiliar administrativo</td>
-                        <td>16 sep, 9:00 a.m.</td>
-                        <td>Diego Ruiz</td>
-                        <td><span class="badge badge-gray">Sin responder</span></td>
-                        <td>—</td>
-                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
-                    </tr>
-
-                    <tr>
-                        <td>Valentina Suárez</td>
-                        <td>Analista de operaciones</td>
-                        <td>16 sep, 10:30 a.m.</td>
-                        <td>Laura Gómez</td>
-                        <td><span class="badge badge-gray">Sin responder</span></td>
-                        <td>—</td>
-                        <td><a href="#" class="btn-secondary btn-sm">Ver detalle</a></td>
-                    </tr>
-
+                    {% for citacion, postulacion, candidato, vacante in citaciones %}
+                        <tr>
+                            <td>{{ candidato.nombres }} {{ candidato.apellidos }}</td>
+                            <td>{{ vacante.titulo }}</td>
+                            <td>
+                                {{ citacion.fecha.strftime('%d %b') if citacion.fecha else '—' }},
+                                {{ citacion.hora.strftime('%I:%M %p') if citacion.hora else '' }}
+                            </td>
+                            <td>
+                                {% if citacion.respuesta == 'confirmada' %}
+                                    <span class="badge badge-green">Confirmado</span>
+                                {% elif citacion.respuesta == 'rechazada' %}
+                                    <span class="badge badge-red">Rechazado</span>
+                                {% else %}
+                                    <span class="badge badge-gray">Sin responder</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if citacion.fecha_respuesta %}
+                                    {{ citacion.fecha_respuesta.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.ver_expediente', id=citacion.id_postulacion) }}" class="btn-secondary btn-sm">
+                                    Ver detalle
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="post-tabla-vacia">No hay citaciones que coincidan con los filtros.</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Estado vacío de referencia (oculto por defecto en tu lógica real) -->
-        <!--
-        <div class="empty-state">
-            <span class="empty-icon"></span>
-            <h3>No hay confirmaciones que coincidan</h3>
-            <p>Ajusta los filtros para ver más resultados.</p>
-        </div>
-        -->
-
     </div>
 </div>
+
+<style>
+    .contenedor-full {
+    max-width: none;
+    width: 100%;
+}
+
+.input-buscar-flex {
+    flex: 1;
+}
+
+.citaciones-panel {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+.citaciones-grupos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.filtro-grupo-titulo {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin: 0 0 8px;
+}
+
+.filtro-select-full,
+.filtro-input-full {
+    width: 100%;
+}
+
+.filtro-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.filtro-check-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.filtro-fechas-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filtro-fecha-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 3px;
+}
+
+.citaciones-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 900px) {
+    .citaciones-grupos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .citaciones-grupos {
+        grid-template-columns: 1fr;
+    }
+
+    .citaciones-acciones {
+        flex-direction: column-reverse;
+    }
+
+    .citaciones-acciones .btn-primary,
+    .citaciones-acciones .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
 {% endblock %}
