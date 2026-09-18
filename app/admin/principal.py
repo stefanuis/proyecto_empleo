@@ -18,11 +18,14 @@ import json
 from sqlalchemy import exists
 from sqlalchemy import case
 from sqlalchemy import func
+import plotly.graph_objects as go
+import plotly.graph_objects as gopip 
 from datetime import date,timedelta
 from flask_login import current_user, login_required
 from datetime import datetime
 from app.extensions import db
 from app.models.user import User
+from sqlalchemy import or_
 from app.models.vacante import Vacante
 from app.forms.vacante import VacanteForm
 from app.models.postulacion import Postulacion
@@ -36,6 +39,8 @@ from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
 from app.forms.experiencia import experienciaForm
 from app.models.funcion_experiencia import FuncionExperiencia
+from app.models.citacion import Citaciones
+from app.forms.citaciones import CitacionForm
 from app.utils.generar_pdf import generar_pdf_expediente
 from flask_mail import Message
 from app.extensions import db, mail
@@ -66,14 +71,113 @@ def inicial():
 
         fecha_hoy = f"{dias[hoy.weekday()]}, {hoy.day} de {meses[hoy.month - 1]}"
 
+        #####  tarjetas de graficos
+
+        hoy = datetime.now()
+
+        inicio_semana = hoy - timedelta(days=hoy.weekday())
+
+        inicio_semana_pasada = inicio_semana - timedelta(days=7)
+
+        fin_semana_pasada = inicio_semana
+
+        total_vacantes_activas = Vacante.query.filter_by(
+            estado='Activa'
+        ).count()
+
+
+        vacantes_esta_semana = Vacante.query.filter(
+            Vacante.fecha_publicacion >= inicio_semana
+        ).count()
+
+
+        total_hojas = Postulacion.query.count()
+
+
+        hojas_esta_semana = Postulacion.query.filter(
+            Postulacion.fecha_postulacion >= inicio_semana
+        ).count()
+
+
+
+        total_entrevistas = Postulacion.query.filter_by(
+            estado='Entrevista'
+        ).count()
+
+
+        entrevistas_semana_pasada = Postulacion.query.filter(
+            Postulacion.estado == 'Entrevista',
+            Postulacion.fecha_postulacion >= inicio_semana_pasada,
+            Postulacion.fecha_postulacion < fin_semana_pasada
+        ).count()
+
+        fecha_limite = hoy + timedelta(days=7)
+
+
+        vacantes_por_cerrar = Vacante.query.filter(
+            Vacante.estado == 'Activa',
+            Vacante.fecha_cierre >= hoy,
+            Vacante.fecha_cierre <= fecha_limite
+        ).order_by(
+            Vacante.fecha_cierre.asc()
+        ).all()
+
+
+        total_por_cerrar = len(vacantes_por_cerrar)
+
+        dias_para_cierre = None
+
+        if vacantes_por_cerrar:
+
+            fecha_cierre_mas_cercana = vacantes_por_cerrar[0].fecha_cierre
+
+            dias_para_cierre = (
+            fecha_cierre_mas_cercana.date() - hoy.date()
+        ).days
+
+        ########## GRAFICOS 
+        resultados = (
+        db.session.query(Vacante.titulo, func.count(Postulacion.id))
+        .join(Postulacion, Postulacion.id_vacante == Vacante.id)
+        .group_by(Vacante.titulo)
+        .order_by(func.count(Postulacion.id).desc())
+        .all()
+        )
+ 
+        vacantes = [r[0] for r in resultados]
+        cantidades = [r[1] for r in resultados]
+ 
+        fig = go.Figure(data=[
+            go.Bar(x=vacantes, y=cantidades, marker_color='#e6007a', width=0.4)
+        ])
+ 
+        fig.update_layout(
+        title='Postulaciones por vacante',
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        yaxis=dict(
+            gridcolor='#eee',
+            tickmode='linear',   
+            dtick=1,             
+        ),
+        xaxis=dict(showgrid=False),
+        margin=dict(l=40, r=40, t=60, b=40),
+)
+        grafico_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+
         return render_template(
             'admin/principal.html',
+            grafico_html=grafico_html,
             vacantes_labels=vacantes_labels,
             vacantes_data=vacantes_data,
-            total_vacantes_activas=18,
-            total_hojas=241,
-            total_entrevistas=12,
-            total_por_cerrar=4,
+            total_vacantes_activas=total_vacantes_activas,
+            vacantes_esta_semana=vacantes_esta_semana,
+            total_hojas=total_hojas,
+            hojas_esta_semana=hojas_esta_semana,
+            total_entrevistas=total_entrevistas,
+            entrevistas_semana_pasada=entrevistas_semana_pasada,
+            total_por_cerrar=total_por_cerrar,
+            dias_para_cierre=dias_para_cierre,
             fecha_hoy=fecha_hoy
         )
     else:
@@ -512,7 +616,68 @@ def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje):
         print(str(e))
         return False
 
-    
+
+@admin_bp.route("admin/citaciones")
+@login_required
+def listar_citaciones():
+
+    q = request.args.get('q', '').strip()
+    vacante_id = request.args.get('vacante_id')
+    estados_seleccionados = request.args.getlist('estado')
+    fecha_desde = request.args.get('fecha_desde')
+    fecha_hasta = request.args.get('fecha_hasta')
+
+    vacantes = Vacante.query.all()
+
+    # Citaciones no tiene relationship() hacia Postulacion/User/Vacante,
+    # así que seleccionamos las 4 entidades unidas explícitamente
+    query = (
+        db.session.query(Citaciones, Postulacion, User, Vacante)
+        .join(Postulacion, Citaciones.id_postulacion == Postulacion.id)
+        .join(User, Postulacion.id_usuario == User.id)
+        .join(Vacante, Postulacion.id_vacante == Vacante.id)
+    )
+
+    if q:
+        busqueda = f"%{q}%"
+        query = query.filter(
+            (User.nombres.ilike(busqueda)) | (User.apellidos.ilike(busqueda))
+        )
+
+    if vacante_id:
+        query = query.filter(Postulacion.id_vacante == int(vacante_id))
+
+    if fecha_desde:
+        query = query.filter(Citaciones.fecha >= datetime.strptime(fecha_desde, '%Y-%m-%d').date())
+
+    if fecha_hasta:
+        query = query.filter(Citaciones.fecha <= datetime.strptime(fecha_hasta, '%Y-%m-%d').date())
+
+    if estados_seleccionados:
+        condiciones = []
+        if 'confirmada' in estados_seleccionados:
+            condiciones.append(Citaciones.respuesta == 'confirmada')
+        if 'rechazada' in estados_seleccionados:
+            condiciones.append(Citaciones.respuesta == 'rechazada')
+        if 'sin_responder' in estados_seleccionados:
+            condiciones.append(Citaciones.respuesta.is_(None))
+
+        if condiciones:
+            query = query.filter(or_(*condiciones))
+
+    citaciones = query.order_by(Citaciones.fecha.desc()).all()
+
+    return render_template(
+        'admin/citaciones.html',
+        citaciones=citaciones,
+        vacantes=vacantes,
+        q=q,
+        vacante_seleccionada=vacante_id,
+        estados_seleccionados=estados_seleccionados,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+    )
+
 @admin_bp.route('/admin/vacantes/<int:id>/citar-seleccionados', methods=['POST'])
 @login_required
 def citar_seleccionados(id):

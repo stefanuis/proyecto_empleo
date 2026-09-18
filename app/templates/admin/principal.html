@@ -8,66 +8,49 @@
     <p class="dashboard-fecha">{{ fecha_hoy }}</p>
     <h1 class="dashboard-saludo">Hola, {{ current_user.nombre or 'admin' }}</h1>
 
-
-
         <div class="kpi-grid">
             <div class="kpi-card">
                 <p class="kpi-label">Vacantes activas</p>
                 <p class="kpi-value">{{ total_vacantes_activas }}</p>
-                <p class="kpi-delta">↑ 3 esta semana</p>
+                <p class="kpi-delta">↑ {{ vacantes_esta_semana }}</p>
             </div>
             <div class="kpi-card">
                 <p class="kpi-label">Hojas recibidas</p>
                 <p class="kpi-value">{{ total_hojas }}</p>
-                <p class="kpi-delta">↑ 27 esta semana</p>
+                <p class="kpi-delta">↑ {{ hojas_esta_semana }}</p>
             </div>
             <div class="kpi-card">
                 <p class="kpi-label">Entrevistas</p>
                 <p class="kpi-value">{{ total_entrevistas }}</p>
-                <p class="kpi-delta down">↓ 2 vs. semana pasada</p>
+                <p class="kpi-delta down">↓ {{ entrevistas_semana_pasada }} vs. semana pasada</p>
             </div>
-            <div class="kpi-card">
+           <div class="kpi-card">
                 <p class="kpi-label">Por cerrar</p>
                 <p class="kpi-value">{{ total_por_cerrar }}</p>
-                <p class="kpi-delta down">Cierre en 3 días</p>
+
+                {% if dias_para_cierre is not none %}
+                    {% if dias_para_cierre == 0 %}
+                        <p class="kpi-delta down">Cierra hoy</p>
+                    {% elif dias_para_cierre == 1 %}
+                        <p class="kpi-delta down">Cierre en 1 día</p>
+                    {% else %}
+                        <p class="kpi-delta down">Cierre en {{ dias_para_cierre }} días</p>
+                    {% endif %}
+                {% else %}
+                    <p class="kpi-delta">Sin cierres próximos</p>
+                {% endif %}
             </div>
         </div>
 
         <div class="card-config">
-            <div class="panel-head">
-                <h2>Postulaciones por vacante</h2>
-            </div>
             <div class="bar-wrap-grande">
-                <canvas id="barChart" role="img" aria-label="Postulaciones por vacante"></canvas>
+                {{ grafico_html | safe }}
             </div>
         </div>
 
     </main>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script>
-new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: {
-        labels: {{ vacantes_labels | tojson }},
-        datasets: [{
-            data: {{ vacantes_data | tojson }},
-            backgroundColor: '#e6007e',
-            borderRadius: 4,
-            maxBarThickness: 32
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: { beginAtZero: true, grid: { color: '#f0eff2' }, ticks: { color: '#8a878f' } },
-            x: { grid: { display: false }, ticks: { color: '#8a878f', font: { size: 11 } } }
-        }
-    }
-});
-</script>
+
 
 {% endblock %}

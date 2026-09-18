@@ -3,9 +3,7 @@ from wtforms import DateField, TimeField, StringField, TextAreaField, SubmitFiel
 from wtforms.validators import DataRequired, Optional, Length
 
 
-# ─────────────────────────────────────────────
-#  FORMULARIO: Citaciones
-# ─────────────────────────────────────────────
+
 class CitacionForm(FlaskForm):
 
     fecha = DateField(
