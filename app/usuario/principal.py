@@ -1197,20 +1197,42 @@ def registro_completo():
 
 
 ### vacantes consultas sql filtros 
+
+@usuario_bp.route('/vacantes/<int:id>', methods=["GET"])
+@login_required
+def detalle_vacante(id):
+    vac = Vacante.query.get_or_404(id)
+    return render_template("detalle_vacante.html", vacante=vac)
+
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
 def vacantes():
-    categoria = request.args.get("categoria", "")
+    accion = request.args.get("accion", "")
+    q = request.args.get("q", "").strip()
+    area_aplicacion = request.args.get("area_aplicacion", "").strip()
+    nivel = request.args.get("nivel", "").strip()
     estado = request.args.get("estado", "Activa")   # por defecto solo muestra abiertas
-    busqueda = request.args.get("q", "")
+
 
     query = Vacante.query.filter_by(estado=estado)
 
-    if categoria:
-        query = query.filter_by(area=categoria)
+    if accion == "buscar":
+        if q:
+            query = query.filter(Vacante.titulo.ilike(f"%{q}%"))
 
-    if busqueda:
-        query = query.filter(Vacante.titulo.ilike(f"%{busqueda}%"))
+    elif accion == "filtrar":
+        if area_aplicacion:
+            query = query.filter(Vacante.area == area_aplicacion)
+
+        if nivel:
+            query = query.filter(Vacante.nivel_academico == nivel)
+
+        if estado:
+            query = query.filter(Vacante.estado == estado)
+    
+
+
+    
 
     vacantes = query.order_by(Vacante.fecha_publicacion.desc()).all()
 
@@ -1221,6 +1243,7 @@ def vacantes():
 @login_required
 def postular(id):
     vac = Vacante.query.get_or_404(id)
+    
 
     if vac.estado != "Activa":
         flash("Esta vacante ya no está disponible.", "danger")

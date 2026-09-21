@@ -1,0 +1,488 @@
+{% extends 'usuario/base.html' %}
+{% block contenido %}
+
+<div class="main-area">
+
+    <main class="page-content">
+           <div class="vacante-volver-contenedor">
+                    <a href="{{ url_for('usuario.vacantes') }}" class="topbar-volver">
+                       <i class="ti ti-arrow-left"></i> Volver a vacantes
+                    </a>
+                </div>
+
+        <div class="vacante-layout">
+
+            <!-- ===== Columna izquierda: contenido ===== -->
+            <div class="vacante-col-principal">
+             
+                <div class="vacante-detalle-top">
+                    <p class="vacante-codigo">{{ vacante.titulo }}</p>
+                    <button type="button" class="btn-compartir" aria-label="Compartir vacante">
+                        <i class="ti ti-share-2"></i>
+                    </button>
+                </div>
+
+                <p class="vacante-fecha-pub">
+                    <i class="ti ti-clock"></i>
+                    Publicada el {{ vacante.fecha_publicacion.strftime('%d de %B de %Y') if vacante.fecha_publicacion else 'Sin fecha' }}
+                </p>
+
+                <div class="divider"></div>
+
+                <h3 class="vacante-detalle-subtitulo">Información general</h3>
+
+                <div class="vacante-info-grid">
+                    <div class="vacante-info-item">
+                        <i class="ti ti-briefcase"></i>
+                        <span>{{ vacante.area_aplicacion or vacante.area or 'No especificada' }}</span>
+                    </div>
+                    <div class="vacante-info-item">
+                        <i class="ti ti-file-text"></i>
+                        <span>{{ vacante.tipo_contrato or 'Tipo de contrato no especificado' }}</span>
+                    </div>
+                    <div class="vacante-info-item">
+                        <i class="ti ti-currency-dollar"></i>
+                        <span>{{ vacante.salario or 'A convenir' }}</span>
+                    </div>
+                </div>
+
+                <h3 class="vacante-detalle-subtitulo">Acerca de la vacante</h3>
+
+                <div class="vacante-detalle-texto">
+                    <p>{{ vacante.descripcion or 'Sin descripción disponible.' }}</p>
+                </div>
+
+                {% if vacante.nivel_academico %}
+                <div class="vacante-detalle-texto">
+                    <p><strong>Formación académica:</strong> {{ vacante.nivel_academico }}</p>
+                </div>
+                {% endif %}
+
+                <div class="vacante-detalle-texto">
+                    <p><strong>Funciones específicas:</strong></p>
+                    <p class="vacante-funciones">{{ vacante.requisito or 'Sin requisito disponible.' }}</p>
+                </div>
+
+            </div>
+
+            <!-- ===== Columna derecha: acción + tips ===== -->
+            <aside class="vacante-col-lateral">
+
+                <form method="POST" action="{{ url_for('usuario.postular', id=vacante.id) }}" class="vacante-form-postular">
+                    {% if vacante.estado == 'Activa' %}
+                        <button type="submit" class="btn-postular btn-full-lateral">
+                            Postularme
+                        </button>
+                    {% else %}
+                        <p class="aviso-cerrada">
+                            Esta vacante ya no está disponible.
+                        </p>
+                    {% endif %}
+                </form>
+
+                <div class="card-tips">
+                    <h4 class="card-tips-titulo">Importante</h4>
+
+
+
+                    <details class="card-tips-item">
+                        <summary>
+                            <span>¿Qué pasa después de postularme a una vacante?</span>
+                            <i class="ti ti-plus"></i>
+                        </summary>
+                        <p>
+                            Tu postulación será revisada por el equipo de selección. Si tu perfil
+                            cumples con los requisitos de la vacante,
+                            recibirás un correo electrónico para confirmar tu disponibilidad y continuar con el proceso de selección.
+                        </p>
+                    </details>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </main>
+</div>
+
+
+
+<style>
+ /* =========================================================
+   DETALLE DE VACANTE — LAYOUT DOS COLUMNAS
+   ========================================================= */
+.vacante-volver-contenedor {
+
+     width: 100%;
+
+    max-width: 1100px;
+
+    margin: 0 auto 20px auto;
+
+}
+
+.vacante-volver-contenedor .topbar-volver {
+
+    
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    color: #ffffff;
+
+    background: var(--primary);
+
+    padding: 9px 16px;
+
+    border-radius: 999px;
+
+    text-decoration: none;
+
+    transition: opacity var(--transition);
+
+}
+
+.topbar-volver {
+  display: inline-flex;
+  align-items: center;
+
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #fff;
+  text-decoration: none;
+
+  transition: opacity var(--transition);
+}
+
+.topbar-volver:hover {
+  opacity: 0.85;
+}
+
+.topbar-volver i {
+  font-size: 16px;
+}
+
+.vacante-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 32px;
+
+  align-items: start;
+
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ===== Columna principal ===== */
+
+.vacante-col-principal {
+  background: var(--bg-main);
+
+  border-radius: var(--radius-lg);
+
+  padding: 28px 32px;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.vacante-detalle-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vacante-codigo {
+  font-size: 14px;
+  font-weight: 700;
+
+  color: var(--text-main);
+
+  margin: 0;
+}
+
+.btn-compartir {
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  color: var(--text-secondary);
+
+  transition:
+    background var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
+}
+
+.btn-compartir:hover {
+  background: var(--primary-ultra-light);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.vacante-fecha-pub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  color: var(--text-secondary);
+
+  margin: 10px 0 0;
+}
+
+.vacante-detalle-top + .vacante-fecha-pub {
+  margin-top: 8px;
+}
+
+.vacante-fecha-pub i {
+  font-size: 14px;
+}
+
+.vacante-detalle-subtitulo {
+  font-size: 17px;
+  font-weight: 700;
+
+  color: var(--text-main);
+
+  margin: 28px 0 16px;
+}
+
+.vacante-col-principal > .vacante-detalle-subtitulo:first-of-type {
+  margin-top: 24px;
+}
+
+/* ===== Información general ===== */
+
+.vacante-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.vacante-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.vacante-info-item i {
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+
+  background: var(--primary-ultra-light);
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+
+  flex-shrink: 0;
+}
+
+/* ===== Texto descriptivo ===== */
+
+.vacante-detalle-texto {
+  margin-bottom: 18px;
+}
+
+.vacante-detalle-texto p {
+  font-size: 14.5px;
+  line-height: 1.7;
+
+  color: var(--text-main);
+}
+
+.vacante-detalle-texto strong {
+  color: var(--text-main);
+}
+
+.vacante-funciones {
+  white-space: pre-line;
+}
+
+/* ===== Columna lateral ===== */
+
+.vacante-col-lateral {
+  position: sticky;
+  top: 100px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vacante-form-postular {
+  margin: 0;
+}
+
+.btn-full-lateral {
+  display: block;
+  width: 100%;
+
+  padding: 16px 20px;
+
+  border-radius: 999px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  text-align: center;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.vacante-form-postular .aviso-cerrada {
+  background: var(--badge-red);
+  color: var(--badge-red-text);
+
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+
+  font-weight: 600;
+  text-align: center;
+
+  margin: 0;
+}
+
+/* ===== Tarjeta "Ten en cuenta" ===== */
+
+.card-tips {
+  background: #fff;
+
+  border-radius: var(--radius-lg);
+
+  padding: 24px 22px;
+}
+
+.card-tips-titulo {
+  text-align: center;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  color: var(--primary);
+
+  margin: 0 0 18px;
+}
+
+.card-tips-item {
+  border-top: 1px solid rgba(0,0,0,0.08);
+
+  padding: 14px 0;
+}
+
+.card-tips-item:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.card-tips-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  font-size: 13.5px;
+  font-weight: 600;
+
+  color: var(--text-main);
+
+  cursor: pointer;
+
+  list-style: none;
+}
+
+.card-tips-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.card-tips-item summary i {
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+
+  background: var(--primary);
+  color: var(--text-main);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 15px;
+
+  flex-shrink: 0;
+
+  transition: transform var(--transition);
+}
+
+.card-tips-item[open] summary i {
+  transform: rotate(45deg);
+}
+
+.card-tips-item p {
+  font-size: 13px;
+  line-height: 1.6;
+
+  color: var(--text-secondary);
+
+  margin-top: 10px;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 900px) {
+  .vacante-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vacante-col-lateral {
+    position: static;
+
+    order: -1;
+  }
+
+  .vacante-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .vacante-col-principal {
+    padding: 20px;
+  }
+
+  .card-tips {
+    padding: 20px 16px;
+  }
+}
+ 
+</style>
+{% endblock %}

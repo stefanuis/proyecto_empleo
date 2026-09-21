@@ -10,25 +10,55 @@
         </div>
     </header>
 
-
     <main class="page-content">
 
-        <form method="GET" class="filtros">
-            <div class="input-buscar">
+        <form method="GET" class="filtros" method="GET" action="{{ url_for('admin.listar_vacantes') }} ">
+           
+            <div class="input-buscar buscador-vacantes">
                 <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
+                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
+                <button type="submit" name="accion" value="buscar" class="btn-secondary btn-sm">
+                Buscar
+                </button>
             </div>
 
-            <select name="categoria" onchange="this.form.submit()">
-                <option value="">Todas las categorías</option>
-                <option value="Asistencial" {% if request.args.get('categoria') == 'Asistencial' %}selected{% endif %}>Asistencial</option>
-                <option value="Administrativa" {% if request.args.get('categoria') == 'Administrativa' %}selected{% endif %}>Administrativa</option>
+            <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
+             <option value="">Todas las áreas de aplicación</option>
+                {% for value, label in areas %}
+                    {% if value %}
+                    <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endif %}
+                {% endfor %}
             </select>
+
+            <select name="nivel" class="vac-filtro-select">
+                <option value="">Todos los niveles</option>
+                <option value="Bachillerato"    {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
+                <option value="tecnico"         {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
+                <option value="tecnologo"       {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
+                <option value="universitario"   {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
+                <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
+                <option value="maestria"        {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
+                <option value="doctorado"       {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
+                </select>
+            </div>
 
             <select name="estado" onchange="this.form.submit()">
                 <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
                 <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
             </select>
+
+            <div class="vac-filtros-acciones">
+                <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
+                    Restablecer
+                </button>
+                <button type="submit" name="accion" value="filtrar" class="btn-primary btn-sm">
+                    Aplicar filtros
+                </button>
+            </div>
+
         </form>
 
         <div class="grid-vacantes" id="lista-vacantes">
@@ -36,36 +66,43 @@
             {% for v in vacantes %}
             <div class="card-vacante">
                 <div class="card-header">
-                    <div class="icono {{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}">
-                        <i class="ti ti-briefcase"></i>
+                    <div class="{{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}">
+ 
                     </div>
                     <div class="card-titulos">
                         <p class="card-cargo">{{ v.titulo }}</p>
-                        <p class="card-categoria">{{ v.area }}</p>
+                        <p class="card-categoria">{{ v.area_aplicacion }}</p>
                     </div>
                 </div>
+
+                {% if v.descripcion %}
+                <p class="card-descripcion">
+                    {{ v.descripcion[:120] }}{% if v.descripcion|length > 120 %}...{% endif %}
+                </p>
+                {% endif %}
+
                 <div class="card-tags">
                     <span class="tag">{{ v.area }}</span>
                     {% if v.salario %}<span class="tag">{{ v.salario }}</span>{% endif %}
+                    {% if v.nivel_academico %}<span class="tag">{{ v.nivel_academico }}</span>{% endif %}
+                    {% if v.requiere_video %}<span class="tag tag-video">Requiere video</span>{% endif %}
                 </div>
-                <div class="card-footer">   
+
+                <div class="card-detalles">
+      
+        
+                </div>
+
+                <div class="card-footer">
                     <div>
-                       
                         <p class="card-fecha">
                             Publicada el {{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}
                         </p>
                     </div>
-                    <button type="button" class="btn-postular" onclick="abrirModal(this)"
-                        data-titulo="{{ v.titulo }}"
-                        data-area="{{ v.area }}"
-                        data-salario="{{ v.salario or 'A convenir' }}"
-                        data-fecha="{{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}"
-                        data-descripcion="{{ v.descripcion or 'Sin descripción disponible.' }}"
-                        data-requisito="{{ v.requisito or 'sin requisito disponible' }}"
-                        data-estado="{{ v.estado }}"
-                        data-id="{{ v.id }}">
+                    
+                    <a href="{{ url_for('usuario.detalle_vacante', id=v.id) }}" class="btn-postular">
                         Ver detalle
-                    </button>
+                    </a>
                 </div>
             </div>
             {% else %}
@@ -78,72 +115,8 @@
 
         </div>
 
-        <!-- Modal de detalle de vacante -->
-        <div id="modal-vacante" class="vacante-modal-overlay" style="display:none;">
-            <div class="vacante-modal-caja">
-                <button class="modal-cerrar" onclick="cerrarModal()" type="button">&times;</button>
-
-                <h2 id="modal-titulo"></h2>
-                <p class="modal-meta">
-                    <span id="modal-area"></span> · <span id="modal-fecha"></span>
-                </p>
-                <p class="modal-salario" id="modal-salario"></p>
-
-                <div class="modal-descripcion">
-                    <h4>Descripción</h4>
-                    <p id="modal-descripcion-texto"></p>
-                </div>
-
-                <div class="modal-requisito">
-                    <h4>Requisito</h4>
-                    <p id="modal-requisito-texto"></p>
-                </div>
-
-                <form id="modal-form-postular" method="POST">
-                    <button type="submit" class="btn-postular btn-full" id="modal-btn-postular">
-                        Postularme
-                    </button>
-                    <p id="modal-cerrada-aviso" class="aviso-cerrada" style="display:none;">
-                        Esta vacante ya no está disponible.
-                    </p>
-                </form>
-            </div>
-        </div>
-
     </main>
 </div>
 
-<script>
-
-function abrirModal(boton) {
-    document.getElementById('modal-titulo').textContent = boton.dataset.titulo;
-    document.getElementById('modal-area').textContent = boton.dataset.area;
-    document.getElementById('modal-fecha').textContent = 'Publicada el ' + boton.dataset.fecha;
-    document.getElementById('modal-salario').textContent = boton.dataset.salario;
-    document.getElementById('modal-descripcion-texto').textContent = boton.dataset.descripcion;
-    document.getElementById('modal-requisito-texto').textContent = boton.dataset.requisito;
-
-    const form = document.getElementById('modal-form-postular');
-    const btnPostular = document.getElementById('modal-btn-postular');
-    const avisoCerrada = document.getElementById('modal-cerrada-aviso');
-
-    form.action = "{{ url_for('usuario.postular', id=0) }}".replace('/0/', '/' + boton.dataset.id + '/');
-
-    if (boton.dataset.estado === 'Activa') {
-        btnPostular.style.display = 'block';
-        btnPostular.disabled = false;
-        avisoCerrada.style.display = 'none';
-    } else {
-        btnPostular.style.display = 'none';
-        avisoCerrada.style.display = 'block';
-    }
-
-    document.getElementById('modal-vacante').style.display = 'flex';
-}
-
-function cerrarModal(){
-      document.getElementById("modal-vacante").style.display = "none";
-}
-</script>
 
 {% endblock %}

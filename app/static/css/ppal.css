@@ -1274,57 +1274,7 @@ body {
   color: var(--primary-hover);
 }
 
-.vacantes {
-  display: grid;
 
-  grid-template-columns: repeat(3, 1fr);
-
-  gap: 16px;
-}
-
-.vacante-card {
-  background: var(--bg-main);
-
-  border: 1px solid var(--border);
-
-  border-radius: 12px;
-
-  padding: 20px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: space-between;
-
-  min-height: 170px;
-}
-
-.vacante-match {
-  font-size: 12px;
-
-  font-weight: 600;
-
-  color: var(--primary-mid);
-
-  margin-bottom: 8px;
-}
-
-.vacante-titulo {
-  font-size: 16px;
-
-  font-weight: 600;
-
-  color: var(--text-main);
-
-  margin-bottom: 4px;
-}
-
-.vacante-detalle {
-  font-size: 13px;
-
-  color: var(--text-secondary);
-}
 
 .btn-postular {
   margin-top: 16px;
@@ -3743,208 +3693,339 @@ tr:hover td {
 }
 
 /* ===== Grid de vacantes ===== */
+
 .grid-vacantes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 24px;
+
 }
 
 .card-vacante {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+
+    background: #fff;
+
+    border-radius: 16px;
+
+    padding: 26px;
+
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+    min-height: 240px;
+
 }
+
+
 
 .card-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
 }
+
+
+/* =========================================================
+   ICONO
+   ========================================================= */
 
 .icono {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: #fff;
-  flex-shrink: 0;
+
+    width: 48px;
+
+    height: 48px;
+
+    border-radius: 12px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 20px;
+
+    color: #fff;
+
+    flex-shrink: 0;
+
 }
 
-.icono-azul { background-color: var(--primary-mid); }
-.icono-teal { background-color: var(--primary-mid); }
+.icono-azul {
+
+    background-color: var(--primary-mid);
+
+}
+
+.icono-teal {
+
+    background-color: var(--primary-mid);
+
+}
+
+
+/* =========================================================
+   TÍTULOS
+   ========================================================= */
 
 .card-titulos {
-  min-width: 0;
+
+    min-width: 0;
+
 }
 
 .card-cargo {
-  font-weight: 600;
-  font-size: 15px;
-  color: #2f2d33;
-  margin: 0;
+
+    font-weight: 600;
+
+    font-size: 16px;
+
+    color: #2f2d33;
+
+    margin: 0;
+
 }
 
 .card-categoria {
-  font-size: 13px;
-  color: #8a878f;
-  margin: 2px 0 0;
+
+    font-size: 13px;
+
+    color: #8a878f;
+
+    margin: 4px 0 0;
+
 }
 
+
+/* =========================================================
+   ETIQUETAS
+   ========================================================= */
+
 .card-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+
+    display: flex;
+
+    gap: 8px;
+
+    flex-wrap: wrap;
+
 }
 
 .tag {
-  background-color: #f2eaf0;
-  color: #a2447f;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 20px;
+
+    background-color: #f2eaf0;
+
+    color: #a2447f;
+
+    font-size: 12px;
+
+    font-weight: 500;
+
+    padding: 5px 11px;
+
+    border-radius: 20px;
+
 }
+
+
+/* =========================================================
+   PIE DE LA TARJETA
+   ========================================================= */
 
 .card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: auto;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+
+    margin-top: auto;
+
 }
 
-.card-salario {
-  font-weight: 600;
-  color: #2f2d33;
-  margin: 0;
-  font-size: 14px;
-}
+
+/* =========================================================
+   FECHA
+   ========================================================= */
 
 .card-fecha {
-  font-size: 12px;
-  color: #8a878f;
-  margin: 2px 0 0;
+
+    font-size: 12px;
+
+    color: #8a878f;
+
+    margin: 2px 0 0;
+
 }
 
+
+/* =========================================================
+   BOTÓN POSTULAR
+   ========================================================= */
+
 .btn-postular {
-  background-color: #e6007e;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
+
+    background-color: #e6007e;
+
+    color: #fff;
+
+    border: none;
+
+    border-radius: 8px;
+
+    padding: 11px 18px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
 }
 
 .btn-postular:hover {
-  background-color: #c40069;
+
+    background-color: #c40069;
+
 }
 
-/* ===== Estado vacío ===== */
-.empty-state {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 80px 20px;
-}
 
-.empty-icon {
-  font-size: 40px;
-  margin-bottom: 16px;
-}
-
-.empty-state h3 {
-  font-size: 17px;
-  font-weight: 700;
-  color: #2f2d33;
-  margin: 0 0 8px;
-}
-
-.empty-state p {
-  font-size: 14px;
-  color: #8a878f;
-  margin: 0;
-}
-.vacante-modal-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.vacante-modal-caja {
-    background: white;
-    border-radius: 10px;
-    padding: 24px;
-    max-width: 480px;
-    width: 90%;
-    max-height: 85vh;
-    overflow-y: auto;
-    position: relative;
-}
-.modal-cerrar {
-    position: absolute;
-    top: 12px;
-    right: 16px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-    line-height: 1;
-}
-
-.modal-meta {
-    color: #777;
-    font-size: 14px;
-    margin: 4px 0 12px;
-}
-
-.modal-salario {
-    font-weight: bold;
-    color: #d81b60;
-    margin-bottom: 16px;
-}
-
-.modal-descripcion h4 {
-    margin-bottom: 6px;
-    font-size: 14px;
-}
+/* =========================================================
+   BOTÓN DE ANCHO COMPLETO
+   ========================================================= */
 
 .btn-full {
+
     width: 100%;
+
     margin-top: 20px;
+
     text-align: center;
+
     display: block;
+
     cursor: pointer;
+
     border: none;
+
 }
 
 .btn-full:disabled {
+
     background: #ccc;
+
     cursor: not-allowed;
+
 }
 
+
+/* =========================================================
+   VACANTE CERRADA
+   ========================================================= */
+
 .aviso-cerrada {
+
     text-align: center;
+
     color: #c0392b;
+
     font-size: 13px;
+
     margin-top: 8px;
+
+}
+
+
+/* =========================================================
+   ESTADO VACÍO
+   ========================================================= */
+
+.empty-state {
+
+    grid-column: 1 / -1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 80px 20px;
+
+}
+
+.empty-icon {
+
+    font-size: 40px;
+
+    margin-bottom: 16px;
+
+}
+
+.empty-state h3 {
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    color: #2f2d33;
+
+    margin: 0 0 8px;
+
+}
+
+.empty-state p {
+
+    font-size: 14px;
+
+    color: #8a878f;
+
+    margin: 0;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .grid-vacantes {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .card-vacante {
+
+        padding: 22px;
+
+        min-height: auto;
+
+    }
+
 }
 
 /***postulaciones---/
