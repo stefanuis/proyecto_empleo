@@ -74,37 +74,140 @@ Principal Usuario
   {% endif %}
 
   <!-- Vacantes recomendadas -->
-  <div class="seccion-titulo">
-    <h2>Vacantes para ti</h2>
-    <a href="#">Ver todas →</a>
-  </div>
 
-  <div class="vacantes">
-    <div class="vacante-card">
-      <div>
-        <div class="vacante-titulo">Enfermera Jefe – Urgencias</div>
-        <div class="vacante-detalle">Sede Norte · Tiempo completo</div>
-      </div>
-      <button class="btn-postular">✓ Postularme</button>
-    </div>
 
-    <div class="vacante-card">
-      <div>
-        <div class="vacante-titulo">Auxiliar de Facturación</div>
-        <div class="vacante-detalle">Sede Centro · Tiempo completo</div>
-      </div>
-      <button class="btn-postular">✓ Postularme</button>
-    </div>
-
-    <div class="vacante-card">
-      <div>
-        <div class="vacante-titulo">Técnico en Laboratorio Clínico</div>
-        <div class="vacante-detalle">Sede Norte · Medio tiempo</div>
-      </div>
-      <button class="btn-postular">✓ Postularme</button>
-    </div>
-  </div>
-
+<div class="seccion-titulo">
+    <h2>{{ 'Vacantes para ti' if sugerencias_personalizadas else 'Vacantes disponibles' }}</h2>
+    <a href="{{ url_for('usuario.vacantes') }}">Ver todas →</a>
 </div>
+
+<div class="vacantes">
+    {% for vacante in vacantes %}
+        <div class="vacante-card">
+            <div>
+                <div class="vacante-titulo">{{ vacante.titulo }}</div>
+                <div class="vacante-detalle">{{ vacante.area or 'Sin área' }} · {{ vacante.nivel_academico or 'Sin nivel especificado' }}</div>
+            </div>
+            <form action="{{ url_for('usuario.postular', id=vacante.id) }}" method="POST" class="form-postular">
+                <button type="submit" class="btn-postular">
+                    ✓ Postularme
+                </button>
+            </form>
+        </div>
+    {% else %}
+        {% if sugerencias_personalizadas %}
+            <p class="vacantes-vacio">
+                No hay vacantes sugeridas o vinculadas a tu área por ahora.
+            </p>
+        {% else %}
+            <p class="vacantes-vacio">
+                Por ahora no hay vacantes activas disponibles.
+            </p>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<style>
+  /* ==================================================
+   ENCABEZADO DE SECCIÓN
+   ================================================== */
+
+.seccion-titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 28px 0 14px;
+}
+
+.seccion-titulo h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-main);
+}
+
+.seccion-titulo a {
+    font-size: 13px;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.seccion-titulo a:hover {
+    text-decoration: underline;
+}
+
+
+/* ==================================================
+   GRID DE VACANTES RECOMENDADAS
+   ================================================== */
+
+.vacantes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+
+/* ==================================================
+   TARJETA DE VACANTE
+   ================================================== */
+
+.vacante-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    transition: var(--transition);
+}
+
+.vacante-card:hover {
+    border-color: var(--primary-mid);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.vacante-titulo {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 4px;
+}
+
+.vacante-detalle {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+
+/* ==================================================
+   BOTÓN POSTULARME
+   ================================================== */
+
+.btn-postular {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.btn-postular:hover {
+    background: var(--primary-mid);
+}
+</style>
 
 {% endblock %}

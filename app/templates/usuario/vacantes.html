@@ -12,43 +12,46 @@
 
     <main class="page-content">
 
-        <form method="GET" class="filtros" method="GET" action="{{ url_for('admin.listar_vacantes') }} ">
-           
+        <form method="GET" class="filtros" action="{{ url_for('usuario.vacantes') }}">
+
             <div class="input-buscar buscador-vacantes">
                 <i class="ti ti-search"></i>
                 <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
                 <button type="submit" name="accion" value="buscar" class="btn-secondary btn-sm">
-                Buscar
+                    Buscar
                 </button>
             </div>
 
-            <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
-             <option value="">Todas las áreas de aplicación</option>
-                {% for value, label in areas %}
-                    {% if value %}
-                    <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
+            <div class="vac-filtros-selects">
 
-            <select name="nivel" class="vac-filtro-select">
-                <option value="">Todos los niveles</option>
-                <option value="Bachillerato"    {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
-                <option value="tecnico"         {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
-                <option value="tecnologo"       {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
-                <option value="universitario"   {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
-                <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
-                <option value="maestria"        {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
-                <option value="doctorado"       {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
+                <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
+                    <option value="">Todas las áreas de aplicación</option>
+                    {% for value, label in areas %}
+                        {% if value %}
+                            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
                 </select>
-            </div>
 
-            <select name="estado" onchange="this.form.submit()">
-                <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
-                <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
-            </select>
+                <select name="nivel" class="vac-filtro-select">
+                    <option value="">Todos los niveles</option>
+                    <option value="Bachillerato" {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
+                    <option value="tecnico" {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
+                    <option value="tecnologo" {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
+                    <option value="universitario" {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
+                    <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
+                    <option value="maestria" {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
+                    <option value="doctorado" {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
+                </select>
+
+                <select name="estado" class="vac-filtro-select">
+                    <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
+                    <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
+                </select>
+
+            </div>
 
             <div class="vac-filtros-acciones">
                 <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
@@ -64,53 +67,43 @@
         <div class="grid-vacantes" id="lista-vacantes">
 
             {% for v in vacantes %}
-            <div class="card-vacante">
-                <div class="card-header">
-                    <div class="{{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}">
- 
+                <div class="card-vacante">
+                    <div class="card-header">
+                        <div class="{{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}"></div>
+                        <div class="card-titulos">
+                            <p class="card-cargo">{{ v.titulo }}</p>
+                            <p class="card-categoria">{{ v.area_aplicacion }}</p>
+                        </div>
                     </div>
-                    <div class="card-titulos">
-                        <p class="card-cargo">{{ v.titulo }}</p>
-                        <p class="card-categoria">{{ v.area_aplicacion }}</p>
+
+                    {% if v.descripcion %}
+                        <p class="card-descripcion">
+                            {{ v.descripcion[:120] }}{% if v.descripcion|length > 120 %}...{% endif %}
+                        </p>
+                    {% endif %}
+
+                    <div class="card-tags">
+                        <span class="tag">{{ v.area }}</span>
+                        {% if v.salario %}<span class="tag">{{ v.salario }}</span>{% endif %}
+                        {% if v.nivel_academico %}<span class="tag">{{ v.nivel_academico }}</span>{% endif %}
+                        {% if v.requiere_video %}<span class="tag tag-video">Requiere video</span>{% endif %}
                     </div>
-                </div>
 
-                {% if v.descripcion %}
-                <p class="card-descripcion">
-                    {{ v.descripcion[:120] }}{% if v.descripcion|length > 120 %}...{% endif %}
-                </p>
-                {% endif %}
-
-                <div class="card-tags">
-                    <span class="tag">{{ v.area }}</span>
-                    {% if v.salario %}<span class="tag">{{ v.salario }}</span>{% endif %}
-                    {% if v.nivel_academico %}<span class="tag">{{ v.nivel_academico }}</span>{% endif %}
-                    {% if v.requiere_video %}<span class="tag tag-video">Requiere video</span>{% endif %}
-                </div>
-
-                <div class="card-detalles">
-      
-        
-                </div>
-
-                <div class="card-footer">
-                    <div>
+                    <div class="card-footer">
                         <p class="card-fecha">
                             Publicada el {{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}
                         </p>
+                        <a href="{{ url_for('usuario.detalle_vacante', id=v.id) }}" class="btn-postular">
+                            Ver detalle
+                        </a>
                     </div>
-                    
-                    <a href="{{ url_for('usuario.detalle_vacante', id=v.id) }}" class="btn-postular">
-                        Ver detalle
-                    </a>
                 </div>
-            </div>
             {% else %}
-            <div class="empty-state">
-                <span class="empty-icon">🔍</span>
-                <h3>No hay vacantes disponibles</h3>
-                <p>Vuelve a intentarlo más tarde o ajusta los filtros.</p>
-            </div>
+                <div class="empty-state">
+                    <span class="empty-icon">🔍</span>
+                    <h3>No hay vacantes disponibles</h3>
+                    <p>Vuelve a intentarlo más tarde o ajusta los filtros.</p>
+                </div>
             {% endfor %}
 
         </div>
@@ -118,5 +111,127 @@
     </main>
 </div>
 
+<style>
+    /* ==================================================
+   CONTENEDOR GENERAL DEL FORMULARIO DE FILTROS
+   ================================================== */
+
+.filtros {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+
+/* ==================================================
+   BUSCADOR
+   ================================================== */
+
+.buscador-vacantes {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.buscador-vacantes i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.buscador-vacantes input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.buscador-vacantes input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.buscador-vacantes .btn-secondary {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+
+/* ==================================================
+   SELECTS DE FILTRO
+   ================================================== */
+
+.vac-filtros-selects {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.vac-filtro-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+}
+
+.vac-filtro-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.vac-filtro-select:hover {
+    border-color: var(--primary-mid);
+}
+
+
+/* ==================================================
+   BOTONES DE ACCIÓN
+   ================================================== */
+
+.vac-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+
+/* ==================================================
+   RESPONSIVE
+   ================================================== */
+
+@media (max-width: 768px) {
+    .vac-filtros-selects {
+        grid-template-columns: 1fr;
+    }
+
+    .vac-filtros-acciones {
+        justify-content: stretch;
+    }
+
+    .vac-filtros-acciones button {
+        flex: 1;
+    }
+}
+</style>
 
 {% endblock %}

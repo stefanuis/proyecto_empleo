@@ -24,6 +24,7 @@
                 <option value="entrevista">Entrevista</option>
                 <option value="contratado">Contratado</option>
                 <option value="rechazado">Rechazado</option>
+                <option value="retirada">Retirada</option>
             </select>
         </form>
 
@@ -40,22 +41,38 @@
                         <span class="tag tag-estado estado-{{ p.post.estado }}">{{ p.post.estado|capitalize }}</span>
                     </div>
 
-                    <div class="stepper">
-                        {% for paso in ['Postulado', 'En revisión', 'Entrevista', 'Decisión'] %}
-                        <div class="paso-wrap">
-                            <div class="paso {% if loop.index < p.paso_actual %}completado{% elif loop.index == p.paso_actual %}activo{% endif %}">
-                                <div class="circulo">
-                                    {% if loop.index < p.paso_actual %}✓{% else %}{{ loop.index }}{% endif %}
+                    {% if p.post.estado != 'retirada' %}
+                        <div class="stepper">
+                            {% for paso in ['Postulado', 'En revisión', 'Entrevista', 'Decisión'] %}
+                            <div class="paso-wrap">
+                                <div class="paso {% if loop.index < p.paso_actual %}completado{% elif loop.index == p.paso_actual %}activo{% endif %}">
+                                    <div class="circulo">
+                                        {% if loop.index < p.paso_actual %}✓{% else %}{{ loop.index }}{% endif %}
+                                    </div>
+                                    <span class="paso-label">{{ paso }}</span>
                                 </div>
-                                <span class="paso-label">{{ paso }}</span>
                             </div>
+                            {% if not loop.last %}
+                            <div class="linea {% if loop.index < p.paso_actual %}linea-completada{% endif %}"></div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
-                        {% if not loop.last %}
-                        <div class="linea {% if loop.index < p.paso_actual %}linea-completada{% endif %}"></div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                    
+                    {% endif %}
+
+                    {% if p.post.estado not in ['retirada', 'contratado', 'rechazado'] %}
+                        <div class="card-footer">
+                            <form
+                                action="{{ url_for('usuario.retirar_postulacion', id=p.post.id) }}"
+                                method="POST"
+                                onsubmit="return confirm('¿Seguro que quieres retirar esta postulación? No podrás volver a postularte a esta vacante.');"
+                            >
+                                <button type="submit" class="btn-secondary btn-sm">
+                                    Retirar postulación
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+
                 </div>
             {% else %}
                 <div class="empty-state">
@@ -68,5 +85,50 @@
 
     </main>
 </div>
+
+<style>
+    /* ==================================================
+   BADGES DE ESTADO - POSTULACIONES
+   ================================================== */
+ 
+.tag-estado {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+ 
+.estado-postulado {
+    background: #fde2ea;
+    color: #c2185b;
+}
+ 
+.estado-revision {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+ 
+.estado-entrevista {
+    background: #ffe8cc;
+    color: #b45309;
+}
+ 
+.estado-contratado {
+    background: #d1f5e0;
+    color: #157347;
+}
+ 
+.estado-rechazado {
+    background: #f8d7da;
+    color: #721c24;
+}
+ 
+.estado-retirada {
+    background: #e9ecef;
+    color: #495057;
+}
+</style>
 
 {% endblock %}

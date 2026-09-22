@@ -4,14 +4,14 @@ from datetime import datetime
 
 class Postulacion(db.Model):
     __tablename__ = "tbl_postulacion"
-    id = db.Column(db.Integer, primary_key = True )
+    id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)
     id_vacante = db.Column(db.Integer)
     estado = db.Column(db.String(30), default='pendiente')
     notas_reclutador = db.Column(db.Text)
-    fecha_postulacion = db.Column(db.DateTime, default=datetime.now())
-    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now())
-
+    fecha_postulacion = db.Column(db.DateTime, default=datetime.now)
+    fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+ 
 
     # ─────────────────────────────────────────
     #  REPRESENTACIÓN

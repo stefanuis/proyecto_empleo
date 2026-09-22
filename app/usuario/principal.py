@@ -41,6 +41,7 @@ from app.forms.discapacidades import discapacidadForm
 from app.models.discapacidades import Discapacidades
 from app.forms.docs import documentoForm
 from app.models.docs import OtrosDocumentos
+from app.forms.vacante import VacanteForm
 from app.models.vacante import Vacante
 from app.models.postulacion import Postulacion
 from app.utils.perfil import calcular_completitud_perfil
@@ -127,12 +128,41 @@ def principal():
     # --- Completitud del perfil ---
     completitud = calcular_completitud_perfil(current_user.id)
 
+        # --- Vacantes sugeridas (hero) ---
+
+    areas_candidato = db.session.query(
+        Info_academica.area
+    ).filter(
+        Info_academica.id_usuario == current_user.id,
+        Info_academica.area.isnot(None)
+    ).distinct().all()
+
+    areas_candidato = [a[0] for a in areas_candidato]
+
+    if areas_candidato:
+        vacantes = Vacante.query.filter(
+            Vacante.estado == 'Activa',
+            Vacante.area_aplicacion.in_(areas_candidato)
+        ).order_by(
+            Vacante.fecha_publicacion.desc()
+        ).limit(3).all()
+        sugerencias_personalizadas = True
+    else:
+        vacantes = Vacante.query.filter(
+            Vacante.estado == 'Activa'
+        ).order_by(
+            Vacante.fecha_publicacion.desc()
+        ).limit(3).all()
+        sugerencias_personalizadas = False
+
     return render_template(
         "usuario/principal.html",
         total_postulaciones=total_postulaciones,
         total_vacantes=total_vacantes,
         fecha_hoy=fecha_hoy,
-        completitud=completitud
+        completitud=completitud,
+        vacantes=vacantes,
+        sugerencias_personalizadas=sugerencias_personalizadas
     )
 
 ##----configuracion
@@ -1211,8 +1241,7 @@ def vacantes():
     q = request.args.get("q", "").strip()
     area_aplicacion = request.args.get("area_aplicacion", "").strip()
     nivel = request.args.get("nivel", "").strip()
-    estado = request.args.get("estado", "Activa")   # por defecto solo muestra abiertas
-
+    estado = request.args.get("estado", "Activa")
 
     query = Vacante.query.filter_by(estado=estado)
 
@@ -1222,32 +1251,45 @@ def vacantes():
 
     elif accion == "filtrar":
         if area_aplicacion:
-            query = query.filter(Vacante.area == area_aplicacion)
+            query = query.filter(Vacante.area_aplicacion == area_aplicacion)
 
         if nivel:
             query = query.filter(Vacante.nivel_academico == nivel)
 
-        if estado:
-            query = query.filter(Vacante.estado == estado)
-    
-
-
-    
-
     vacantes = query.order_by(Vacante.fecha_publicacion.desc()).all()
 
-    return render_template("usuario/vacantes.html", vacantes=vacantes)
+    areas_aplicacion = (
+        VacanteForm
+        .area_aplicacion
+        .kwargs["choices"]
+    )
 
-
+    return render_template(
+        "usuario/vacantes.html",
+        vacantes=vacantes,
+        areas=areas_aplicacion,
+        q=q,
+        area_aplicacion_seleccionada=area_aplicacion,
+        nivel_seleccionado=nivel
+    )
 @usuario_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
 @login_required
 def postular(id):
     vac = Vacante.query.get_or_404(id)
-    
 
     if vac.estado != "Activa":
         flash("Esta vacante ya no está disponible.", "danger")
         return redirect(url_for("usuario.vacantes"))
+
+    completitud = calcular_completitud_perfil(current_user.id)
+
+    if completitud["porcentaje"] < 100:
+        flash(
+            "Debes completar tu perfil antes de postularte. Te falta: "
+            + ", ".join(completitud["faltantes"]) + ".",
+            "warning"
+        )
+        return redirect(url_for(f"usuario.{completitud['primer_paso_faltante']}"))
 
     ya_postulado = Postulacion.query.filter_by(
         id_usuario=current_user.id,
@@ -1269,8 +1311,6 @@ def postular(id):
 
     flash("¡Te has postulado correctamente!", "success")
     return redirect(url_for("usuario.mis_postulaciones"))
-
-    
 
 ##------ mis postulaciones----------
 
@@ -1314,3 +1354,24 @@ def mis_postulaciones():
         postulaciones=postulaciones
     )
 
+@usuario_bp.route('/postulaciones/<int:id>/retirar', methods=['POST'])
+@login_required
+def retirar_postulacion(id):
+    postulacion = Postulacion.query.filter(
+        Postulacion.id == id,
+        Postulacion.id_usuario == current_user.id
+    ).first_or_404()
+
+    if postulacion.estado == 'retirada':
+        flash('Esta postulación ya estaba retirada.', 'warning')
+        return redirect(url_for('usuario.mis_postulaciones'))
+
+    if postulacion.estado in ('contratado', 'rechazado'):
+        flash('No puedes retirar una postulación que ya fue finalizada.', 'warning')
+        return redirect(url_for('usuario.mis_postulaciones'))
+
+    postulacion.estado = 'retirada'
+    db.session.commit()
+
+    flash('Has retirado tu postulación. No podrás volver a postularte a esta vacante.', 'success')
+    return redirect(url_for('usuario.mis_postulaciones'))
