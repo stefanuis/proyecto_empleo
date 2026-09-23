@@ -2,6 +2,7 @@
 
 from app.usuario.constantes import NOMBRES_PASO, PASOS_seguimiento
 from app.models.personal import Personal
+from datetime import date
 from app.models.contacto import Contacto
 from app.models.familiar import Familiar
 from app.models.academica import Info_academica
@@ -57,3 +58,66 @@ def calcular_completitud_perfil(id_usuario):
         "secciones": secciones,
         "primer_paso_faltante": primer_paso_faltante,
     }
+
+
+RANKING_NIVEL = {
+    'Bachillerato': 1,
+    'tecnico': 2,
+    'tecnologo': 3,
+    'universitario': 4,
+    'especializacion': 5,
+    'maestria': 6,
+    'doctorado': 7,
+}
+
+
+def obtener_nivel_mas_alto(id_usuario):
+    registros = Info_academica.query.filter(
+        Info_academica.id_usuario == id_usuario,
+        Info_academica.estado == 'finalizado'
+    ).all()
+
+    if not registros:
+        return None
+
+    registro_mas_alto = max(registros, key=lambda r: RANKING_NIVEL.get(r.nivel, 0))
+    return registro_mas_alto.nivel
+
+
+def obtener_experiencia_total(id_usuario):
+    registros = Experiencia.query.filter_by(id_usuario=id_usuario).all()
+    if not registros:
+        return 0
+ 
+    total_dias = 0
+    for exp in registros:
+        if not exp.fecha_ingreso:
+            continue
+        fecha_fin = date.today() if exp.actual else exp.fecha_salida
+        if not fecha_fin:
+            continue
+        total_dias += (fecha_fin - exp.fecha_ingreso).days
+ 
+    return round(total_dias / 365.25, 1)
+ 
+ 
+def formatear_experiencia(anos):
+    """
+    Convierte el número de años (float) a un texto legible:
+    menos de 1 año se muestra en meses, de ahí en adelante en años.
+    """
+    if not anos:
+        return '—'
+ 
+    if anos < 1:
+        meses = round(anos * 12)
+        if meses == 0:
+            return '—'
+        return f"{meses} mes{'es' if meses != 1 else ''}"
+ 
+    anos_redondeado = round(anos, 1)
+    # Si el decimal es .0, lo mostramos como entero (ej. "3 años" en vez de "3.0 años")
+    if anos_redondeado == int(anos_redondeado):
+        anos_redondeado = int(anos_redondeado)
+ 
+    return f"{anos_redondeado} año{'s' if anos_redondeado != 1 else ''}"

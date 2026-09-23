@@ -1,6 +1,5 @@
 {% extends 'admin/base.html' %}
 
-
 {% block contenido %}
 
 <div class="post-header">
@@ -15,6 +14,11 @@
     <div class="filtros-avanzados-panel post-filtros-panel">
 
         <div class="post-filtros-grid-3">
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Buscar candidato</p>
+                <input type="text" name="q" placeholder="Nombre o documento..." value="{{ q }}">
+            </div>
 
             <div class="vac-filtro-grupo">
                 <p class="filtro-grupo-titulo">Vacante</p>
@@ -32,11 +36,50 @@
                 <p class="filtro-grupo-titulo">Estado</p>
                 <select name="estado">
                     <option value="">Todos los estados</option>
-                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado')] %}
+                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado'), ('retirada', 'Retirada')] %}
                         <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>
                             {{ etiqueta }}
                         </option>
                     {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="post-filtros-grid-3">
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Postulado desde</p>
+                <input type="date" name="fecha_desde" value="{{ fecha_desde }}">
+            </div>
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Postulado hasta</p>
+                <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}">
+            </div>
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Nivel académico</p>
+                <select name="nivel_academico">
+                    <option value="">Todos los niveles</option>
+                    {% for valor, etiqueta in [('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'), ('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'), ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado')] %}
+                        <option value="{{ valor }}" {% if nivel_academico_seleccionado == valor %}selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+        </div>
+
+        <div class="post-filtros-grid-3">
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Expediente</p>
+                <select name="completitud">
+                    <option value="">Completo e incompleto</option>
+                    <option value="completo" {% if completitud_seleccionada == 'completo' %}selected{% endif %}>Solo completos</option>
+                    <option value="incompleto" {% if completitud_seleccionada == 'incompleto' %}selected{% endif %}>Solo incompletos</option>
                 </select>
             </div>
 
@@ -57,10 +100,14 @@
 
 <div class="post-filtros-info" style="display:flex; justify-content:space-between; align-items:center; margin:16px 0;">
     <p style="color:var(--text-secondary); font-size:13.5px; margin:0;">
-        Mostrando {{ postulantes|length }} postulante{{ 's' if postulantes|length != 1 else '' }}
+        {% if pagination %}
+            Mostrando {{ postulantes|length }} de {{ pagination.total }} postulante{{ 's' if pagination.total != 1 else '' }}
+        {% else %}
+            Mostrando {{ postulantes|length }} postulante{{ 's' if postulantes|length != 1 else '' }}
+        {% endif %}
     </p>
 
-    <button type="button" id="btn-descargar-zip" class="btn-primary btn-sm" disabled>
+    <button type="button" id="btn-descargar-zip" class="btn-primary btn-sm">
         Descargar todo en ZIP
     </button>
 </div>
@@ -75,9 +122,13 @@
                     <input type="checkbox" id="chk-todos">
                 </th>
                 <th>Nombre</th>
+                <th>Documento</th>
+                <th>Contacto</th>
+                <th>Nivel académico</th>
                 <th>Vacante</th>
                 <th>Fecha de postulación</th>
                 <th>Estado</th>
+                <th>Expediente</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -93,6 +144,33 @@
                     </td>
 
                     <td>
+                        {% if post.personal %}
+                            {{ post.personal.tipo_doc or '' }} {{ post.personal.num_doc or '—' }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if post.personal %}
+                            <div>{{ post.personal.email or '—' }}</div>
+                            <div style="color:var(--text-secondary); font-size:12.5px;">
+                                {{ post.personal.num_cel or '' }}
+                            </div>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if post.nivel_mas_alto %}
+                            {{ post.nivel_mas_alto|capitalize }}
+                        {% else %}
+                            <span style="color:var(--text-secondary);">Sin registrar</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
                         {{ post.vacante.titulo if post.vacante else '—' }}
                     </td>
 
@@ -105,18 +183,32 @@
                     </td>
 
                     <td>
-                        {% if post.estado == 'Postulado' %}
+                        {% if post.estado == 'postulado' %}
                             <span class="badge badge-pink">Postulado</span>
-                        {% elif post.estado == 'Revision' %}
-                            <span class="badge badge-blue">Revision</span>
-                        {% elif post.estado == 'Entrevista' %}
+                        {% elif post.estado == 'revision' %}
+                            <span class="badge badge-blue">En revisión</span>
+                        {% elif post.estado == 'entrevista' %}
                             <span class="badge badge-orange">Entrevista</span>
-                        {% elif post.estado == 'Contratado' %}
+                        {% elif post.estado == 'contratado' %}
                             <span class="badge badge-green">Contratado</span>
-                        {% elif post.estado == 'Rechazado' %}
+                        {% elif post.estado == 'rechazado' %}
                             <span class="badge badge-red">Rechazado</span>
+                        {% elif post.estado == 'retirada' %}
+                            <span class="badge badge-gray">Retirada</span>
                         {% else %}
                             <span class="badge badge-gray">{{ post.estado }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if post.completitud %}
+                            {% if post.completitud.porcentaje == 100 %}
+                                <span class="badge badge-green">Completo</span>
+                            {% else %}
+                                <span class="badge badge-orange">{{ post.completitud.porcentaje }}%</span>
+                            {% endif %}
+                        {% else %}
+                            —
                         {% endif %}
                     </td>
 
@@ -133,7 +225,7 @@
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="6" class="vac-tabla-vacia">No se encontraron postulantes.</td>
+                    <td colspan="10" class="vac-tabla-vacia">No se encontraron postulantes.</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -141,6 +233,30 @@
 </div>
 
 </form>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="vac-paginador">
+
+    <a
+        class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
+        href="{% if pagination.has_prev %}{{ url_for('admin.listar_hoja_vida', page=pagination.prev_num, vacante_id=vacante_seleccionada, estado=estado_seleccionado, q=q, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta, nivel_academico=nivel_academico_seleccionado, completitud=completitud_seleccionada) }}{% else %}#{% endif %}"
+    >
+        ← Anterior
+    </a>
+
+    <span class="vac-paginador-info">
+        Página {{ pagination.page }} de {{ pagination.pages }}
+    </span>
+
+    <a
+        class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
+        href="{% if pagination.has_next %}{{ url_for('admin.listar_hoja_vida', page=pagination.next_num, vacante_id=vacante_seleccionada, estado=estado_seleccionado, q=q, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta, nivel_academico=nivel_academico_seleccionado, completitud=completitud_seleccionada) }}{% else %}#{% endif %}"
+    >
+        Siguiente →
+    </a>
+
+</div>
+{% endif %}
 
 <style>
 
@@ -153,7 +269,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-/* === Grids === */
 .post-filtros-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -161,14 +276,6 @@
     margin-bottom: 16px;
 }
 
-.post-filtros-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-/* === Grupo individual de filtro === */
 .vac-filtro-grupo {
     display: flex;
     flex-direction: column;
@@ -182,9 +289,9 @@
     margin: 0;
 }
 
-/* === Inputs y selects === */
 .vac-filtro-grupo select,
-.vac-filtro-grupo input[type="text"] {
+.vac-filtro-grupo input[type="text"],
+.vac-filtro-grupo input[type="date"] {
     padding: 9px 12px;
     border: 1px solid #d5d9dd;
     border-radius: 6px;
@@ -196,17 +303,17 @@
 }
 
 .vac-filtro-grupo select:focus,
-.vac-filtro-grupo input[type="text"]:focus {
+.vac-filtro-grupo input[type="text"]:focus,
+.vac-filtro-grupo input[type="date"]:focus {
     outline: none;
     border-color: var(--primary);
     background-color: #fff;
 }
 
-.vac-filtro-grupo input[type="text"]::placeholder {
+.vac-filtro-grupo input::placeholder {
     color: #9aa1a8;
 }
 
-/* === Acciones (botones) === */
 .post-filtros-acciones {
     display: flex;
     justify-content: flex-end;
@@ -215,7 +322,6 @@
     border-top: 1px solid #eef0f2;
 }
 
-/* === Botones === */
 .btn-primary,
 .btn-secondary {
     border: none;
@@ -235,10 +341,6 @@
     color: #fff;
 }
 
-.btn-primary:hover {
-    background-color: var(--primary);
-}
-
 .btn-secondary {
     background-color: #f1f3f5;
     color: #444;
@@ -254,7 +356,6 @@
     transform: scale(0.98);
 }
 
-/* === Header de la página === */
 .post-header {
     display: flex;
     justify-content: space-between;
@@ -274,7 +375,6 @@
     color: #6b7280;
     margin: 0;
 }
-
 
 .vac-tabla-container {
     width: 100%;
@@ -307,18 +407,47 @@
     transition: var(--transition);
 }
 
-
-
 .vac-tabla tbody td {
     padding: 14px 16px;
     color: var(--text-main);
     vertical-align: middle;
 }
 
+.vac-paginador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0;
+}
 
+.vac-paginador-btn {
+    padding: 8px 16px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
 
+.vac-paginador-btn:hover {
+    background: #f1f3f5;
+}
 
-/* === Responsive === */
+.vac-paginador-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+}
+
+.vac-paginador-info {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
 @media (max-width: 900px) {
     .post-filtros-grid-3 {
         grid-template-columns: repeat(2, 1fr);
@@ -332,8 +461,7 @@
         gap: 12px;
     }
 
-    .post-filtros-grid-3,
-    .post-filtros-grid-2 {
+    .post-filtros-grid-3 {
         grid-template-columns: 1fr;
     }
 
@@ -358,7 +486,6 @@ const formZip = document.getElementById('form-descargar-zip');
 
 function actualizarBotonZip() {
     const marcados = document.querySelectorAll('.chk-postulante:checked').length;
-    btnZip.disabled = marcados === 0;
     btnZip.textContent = marcados > 0
         ? `Descargar seleccionados (${marcados})`
         : 'Descargar todo en ZIP';
@@ -380,7 +507,6 @@ btnZip.addEventListener('click', () => {
     const marcados = document.querySelectorAll('.chk-postulante:checked').length;
 
     if (marcados === 0) {
-        // Ninguno seleccionado: se descargan todos los de la tabla
         chksPostulante.forEach(chk => chk.checked = true);
     }
 

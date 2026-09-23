@@ -126,12 +126,12 @@ def _fecha(valor):
     except AttributeError:
         return str(valor)
 
-
 def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=None, familiar=None, referencias=None):
     """
-    Genera el PDF del expediente (Parte 1: encabezado + personal + contacto)
-    y devuelve un BytesIO listo para enviar con send_file().
-    """                
+    Genera el PDF del expediente completo:
+    encabezado + personal + contacto + académica + familiar + referencias.
+    Devuelve un BytesIO listo para enviar con send_file().
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, pagesize=letter,
@@ -142,7 +142,7 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
     elementos = []
 
     # ---- Encabezado con logo (como tu .card-header) ----
-    logo_path = os.path.join(os.path.dirname(__file__), '..','static', 'img', 'logo_color.png')
+    logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo_color.png')
     try:
         logo = Image(logo_path, width=2.8 * cm, height=1.4 * cm)
         logo.hAlign = 'RIGHT'
@@ -241,14 +241,13 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         ]
         elementos.append(_fila_datos(pares_emergencia))
 
-    # TODO Parte 2: académica, familiar y referencias se agregan aquí abajo.
     # ---- Información académica ----
     elementos.append(Paragraph('Información académica', style_h3))
     if academica:
         for est in academica:
             titulo = est.titulo or est.nivel or '—'
             estado_est = getattr(est, 'estado', None) or '—'
- 
+
             fila_titulo = Table(
                 [[Paragraph(f"<b>{titulo}</b>", style_valor),
                   Paragraph(estado_est, style_label)]],
@@ -260,10 +259,10 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ]))
             elementos.append(fila_titulo)
- 
+
             institucion = f"{est.institucion or '—'} — {est.pais_institucion or '—'}"
             elementos.append(Paragraph(institucion, style_valor))
- 
+
             detalle = (
                 f"Nivel: {est.nivel or '—'} · Área: {est.area or '—'} · "
                 f"Finalización: {est.mes_finalizacion or '—'}/{est.anno_finalizacion or '—'} · "
@@ -272,15 +271,63 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
             if getattr(est, 'convalidacion', False):
                 detalle += " · Convalidado"
             elementos.append(Paragraph(detalle, style_label))
- 
+
             if getattr(est, 'ruta_soporte', None):
                 elementos.append(Paragraph(
                     'Soporte: (archivo adjunto disponible en el sistema)', style_label
                 ))
- 
+
             elementos.append(Spacer(1, 10))
     else:
         elementos.append(Paragraph('No registró información académica.', style_label))
+
+    # ---- Información familiar ----
+    elementos.append(Paragraph('Información familiar', style_h3))
+    if familiar:
+        pares_familiar = [
+            ('Personas en el hogar', familiar.personas_casa),
+            ('Dependen económicamente', familiar.dependen_eco),
+        ]
+        elementos.append(_fila_datos(pares_familiar))
+    else:
+        elementos.append(Paragraph('No registró información familiar.', style_label))
+
+    elementos.append(Spacer(1, 10))
+
+    # ---- Referencias ----
+    elementos.append(Paragraph('Referencias', style_h3))
+    if referencias:
+        encabezados = ['Nombre', 'Parentesco', 'Empresa', 'Teléfono', 'Ciudad', 'Autoriza']
+        filas = [encabezados]
+
+        for ref in referencias:
+            nombre_ref = f"{ref.nombres} {ref.apellidos}"
+            autoriza = 'Sí' if getattr(ref, 'autoriza', None) == 'si' else 'No'
+            filas.append([
+                nombre_ref,
+                ref.parentesco or '—',
+                ref.empresa or '—',
+                ref.telefono or '—',
+                ref.ciudad or '—',
+                autoriza,
+            ])
+
+        tabla_referencias = Table(
+            filas,
+            colWidths=[4 * cm, 2.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm]
+        )
+        tabla_referencias.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f3f5')),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e5e9')),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elementos.append(tabla_referencias)
+    else:
+        elementos.append(Paragraph('No registró referencias.', style_label))
 
     doc.build(elementos)
     buffer.seek(0)

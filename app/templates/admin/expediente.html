@@ -217,6 +217,51 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         <p style="color:var(--text-secondary);">No registró referencias.</p>
     {% endif %}
 
+
+            <!-- ── Documentos adicionales ── -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:20px;">
+            <h3 style="margin:0;">Documentos adicionales</h3>
+            {% if documentos %}
+                <a href="{{ url_for('admin.descargar_documentos_candidato', id=post.id) }}" class="btn-secondary btn-sm">
+                    Descargar todos (ZIP)
+                </a>
+            {% endif %}
+        </div>
+
+        {% if documentos %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Fecha de carga</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for documento in documentos %}
+                        <tr>
+                            <td>{{ documento.nombre }}</td>
+                            <td>{{ documento.tipo or '—' }}</td>
+                            <td>{{ documento.fecha_registro.strftime('%d %b %Y') if documento.fecha_registro else '—' }}</td>
+                            <td>
+                                {% if documento.ruta_soporte %}
+                                    <a href="{{ url_for('static', filename=documento.ruta_soporte) }}" target="_blank" class="btn-outline btn-sm">Ver documento</a>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="color:var(--text-secondary);">No cargó documentos adicionales.</p>
+        {% endif %}
+
+
     <!-- ── Estado y notas del reclutador ── -->
     <h3 style="border-top:1px solid var(--border); padding-top:20px;">Gestión del reclutador</h3>
     <form method="POST" action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
@@ -256,7 +301,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 <textarea name="notas_talento_humano" class="form-control">{{ post.notas_talento_humano or '' }}</textarea>
             </div>
         </div>
-
+        
         <div class="form-botones">
             <button type="submit" class="btn-primary">Guardar cambios</button>
         </div>

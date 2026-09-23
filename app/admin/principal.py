@@ -7,10 +7,11 @@ from flask import (
     url_for,
     flash,
     send_file,
-    abort
+    abort,
+    current_app
     
 )
-
+import secrets
 import io
 import zipfile
 import os
@@ -41,7 +42,9 @@ from app.forms.experiencia import experienciaForm
 from app.models.funcion_experiencia import FuncionExperiencia
 from app.models.citacion import Citaciones
 from app.forms.citaciones import CitacionForm
+from app.models.docs import OtrosDocumentos
 from app.utils.generar_pdf import generar_pdf_expediente
+from app.utils.perfil import calcular_completitud_perfil, obtener_nivel_mas_alto,obtener_experiencia_total,formatear_experiencia
 from flask_mail import Message
 from app.extensions import db, mail
 
@@ -324,15 +327,15 @@ def editar_vacante(id):
 def listar_postulantes(id):
     if session.get("rol") != "admin":
         return "No tienes permiso para acceder a esta página", 403
-
+ 
     vacante = Vacante.query.get_or_404(id)
-
+ 
     estado = request.args.get('estado', '').strip()
     experiencia_minima = request.args.get('experiencia_minima', '').strip()
     nivel_estudios = request.args.get('nivel_estudios', '').strip()
     titulo_estudios = request.args.get('titulo_estudios', '').strip()
     funcion_buscar = request.args.get('funcion', '').strip()
-
+ 
     query = db.session.query(
         Postulacion,
         Personal
@@ -342,24 +345,23 @@ def listar_postulantes(id):
     ).filter(
         Postulacion.id_vacante == id
     )
-
+ 
     if estado:
         query = query.filter(Postulacion.estado == estado)
-
-
+ 
     if experiencia_minima:
         try:
             experiencia_minima_float = float(experiencia_minima)
-
+ 
             fecha_fin_efectiva = case(
                 (Experiencia.actual == True, date.today()),
                 else_=Experiencia.fecha_salida
             )
-
+ 
             duracion_anios = (
                 func.datediff(fecha_fin_efectiva, Experiencia.fecha_ingreso) / 365.25
             )
-
+ 
             subq_experiencia = db.session.query(
                 Experiencia.id_usuario
             ).group_by(
@@ -367,38 +369,36 @@ def listar_postulantes(id):
             ).having(
                 func.sum(duracion_anios) >= experiencia_minima_float
             ).subquery()
-
+ 
             query = query.filter(
                 Postulacion.id_usuario.in_(db.session.query(subq_experiencia.c.id_usuario))
             )
-
+ 
         except ValueError:
             pass
-
-
+ 
     if nivel_estudios:
         subq_nivel = db.session.query(
             Info_academica.id_usuario
         ).filter(
             Info_academica.nivel == nivel_estudios
         ).subquery()
-
+ 
         query = query.filter(
             Postulacion.id_usuario.in_(db.session.query(subq_nivel.c.id_usuario))
         )
-
+ 
     if titulo_estudios:
         subq_titulo = db.session.query(
             Info_academica.id_usuario
         ).filter(
             Info_academica.titulo.ilike(f"%{titulo_estudios}%")
         ).subquery()
-
+ 
         query = query.filter(
             Postulacion.id_usuario.in_(db.session.query(subq_titulo.c.id_usuario))
         )
-
-
+ 
     if funcion_buscar:
         subq_funcion = db.session.query(
             Experiencia.id_usuario
@@ -408,13 +408,22 @@ def listar_postulantes(id):
         ).filter(
             FuncionExperiencia.funcion.ilike(f"%{funcion_buscar}%")
         ).subquery()
-
+ 
         query = query.filter(
             Postulacion.id_usuario.in_(db.session.query(subq_funcion.c.id_usuario))
         )
-
-    postulaciones = query.order_by(Postulacion.fecha_postulacion.desc()).all()
-
+ 
+    resultados = query.order_by(Postulacion.fecha_postulacion.desc()).all()
+ 
+    # Agregamos nivel académico más alto y experiencia total por cada fila,
+    # usando id_usuario (no el id propio de Personal)
+    postulaciones = []
+    for postulacion, personal in resultados:
+        nivel = obtener_nivel_mas_alto(postulacion.id_usuario)
+        experiencia_anos = obtener_experiencia_total(postulacion.id_usuario)
+        experiencia_texto = formatear_experiencia(experiencia_anos)
+        postulaciones.append((postulacion, personal, nivel, experiencia_texto))
+ 
     return render_template(
         "admin/listar_postulantes.html",
         vacante=vacante,
@@ -426,16 +435,45 @@ def listar_postulantes(id):
         funcion_seleccionada=funcion_buscar
     )
 
+@admin_bp.route('/postulacion/<int:id>/documentos/descargar-zip')
+@login_required
+def descargar_documentos_candidato(id):
+    post = Postulacion.query.get_or_404(id)
 
-    
+    documentos = OtrosDocumentos.query.filter_by(
+        id_usuario=post.id_usuario
+    ).all()
 
-@admin_bp.route('/hojas-de-vida')
-def listar_hojas():
-    if(session["rol"] == "admin"):
-        return render_template('admin/listar_hojas.html')
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
-    
+    if not documentos:
+        abort(404, description='Este candidato no tiene documentos cargados.')
+
+    personal = Personal.query.filter_by(id_usuario=post.id_usuario).first_or_404()
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for documento in documentos:
+            if not documento.ruta_soporte:
+                continue
+
+            ruta_absoluta = os.path.join(
+                current_app.root_path, 'static', documento.ruta_soporte
+            )
+
+            if os.path.exists(ruta_absoluta):
+                extension = os.path.splitext(documento.ruta_soporte)[1]
+                nombre_en_zip = f"{documento.tipo or 'documento'}_{documento.nombre}{extension}"
+                zf.write(ruta_absoluta, nombre_en_zip)
+
+    zip_buffer.seek(0)
+
+    nombre_zip = f"documentos_{personal.nombres}_{personal.apellidos}.zip"
+
+    return send_file(
+        zip_buffer,
+        as_attachment=True,
+        download_name=nombre_zip,
+        mimetype='application/zip',
+    )
 
 @admin_bp.route('/postulante/<int:id>/expediente')
 def ver_expediente(id):
@@ -448,6 +486,7 @@ def ver_expediente(id):
         academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
         familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
         referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
+        documentos = OtrosDocumentos.query.filter_by(id_usuario=post.id_usuario).all()
 
         return render_template('admin/expediente.html',
                                 post=post,
@@ -456,20 +495,31 @@ def ver_expediente(id):
                                 contacto=contacto,
                                 academica=academica,
                                 familiar=familiar,
-                                referencias=referencias)
+                                referencias=referencias,
+                                documentos=documentos)
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
-    
-
 @admin_bp.route("/postulacion/<int:id>/actualizar", methods=["POST"])
 @login_required
 def actualizar_postulacion(id):
-    if(session["rol"] == "admin"):
+    if session.get("rol") == "admin":
         postulacion = Postulacion.query.get_or_404(id)
 
-        postulacion.estado = request.form["estado"]
+        nuevo_estado = request.form["estado"]
+        postulacion.estado = nuevo_estado
         postulacion.notas_reclutador = request.form["notas_reclutador"]
         postulacion.fecha_actualizacion = datetime.now()
+
+        if nuevo_estado == 'contratado':
+            otras_postulaciones = Postulacion.query.filter(
+                Postulacion.id_usuario == postulacion.id_usuario,
+                Postulacion.id != postulacion.id,
+                Postulacion.estado.notin_(['contratado', 'rechazado', 'retirada'])
+            ).all()
+
+            for otra in otras_postulaciones:
+                otra.estado = 'retirada'
+                otra.fecha_actualizacion = datetime.now()
 
         db.session.commit()
 
@@ -498,8 +548,11 @@ def descargar_expediente(id):
      academica = Info_academica.query.filter_by(
                  id_usuario=post.id_usuario
              ).first()
+     familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
 
-     buffer = generar_pdf_expediente(personal, vacante, post, contacto, academica)
+     referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
+
+     buffer = generar_pdf_expediente(personal, vacante, post, contacto, academica, familiar, referencias)
 
      return send_file(
         buffer,
@@ -508,56 +561,163 @@ def descargar_expediente(id):
         mimetype='application/pdf'
     )
 
+
 @admin_bp.route('/admin/hoja-de-vida')
 @login_required
 def listar_hoja_vida():
 
-    # 1. Filtros que llegan por la URL
-    vacante_id = request.args.get('vacante_id')
-    estado = request.args.get('estado')
+    # --------------------------------------------------
+    # FILTROS RECIBIDOS POR GET
+    # --------------------------------------------------
+    vacante_id = request.args.get('vacante_id', '').strip()
+    estado = request.args.get('estado', '').strip()
+    q = request.args.get('q', '').strip()
+    fecha_desde = request.args.get('fecha_desde', '').strip()
+    fecha_hasta = request.args.get('fecha_hasta', '').strip()
+    nivel_academico = request.args.get('nivel_academico', '').strip()
+    completitud_filtro = request.args.get('completitud', '').strip()
 
-    # 2. Obtener todas las vacantes
-    vacantes = Vacante.query.all()
+    # --------------------------------------------------
+    # PAGINACIÓN
+    # --------------------------------------------------
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
 
-    # 3. Consulta de postulaciones
-    query = Postulacion.query
+    vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
+
+    # --------------------------------------------------
+    # CONSULTA PRINCIPAL (con joins, sin N+1)
+    # --------------------------------------------------
+    query = db.session.query(Postulacion).join(
+        Vacante, Vacante.id == Postulacion.id_vacante
+    ).join(
+        Personal, Personal.id_usuario == Postulacion.id_usuario
+    )
 
     if vacante_id:
-        query = query.filter(
-            Postulacion.id_vacante == int(vacante_id)
-        )
+        try:
+            query = query.filter(Postulacion.id_vacante == int(vacante_id))
+        except ValueError:
+            pass
 
     if estado:
+        query = query.filter(Postulacion.estado == estado)
+
+    if q:
         query = query.filter(
-            Postulacion.estado == estado
+            db.or_(
+                Personal.nombres.ilike(f"%{q}%"),
+                Personal.apellidos.ilike(f"%{q}%"),
+                Personal.num_doc.ilike(f"%{q}%")
+            )
         )
 
-    # 4. Obtener las postulaciones
-    postulantes = query.order_by(
-        Postulacion.fecha_postulacion.desc()
-    ).all()
+    if fecha_desde:
+        try:
+            fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
+            query = query.filter(Postulacion.fecha_postulacion >= fecha_desde_dt)
+        except ValueError:
+            pass
 
-    # 5. Asociar la información personal a cada postulación
-    for post in postulantes:
+    if fecha_hasta:
+        try:
+            fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d") + timedelta(days=1)
+            query = query.filter(Postulacion.fecha_postulacion < fecha_hasta_dt)
+        except ValueError:
+            pass
 
-        post.personal = Personal.query.filter_by(
-            id_usuario=post.id_usuario
-        ).first()
+    if nivel_academico:
+        subq_nivel = db.session.query(
+            Info_academica.id_usuario
+        ).filter(
+            Info_academica.nivel == nivel_academico
+        ).subquery()
 
-    # 6. Enviar los datos a la plantilla
+        query = query.filter(
+            Postulacion.id_usuario.in_(db.session.query(subq_nivel.c.id_usuario))
+        )
+
+    query = query.order_by(Postulacion.fecha_postulacion.desc())
+
+    if completitud_filtro:
+        todos = query.all()
+
+        for post in todos:
+            post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
+            post.vacante = Vacante.query.get(post.id_vacante)
+            post.completitud = calcular_completitud_perfil(post.id_usuario)
+            post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
+
+        if completitud_filtro == 'completo':
+            filtrados = [p for p in todos if p.completitud['porcentaje'] == 100]
+        else:
+            filtrados = [p for p in todos if p.completitud['porcentaje'] < 100]
+
+        total = len(filtrados)
+        inicio = (page - 1) * per_page
+        fin = inicio + per_page
+        postulantes = filtrados[inicio:fin]
+
+        total_paginas = max(1, (total + per_page - 1) // per_page)
+        pagination = {
+            'page': page,
+            'pages': total_paginas,
+            'total': total,
+            'has_prev': page > 1,
+            'has_next': page < total_paginas,
+            'prev_num': page - 1,
+            'next_num': page + 1,
+        }
+
+    # --------------------------------------------------
+    # CASO B: sin filtro de completitud
+    # Paginación real en SQL, mucho más eficiente:
+    # solo calculamos completitud para los 15 de la página actual.
+    # --------------------------------------------------
+    else:
+        paginado = db.paginate(
+            query,
+            page=page,
+            per_page=per_page,
+            error_out=False
+        )
+
+        postulantes = paginado.items
+
+        for post in postulantes:
+            post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
+            post.vacante = Vacante.query.get(post.id_vacante)
+            post.completitud = calcular_completitud_perfil(post.id_usuario)
+            post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
+
+        pagination = {
+            'page': paginado.page,
+            'pages': paginado.pages,
+            'total': paginado.total,
+            'has_prev': paginado.has_prev,
+            'has_next': paginado.has_next,
+            'prev_num': paginado.prev_num,
+            'next_num': paginado.next_num,
+        }
+
     return render_template(
         'listar_hojas de vida.html',
         vacantes=vacantes,
         postulantes=postulantes,
         vacante_seleccionada=vacante_id,
-        estado_seleccionado=estado
+        estado_seleccionado=estado,
+        q=q,
+        fecha_desde=fecha_desde,
+        fecha_hasta=fecha_hasta,
+        nivel_academico_seleccionado=nivel_academico,
+        completitud_seleccionada=completitud_filtro,
+        pagination=pagination
     )
 
 @admin_bp.route('/admin/expedientes/descargar-zip')
 @login_required
 def descargar_expedientes_zip():
-    # El template envía varios checkboxes con name="ids", así que
-    # llegan como ?ids=3&ids=7&ids=12
+
     ids = [int(i) for i in request.args.getlist('ids') if i.isdigit()]
 
     if not ids:
@@ -565,15 +725,24 @@ def descargar_expedientes_zip():
 
     postulantes = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
 
+
+    usuarios_ya_procesados = set()
+    postulantes_unicos = []
+
+    for post in postulantes:
+        if post.id_usuario not in usuarios_ya_procesados:
+            usuarios_ya_procesados.add(post.id_usuario)
+            postulantes_unicos.append(post)
+
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for post in postulantes:
-            personal = post.personal
-            vacante = post.vacante
-            contacto = getattr(post, 'contacto', None)
-            academica = getattr(post, 'academica', None)
-            familiar = getattr(post, 'familiar', None)
-            referencias = getattr(post, 'referencias', None)
+        for post in postulantes_unicos:
+            personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
+            vacante = Vacante.query.get(post.id_vacante)
+            contacto = Contacto.query.filter_by(id_usuario=post.id_usuario).first()
+            academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
+            familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
+            referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
 
             pdf_buffer = generar_pdf_expediente(
                 personal, vacante, post, contacto, academica, familiar, referencias
@@ -607,7 +776,7 @@ def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje):
             disposition="inline",
             headers={"Content-ID": "<logo_color>"}
         )
-        msg.html = render_template("citacion.html", nombres=nombres, fecha=fecha, hora=hora, lugar=lugar,mensaje=mensaje,)
+        msg.html = render_template("citaciones.html", nombres=nombres, fecha=fecha, hora=hora, lugar=lugar,mensaje=mensaje,)
         mail.send(msg)
         return True
     except Exception as e:
@@ -689,13 +858,20 @@ def citar_seleccionados(id):
  
     datos = json.loads(datos_raw)
     ids = datos.get('ids', [])
-    fecha = datos.get('fecha')
-    hora = datos.get('hora')
+    fecha_str = datos.get('fecha')
+    hora_str = datos.get('hora')
     lugar = datos.get('lugar') or 'Por confirmar'
     mensaje = datos.get('mensaje') or ''
  
-    if not ids or not fecha or not hora:
+    if not ids or not fecha_str or not hora_str:
         flash('Faltan datos para citar (fecha, hora o postulantes).', 'error')
+        return redirect(url_for('admin.listar_postulantes', id=id))
+ 
+    try:
+        fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        hora = datetime.strptime(hora_str, '%H:%M').time()
+    except ValueError:
+        flash('La fecha o la hora tienen un formato inválido.', 'error')
         return redirect(url_for('admin.listar_postulantes', id=id))
  
     postulaciones = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
@@ -704,19 +880,52 @@ def citar_seleccionados(id):
     fallidos = 0
  
     for post in postulaciones:
-        candidato = post.candidato  
+        candidato = User.query.get(post.id_usuario)
  
-        exito = enviar_correo_citacion(
-            email=candidato.correo,        
-            nombres=candidato.nombres,
+        if not candidato or not candidato.correo:
+            fallidos += 1
+            continue
+ 
+        token = secrets.token_urlsafe(32)
+ 
+        nueva_citacion = Citaciones(
+            id_postulacion=post.id,
             fecha=fecha,
             hora=hora,
             lugar=lugar,
             mensaje=mensaje,
+            estado='pendiente',
+            token=token,
+            fecha_envio=datetime.now()
+        )
+        db.session.add(nueva_citacion)
+ 
+        link_confirmacion = url_for(
+            'candidato.responder_citacion',
+            token=token,
+            respuesta='confirmar',
+            _external=True
+        )
+        link_rechazo = url_for(
+            'candidato.responder_citacion',
+            token=token,
+            respuesta='rechazar',
+            _external=True
+        )
+ 
+        exito = enviar_correo_citacion(
+            email=candidato.correo,
+            nombres=candidato.nombres,
+            fecha=fecha_str,
+            hora=hora_str,
+            lugar=lugar,
+            mensaje=mensaje,
+            link_confirmar=link_confirmacion,
+            link_rechazar=link_rechazo,
         )
  
         if exito:
-            post.estado = 'Entrevista'
+            post.estado = 'entrevista'
             enviados += 1
         else:
             fallidos += 1
@@ -729,6 +938,3 @@ def citar_seleccionados(id):
         flash(f'Se citó a {enviados} postulante(s). {fallidos} correo(s) no se pudieron enviar.', 'warning')
  
     return redirect(url_for('admin.listar_postulantes', id=id))
- 
-
-
