@@ -405,89 +405,29 @@ Postulantes - {{ vacante.titulo }}
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const chkTodos = document.getElementById('seleccionar-todos');
-    const chksPostulante = document.querySelectorAll('.checkbox-postulante');
-    const contador = document.getElementById('contador-seleccionados');
-    const btnCitar = document.getElementById('btn-citar-seleccionados');
-    const modal = document.getElementById('modal-citar');
-    const modalResumen = document.getElementById('modal-resumen');
-    const modalCerrar = document.getElementById('modal-cerrar');
-    const modalCancelar = document.getElementById('modal-cancelar');
-    const modalConfirmar = document.getElementById('modal-confirmar');
-    const inputIds = document.getElementById('input-ids-seleccionados');
-    const form = document.getElementById('form-citar');
- 
-    function idsSeleccionados() {
-        return Array.from(document.querySelectorAll('.checkbox-postulante:checked'))
-            .map(chk => chk.dataset.id);
-    }
- 
-    function actualizarContador() {
-        const marcados = idsSeleccionados().length;
-        contador.textContent = `${marcados} postulante${marcados !== 1 ? 's' : ''} seleccionado${marcados !== 1 ? 's' : ''}`;
-    }
- 
-    chkTodos.addEventListener('change', () => {
-        chksPostulante.forEach(chk => chk.checked = chkTodos.checked);
-        actualizarContador();
-    });
- 
-    chksPostulante.forEach(chk => {
-        chk.addEventListener('change', () => {
-            if (!chk.checked) chkTodos.checked = false;
-            actualizarContador();
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("JavaScript de reprogramación cargado");
+
+    const modal = document.getElementById("modal-reprogramar");
+    const botones = document.querySelectorAll(".btn-reprogramar");
+
+    console.log("Modal:", modal);
+    console.log("Botones encontrados:", botones.length);
+
+    botones.forEach(function (boton) {
+
+        boton.addEventListener("click", function () {
+
+            console.log("Botón Reprogramar presionado");
+            console.log("URL:", boton.dataset.url);
+
+            modal.style.display = "flex";
+
         });
+
     });
- 
-    btnCitar.addEventListener('click', () => {
-        const ids = idsSeleccionados();
- 
-        if (ids.length === 0) {
-            alert('Debes seleccionar al menos un postulante.');
-            return;
-        }
- 
-        modalResumen.textContent = `Se enviará un correo a ${ids.length} postulante(s).`;
-        modal.style.display = 'flex';
-    });
- 
-    modalCerrar.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
- 
-    modalCancelar.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
- 
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
- 
-    modalConfirmar.addEventListener('click', () => {
-        const ids = idsSeleccionados();
-        const fecha = document.getElementById('modal-fecha').value;
-        const hora = document.getElementById('modal-hora').value;
-        const lugar = document.getElementById('modal-lugar').value;
-        const mensaje = document.getElementById('modal-mensaje').value;
- 
-        if (ids.length === 0) {
-            alert('Debes seleccionar al menos un postulante.');
-            return;
-        }
- 
-        if (!fecha || !hora) {
-            alert('Por favor completa la fecha y la hora de la entrevista.');
-            return;
-        }
- 
-        const datos = { ids, fecha, hora, lugar, mensaje };
- 
-        inputIds.value = JSON.stringify(datos);
-        form.submit();
-    });
+
 });
 </script>
  

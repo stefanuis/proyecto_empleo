@@ -44,6 +44,7 @@ from app.models.docs import OtrosDocumentos
 from app.forms.vacante import VacanteForm
 from app.models.vacante import Vacante
 from app.models.postulacion import Postulacion
+from app.models.citacion import Citaciones
 from app.utils.perfil import calcular_completitud_perfil
 from app.forms.validaciones import fila_vacia, validar_personal
 from app.forms.validaciones import fila_vacia, validar_contacto
@@ -1375,3 +1376,33 @@ def retirar_postulacion(id):
 
     flash('Has retirado tu postulación. No podrás volver a postularte a esta vacante.', 'success')
     return redirect(url_for('usuario.mis_postulaciones'))
+
+
+####### gestion de envios de correo 
+
+@usuario_bp.route('/citacion/responder/<token>/<respuesta>')
+def responder_citacion(token, respuesta):
+    citacion = Citaciones.query.filter_by(token=token).first_or_404()
+
+    if respuesta not in ['confirmar', 'rechazar']:
+        flash('Enlace inválido.', 'error')
+        return render_template('usuario/respuesta_citacion.html', citacion=None)
+
+    # Si ya respondió antes, no permitir sobreescribir
+    if citacion.respuesta:
+        return render_template(
+            'usuario/respuesta_citacion.html',
+            citacion=citacion,
+            ya_respondida=True
+        )
+
+    citacion.respuesta = 'confirmada' if respuesta == 'confirmar' else 'rechazada'
+    citacion.estado = 'confirmada' if respuesta == 'confirmar' else 'rechazada'
+    citacion.fecha_respuesta = datetime.now()
+    db.session.commit()
+
+    return render_template(
+        'usuario/respuesta_citacion.html',
+        citacion=citacion,
+        respuesta=respuesta
+    )

@@ -762,11 +762,11 @@ def descargar_expedientes_zip():
 
 #### Gestion de envio de citaciones ########
 
-def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje):
+def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje, link_confirmar, link_rechazar):
     try:
         msg = Message(
-            subject='Has sido citado a entrevista',
-            sender='noresponder@clinpanamericana.com',  # ajusta al remitente real
+            subject='Has sido citado a una entrevista',
+            sender='noresponder@clinpanamericana.com',
             recipients=[email]
         )
         msg.attach(
@@ -776,14 +776,22 @@ def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje):
             disposition="inline",
             headers={"Content-ID": "<logo_color>"}
         )
-        msg.html = render_template("citaciones.html", nombres=nombres, fecha=fecha, hora=hora, lugar=lugar,mensaje=mensaje,)
+        msg.html = render_template(
+            "c_citacion.html",
+            nombres=nombres,
+            fecha=fecha,
+            hora=hora,
+            lugar=lugar,
+            mensaje=mensaje,
+            link_confirmar=link_confirmar,
+            link_rechazar=link_rechazar,
+        )
         mail.send(msg)
         return True
     except Exception as e:
         print("ERROR SMTP al enviar citación:")
         print(type(e))
         print(str(e))
-        return False
 
 
 @admin_bp.route("admin/citaciones")
@@ -901,13 +909,13 @@ def citar_seleccionados(id):
         db.session.add(nueva_citacion)
  
         link_confirmacion = url_for(
-            'candidato.responder_citacion',
+            'usuario.responder_citacion',
             token=token,
             respuesta='confirmar',
             _external=True
         )
         link_rechazo = url_for(
-            'candidato.responder_citacion',
+            'usuario.responder_citacion',
             token=token,
             respuesta='rechazar',
             _external=True
@@ -938,3 +946,91 @@ def citar_seleccionados(id):
         flash(f'Se citó a {enviados} postulante(s). {fallidos} correo(s) no se pudieron enviar.', 'warning')
  
     return redirect(url_for('admin.listar_postulantes', id=id))
+
+
+
+@admin_bp.route("/citaciones/<int:id>/reprogramar", methods=["POST"])
+@login_required
+def reprogramar_citacion(id):
+
+    if session.get("rol") != "admin":
+        return "No tienes permiso para realizar esta acción", 403
+
+    citacion = Citaciones.query.get_or_404(id)
+
+    fecha = request.form.get("fecha")
+    hora = request.form.get("hora")
+    lugar = request.form.get("lugar") or citacion.lugar
+    mensaje = request.form.get("mensaje") or ""
+
+    if not fecha or not hora:
+        flash("Debes indicar la nueva fecha y hora.", "error")
+        return redirect(url_for("admin.listar_citaciones"))
+
+    postulacion = Postulacion.query.get_or_404(
+        citacion.id_postulacion
+    )
+
+    personal = Personal.query.filter_by(
+        id_usuario=postulacion.id_usuario
+    ).first()
+
+    if not personal:
+        flash("No se encontró la información del candidato.", "error")
+        return redirect(url_for("admin.listar_citaciones"))
+
+    citacion.fecha = datetime.strptime(
+        fecha,
+        "%Y-%m-%d"
+    ).date()
+
+    citacion.hora = datetime.strptime(
+        hora,
+        "%H:%M"
+    ).time()
+
+    citacion.lugar = lugar
+    citacion.mensaje = mensaje
+
+    # Reiniciar la respuesta anterior
+    citacion.respuesta = None
+    citacion.estado = "pendiente"
+    citacion.fecha_respuesta = None
+
+    db.session.commit()
+
+    # Enlaces para responder a la nueva citación
+    link_confirmar = url_for(
+        "usuario.responder_citacion",
+        token=citacion.token,
+        respuesta="confirmar",
+        _external=True
+    )
+
+    link_rechazar = url_for(
+        "usuario.responder_citacion",
+        token=citacion.token,
+        respuesta="rechazar",
+        _external=True
+    )
+
+    enviar_correo_citacion(
+        email=personal.email,
+        nombres=personal.nombres,
+        fecha=fecha,
+        hora=hora,
+        lugar=lugar,
+        mensaje=f"Tu entrevista ha sido reprogramada. {mensaje}",
+        link_confirmar=link_confirmar,
+        link_rechazar=link_rechazar
+    )
+
+    flash(
+        "Citación reprogramada y correo enviado correctamente.",
+        "success"
+    )
+
+    return redirect(
+        url_for("admin.listar_citaciones")
+    )
+

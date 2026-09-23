@@ -1,0 +1,102 @@
+<!-- citaciones.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Has sido citado a entrevista</title>
+</head>
+<body style="margin:0;padding:20px;background:#F5F5F5;font-family:'DM Sans',Arial,sans-serif;">
+    <table cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #E0E0E0;">
+        <tr>
+            <td style="background:#d9d9d9;padding:24px 30px;text-align:center;">
+                <img src="cid:logo_color"
+                    alt="Clínica Panamericana"
+                    style="max-width:220px;height:auto;">
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:35px 30px;">
+                <h2 style="font-size:20px;font-weight:600;color:#212121;margin:0 0 12px 0;">
+                    ¡Hola, {{ nombres }}!
+                </h2>
+
+                <p style="font-size:14px;line-height:1.6;color:#757575;margin:0 0 20px 0;">
+                    Has sido citado a una entrevista. A continuación los detalles:
+                </p>
+
+                <!-- Tabla de datos de la citación -->
+                <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#FBEAF0;border:1px solid #F4C0D1;border-radius:10px;margin:0 0 24px 0;">
+                    <tr>
+                        <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
+                            <span style="font-size:12px;color:#54545A;">Fecha</span><br>
+                            <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ fecha }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
+                            <span style="font-size:12px;color:#54545A;">Hora</span><br>
+                            <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ hora }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
+                            <span style="font-size:12px;color:#54545A;">Lugar</span><br>
+                            <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ lugar }}</span>
+                        </td>
+                    </tr>
+                    {% if mensaje %}
+                    <tr>
+                        <td style="padding:16px 20px;">
+                            <span style="font-size:12px;color:#54545A;">Mensaje</span><br>
+                            <span style="font-size:14px;color:#2C2C2A;">{{ mensaje }}</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+
+                <p style="font-size:14px;color:#212121;text-align:center;margin:0 0 16px 0;font-weight:600;">
+                    ¿Confirmas tu asistencia?
+                </p>
+
+                <!-- Botones Confirmar / Rechazar -->
+                <table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 24px 0;">
+                    <tr>
+                        <td style="text-align:center;padding:0 8px;">
+                            <a href="{{ link_confirmar }}" style="display:inline-block;background:#D81B60;color:#ffffff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
+                                ✓ Confirmar asistencia
+                            </a>
+                        </td>
+                        <td style="text-align:center;padding:0 8px;">
+                            <a href="{{ link_rechazar }}" style="display:inline-block;background:#ffffff;color:#54545A;border:1px solid #DCDCDE;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px;">
+                                ✕ No podré asistir
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:6px;padding:12px 16px;margin-top:16px;">
+                    <p style="font-size:12px;color:#E65100;margin:0;">
+                        💡 Si los botones no funcionan, copia y pega uno de estos enlaces en tu navegador:
+                    </p>
+                    <p style="font-size:11px;color:#757575;word-break:break-all;margin-top:4px;">
+                        Confirmar: {{ link_confirmar }}
+                    </p>
+                    <p style="font-size:11px;color:#757575;word-break:break-all;margin-top:4px;">
+                        Rechazar: {{ link_rechazar }}
+                    </p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="background:#F5F5F5;padding:20px 30px;text-align:center;border-top:1px solid #E0E0E0;">
+                <p style="font-size:12px;color:#757575;margin:4px 0;">
+                    <strong>Clinica Panamericana</strong>
+                </p>
+                <p style="font-size:11px;color:#9e9e9e;margin:4px 0;">
+                    © 2026 Clinica Panamericana. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

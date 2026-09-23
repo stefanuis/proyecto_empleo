@@ -1,234 +1,470 @@
-{% extends 'admin/base.html' %}
-{% block titulo %}Postulaciones{% endblock %}
 
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/citaciones.css') }}">
-{% endblock %}
+{% extends 'admin/base.html' %}
+
+{% block titulo %}Citaciones{% endblock %}
 
 {% block contenido %}
 
-<div class="contenedor-padre">
-    <div class="contenedor-formulario contenedor-full">
+<div class="post-header">
+    <div>
+        <h2 class="post-titulo">Citaciones</h2>
+        <p class="post-subtitulo">Gestiona las entrevistas y confirmaciones de asistencia.</p>
+    </div>
+</div>
 
-        <div class="card-header">
-            <span class="card-title">Confirmaciones de asistencia</span>
+<form method="GET" action="{{ url_for('admin.listar_citaciones') }}">
+    <div class="filtros-avanzados-panel post-filtros-panel">
+        <div class="post-filtros-grid-3">
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Buscar candidato</p>
+                <input type="text" name="buscar" placeholder="Nombre o apellido..." value="{{ request.args.get('buscar', '') }}">
+            </div>
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Estado</p>
+                <select name="estado">
+                    <option value="">Todos los estados</option>
+                    <option value="pendiente" {% if request.args.get('estado') == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                    <option value="confirmada" {% if request.args.get('estado') == 'confirmada' %}selected{% endif %}>Confirmada</option>
+                    <option value="cancelada" {% if request.args.get('estado') == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+
+            <div class="vac-filtro-grupo">
+                <p class="filtro-grupo-titulo">Fecha</p>
+                <input type="date" name="fecha" value="{{ request.args.get('fecha', '') }}">
+            </div>
         </div>
 
-        <form method="GET" action="{{ url_for('admin.listar_citaciones') }}" class="filtros-vacantes-admin">
-            <div class="input-buscar input-buscar-flex">
-                <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q or '' }}">
+        <div class="post-filtros-acciones">
+            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
+            <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
+        </div>
+    </div>
+</form>
+
+<div class="vac-tabla-container">
+    <table class="vac-tabla">
+        <thead>
+            <tr>
+                <th>Candidato</th>
+                <th>Vacante</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Estado</th>
+                <th>Respondió</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for citacion, postulacion, candidato, vacante in citaciones %}
+            <tr>
+                <td><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></td>
+                <td>{{ vacante.titulo }}</td>
+
+                <td>
+                    {% if citacion.fecha %}
+                        {{ citacion.fecha.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if citacion.hora %}
+                        {{ citacion.hora.strftime('%H:%M') }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if citacion.estado == 'pendiente' %}
+                        <span class="badge badge-orange">Pendiente</span>
+                    {% elif citacion.estado == 'confirmada' %}
+                        <span class="badge badge-green">Confirmada</span>
+                    {% elif citacion.estado == 'cancelada' %}
+                        <span class="badge badge-red">Cancelada</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ citacion.estado or 'Sin estado' }}</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if citacion.respuesta == 'Confirmó' %}
+                        <span class="badge badge-green">Confirmó</span>
+                    {% elif citacion.respuesta == 'No confirmó' %}
+                        <span class="badge badge-red">No confirmó</span>
+                    {% else %}
+                        <span class="badge badge-gray">Pendiente</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <div class="acciones">
+                        <a href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}" class="btn-secondary btn-sm">Ver detalle</a>
+
+                        <button type="button"
+                                class="btn-secondary btn-sm btn-reprogramar"
+                                data-id="{{ citacion.id }}"
+                                data-url="{{ url_for('admin.reprogramar_citacion', id=citacion.id) }}"
+                                data-fecha="{{ citacion.fecha.strftime('%Y-%m-%d') if citacion.fecha else '' }}"
+                                data-hora="{{ citacion.hora.strftime('%H:%M') if citacion.hora else '' }}"
+                                data-lugar="{{ citacion.lugar or '' }}"
+                                data-mensaje="{{ citacion.mensaje or '' }}">
+                            Reprogramar
+                        </button>
+                    </div>
+                </td>
+            </tr>
+
+            {% else %}
+            <tr>
+                <td colspan="7" class="post-tabla-vacia">No hay citaciones registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+<!-- MODAL REPROGRAMAR -->
+
+<div id="modal-reprogramar" class="vacante-modal-overlay" style="display: none;">
+
+    <div class="vacante-modal-caja">
+
+        <button type="button" class="modal-cerrar" id="modal-cerrar-reprogramar">&times;</button>
+
+        <h2 id="modal-reprogramar-titulo">Reprogramar citación</h2>
+
+        <p class="modal-meta" id="modal-reprogramar-resumen">
+            Modifica la fecha y hora de la entrevista.
+        </p>
+
+        <form id="form-reprogramar" method="POST">
+
+            <div class="campo campo-completo">
+                <label class="form-label" for="modal-reprogramar-fecha">Nueva fecha</label>
+                <input type="date" id="modal-reprogramar-fecha" name="fecha" class="form-control" required>
             </div>
-            <button type="submit" class="btn-secondary btn-sm">Buscar</button>
+
+            <div class="campo campo-completo">
+                <label class="form-label" for="modal-reprogramar-hora">Nueva hora</label>
+                <input type="time" id="modal-reprogramar-hora" name="hora" class="form-control" required>
+            </div>
+
+            <div class="campo campo-completo">
+                <label class="form-label" for="modal-reprogramar-lugar">Lugar o enlace</label>
+                <input type="text" id="modal-reprogramar-lugar" name="lugar" class="form-control" placeholder="Oficina principal / Enlace de videollamada...">
+            </div>
+
+            <div class="campo campo-completo">
+                <label class="form-label" for="modal-reprogramar-mensaje">Mensaje adicional</label>
+                <textarea id="modal-reprogramar-mensaje" name="mensaje" class="form-control" rows="3" placeholder="Mensaje adicional para el candidato..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+                <button type="button" class="btn-secondary btn-sm" id="modal-cancelar-reprogramar">Cancelar</button>
+                <button type="submit" class="btn-primary btn-sm">Reprogramar citación</button>
+            </div>
+
         </form>
 
-        <div class="filtros-avanzados-panel citaciones-panel">
-
-            <div class="filtros-avanzados-grupos citaciones-grupos">
-
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo">Vacante</p>
-
-                    <select name="vacante_id" class="filtro-select-full">
-                        <option value="">Todas las vacantes</option>
-                        {% for v in vacantes %}
-                            <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
-                                {{ v.titulo }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo">Estado de la cita</p>
-
-                    <div class="filtro-checks">
-                        <label class="filtro-check-label">
-                            <input type="checkbox" name="estado" value="confirmada" {% if 'confirmada' in estados_seleccionados %}checked{% endif %}> Confirmado
-                        </label>
-                        <label class="filtro-check-label">
-                            <input type="checkbox" name="estado" value="rechazada" {% if 'rechazada' in estados_seleccionados %}checked{% endif %}> Rechazado
-                        </label>
-                        <label class="filtro-check-label">
-                            <input type="checkbox" name="estado" value="sin_responder" {% if 'sin_responder' in estados_seleccionados %}checked{% endif %}> Sin responder
-                        </label>
-                    </div>
-                </div>
-
-                <div class="filtro-grupo">
-                    <p class="filtro-grupo-titulo">Rango de fecha de la cita</p>
-
-                    <div class="filtro-fechas-col">
-                        <div>
-                            <label class="filtro-fecha-label">Desde</label>
-                            <input type="date" name="fecha_desde" value="{{ fecha_desde or '' }}" class="filtro-input-full">
-                        </div>
-                        <div>
-                            <label class="filtro-fecha-label">Hasta</label>
-                            <input type="date" name="fecha_hasta" value="{{ fecha_hasta or '' }}" class="filtro-input-full">
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="citaciones-acciones">
-                <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
-                <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
-            </div>
-
-        </div>
-
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Vacante</th>
-                        <th>Fecha y hora</th>
-                        <th>Estado</th>
-                        <th>Respondió</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for citacion, postulacion, candidato, vacante in citaciones %}
-                        <tr>
-                            <td>{{ candidato.nombres }} {{ candidato.apellidos }}</td>
-                            <td>{{ vacante.titulo }}</td>
-                            <td>
-                                {{ citacion.fecha.strftime('%d %b') if citacion.fecha else '—' }},
-                                {{ citacion.hora.strftime('%I:%M %p') if citacion.hora else '' }}
-                            </td>
-                            <td>
-                                {% if citacion.respuesta == 'confirmada' %}
-                                    <span class="badge badge-green">Confirmado</span>
-                                {% elif citacion.respuesta == 'rechazada' %}
-                                    <span class="badge badge-red">Rechazado</span>
-                                {% else %}
-                                    <span class="badge badge-gray">Sin responder</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if citacion.fecha_respuesta %}
-                                    {{ citacion.fecha_respuesta.strftime('%d/%m/%Y') }}
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                            <td>
-                                <a href="{{ url_for('admin.ver_expediente', id=citacion.id_postulacion) }}" class="btn-secondary btn-sm">
-                                    Ver detalle
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr>
-                            <td colspan="6" class="post-tabla-vacia">No hay citaciones que coincidan con los filtros.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
     </div>
+
 </div>
 
 
 <style>
-    .contenedor-full {
-    max-width: none;
-    width: 100%;
+.filtros-avanzados-panel {
+    background: #fff;
+    border: 1px solid #e2e5e9;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.input-buscar-flex {
-    flex: 1;
-}
-
-.citaciones-panel {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 8px;
+.post-filtros-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-bottom: 16px;
 }
 
-.citaciones-grupos {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+.vac-filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .filtro-grupo-titulo {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin: 0;
 }
 
-.filtro-select-full,
-.filtro-input-full {
+.vac-filtro-grupo select,
+.vac-filtro-grupo input[type="text"],
+.vac-filtro-grupo input[type="date"] {
+    padding: 9px 12px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #222;
+    background-color: #fafbfc;
     width: 100%;
+    box-sizing: border-box;
 }
 
-.filtro-checks {
+.vac-filtro-grupo select:focus,
+.vac-filtro-grupo input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+.post-filtros-acciones {
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 10px;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #eef0f2;
 }
 
-.filtro-check-label {
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.post-titulo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.post-subtitulo {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.vac-tabla-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.vac-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: auto;
+}
+
+.vac-tabla thead {
+    background: var(--primary);
+}
+
+.vac-tabla thead th {
+    color: #fff;
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-tabla tbody tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.vac-tabla tbody td {
+    padding: 14px 16px;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+.acciones {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.vacante-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999999;
+    align-items: center;
+    justify-content: center;
+}
+
+.vacante-modal-caja {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    width: 90%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-cerrar {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    border: none;
+    background: transparent;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+}
+
+.modal-cerrar:hover {
+    color: #222;
+}
+
+.modal-meta {
     font-size: 13px;
+    color: #6b7280;
+    margin: 8px 0 18px;
 }
 
-.filtro-fechas-col {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.campo {
+    margin-bottom: 14px;
 }
 
-.filtro-fecha-label {
-    font-size: 11px;
-    color: var(--text-muted);
+.form-label {
     display: block;
-    margin-bottom: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #444;
 }
 
-.citaciones-acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
+.form-control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fafbfc;
+    color: #222;
+    font-family: inherit;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
 }
 
 @media (max-width: 900px) {
-    .citaciones-grupos {
+    .post-filtros-grid-3 {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 640px) {
-    .citaciones-grupos {
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .post-filtros-grid-3 {
         grid-template-columns: 1fr;
     }
 
-    .citaciones-acciones {
+    .post-filtros-acciones {
         flex-direction: column-reverse;
     }
 
-    .citaciones-acciones .btn-primary,
-    .citaciones-acciones .btn-secondary {
+    .post-filtros-acciones .btn-primary,
+    .post-filtros-acciones .btn-secondary {
         width: 100%;
         text-align: center;
     }
+
+    .vacante-modal-caja {
+        width: 95%;
+        padding: 20px;
+    }
 }
 </style>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    console.log("JavaScript de citaciones cargado");
+
+    const modal = document.getElementById("modal-reprogramar");
+    const formulario = document.getElementById("form-reprogramar");
+    const fecha = document.getElementById("modal-reprogramar-fecha");
+    const hora = document.getElementById("modal-reprogramar-hora");
+    const lugar = document.getElementById("modal-reprogramar-lugar");
+    const mensaje = document.getElementById("modal-reprogramar-mensaje");
+    const cerrar = document.getElementById("modal-cerrar-reprogramar");
+    const cancelar = document.getElementById("modal-cancelar-reprogramar");
+    const botones = document.querySelectorAll(".btn-reprogramar");
+
+    console.log("Modal:", modal);
+    console.log("Botones:", botones.length);
+
+    botones.forEach(function (boton) {
+
+        boton.addEventListener("click", function () {
+
+            console.log("Botón Reprogramar presionado");
+
+            fecha.value = boton.dataset.fecha || "";
+            hora.value = boton.dataset.hora || "";
+            lugar.value = boton.dataset.lugar || "";
+            mensaje.value = boton.dataset.mensaje || "";
+
+            formulario.action = boton.dataset.url;
+
+            modal.style.display = "flex";
+
+        });
+
+    });
+
+    cerrar.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
+
+    cancelar.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
+
+    modal.addEventListener("click", function (event) {
+
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+
+    });
+
+});
+</script>
 {% endblock %}
+
 

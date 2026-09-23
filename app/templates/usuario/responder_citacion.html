@@ -1,0 +1,27 @@
+{% extends 'usuario/base.html' %}
+{% block contenido %}
+<div style="max-width:500px;margin:60px auto;text-align:center;font-family:'DM Sans',Arial,sans-serif;">
+    {% if not citacion %}
+        <h2 style="color:#D81B60;">Enlace inválido</h2>
+        <p style="color:#54545A;">Este enlace no es válido o ha expirado.</p>
+
+    {% elif ya_respondida %}
+        <h2 style="color:#54545A;">Ya respondiste a esta citación</h2>
+        <p style="color:#54545A;">
+            Tu respuesta anterior fue:
+            <strong>{{ 'Confirmada' if citacion.respuesta == 'confirmada' else 'Rechazada' }}</strong>
+        </p>
+
+    {% elif respuesta == 'confirmar' %}
+        <h2 style="color:#D81B60;">✓ Has confirmado tu asistencia</h2>
+        <p style="color:#54545A;">
+            Te esperamos el {{ citacion.fecha.strftime('%d/%m/%Y') }} a las {{ citacion.hora.strftime('%I:%M %p') }}
+            {% if citacion.lugar %} en {{ citacion.lugar }}{% endif %}.
+        </p>
+
+    {% else %}
+        <h2 style="color:#54545A;">Has rechazado la citación</h2>
+        <p style="color:#54545A;">Gracias por avisarnos. Esperamos verte en futuras oportunidades.</p>
+    {% endif %}
+</div>
+{% endblock %}
