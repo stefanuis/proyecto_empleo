@@ -6,70 +6,209 @@ Competencias Profesionales
 
 {% block contenido %}
 
-<section class="beneficios-clinica">
+<div class="wrap">
+ 
+  <div class="hero-image">
 
-    <div class="beneficios-banner">
-        <img src="{{ url_for('static', filename='img/banner-empleo.png') }}" alt="Trabaja con nosotros - Clínica">
+    <span>Espacio para imagen · sugerido 1120×420px</span>
+  </div>
+ 
+  <div class="grid">
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
+            <img src="" alt="">
+        </div>
+        <span class="num">01</span>
+      </div>
+      <h3>Alimentación</h3>
+      <p>Disfruta de un <b>subsidio del 57%</b> en almuerzos. El 43% restante se descuenta por nómina.</p>
     </div>
-
-
-    <div class="beneficios-grid">
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-heart-handshake"></i>
-            </div>
-            <h3>Ambiente humano y colaborativo</h3>
-            <p>Un equipo interdisciplinario comprometido con el cuidado, tanto de nuestros pacientes como de quienes trabajan aquí.</p>
-        </div>
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-school"></i>
-            </div>
-            <h3>Formación y crecimiento continuo</h3>
-            <p>Programas de capacitación, actualización clínica y apoyo para tu desarrollo profesional dentro de la institución.</p>
-        </div>
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-shield-check"></i>
-            </div>
-            <h3>Estabilidad laboral</h3>
-            <p>Contratación formal, con todas las prestaciones de ley y procesos de vinculación transparentes.</p>
-        </div>
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-clock"></i>
-            </div>
-            <h3>Equilibrio vida-trabajo</h3>
-            <p>Horarios organizados que respetan tu tiempo personal y familiar, dentro de las exigencias del sector salud.</p>
-        </div>
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-medical-cross"></i>
-            </div>
-            <h3>Bienestar integral</h3>
-            <p>Programas de seguridad y salud en el trabajo, acompañamiento psicosocial y espacios de bienestar para el equipo.</p>
-        </div>
-
-        <div class="beneficio-card">
-            <div class="beneficio-icono">
-                <i class="ti ti-trending-up"></i>
-            </div>
-            <h3>Oportunidades de crecimiento</h3>
-            <p>Damos prioridad a la promoción interna: preferimos que nuestro propio equipo crezca antes que buscar afuera.</p>
-        </div>
-
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }} " alt="" >
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#54545A"></div>
+        <span class="num">02</span>
+      </div>
+      <h3>Optometría</h3>
+      <p>Consulta gratuita (si compras lentes y monturas), <b>20% de descuento en lentes</b> y pago por nómina hasta $400.000.</p>
     </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
 
-    <div class="beneficios-cta">
-        <a href="{{ url_for('usuario.vacantes') }}" class="btn-primary">Ver vacantes disponibles</a>
+        </div>
+        <span class="num">03</span>
+      </div>
+      <h3>Exámenes médicos</h3>
+      <p>Descuentos especiales en exámenes de laboratorio y tarifas preferenciales en imagenología. <span style="opacity:.75">(Aplican estudios seleccionados)</span></p>
     </div>
-</section>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#54545A">
 
+        </div>
+        <span class="num">04</span>
+      </div>
+      <h3>Salud especializada</h3>
+      <p>Solo pagas el <b>30% del valor</b> de la consulta con médico especialista.</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
+            <img src="" alt="">
+        </div>
+        <span class="num">05</span>
+      </div>
+      <h3>Seguros de vida</h3>
+      <p>Tarifa especial en póliza SURA con deducción por nómina, más una <b>póliza patronal gratuita</b> pagada por la clínica (WTW).</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#54545A">
+            <img src="" alt="">
+        </div>
+        <span class="num">06</span>
+      </div>
+      <h3>Finanzas personales</h3>
+      <p>Convenios de ahorro y crédito con Confiar, Fodelsa, Comfama, Bancolombia y BBVA.</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
+            <img src="" alt="">
+        </div>
+        <span class="num">07</span>
+      </div>
+      <h3>Comités de apoyo</h3>
+      <p>¿Eres parte de un comité de SST? Recibe <b>1 día adicional de vacaciones</b> como reconocimiento.</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#54545A">
+            <img src="" alt="">
+        </div>
+        <span class="num">08</span>
+      </div>
+      <h3>Póliza exequial</h3>
+      <p>Cobertura de gastos y servicios funerarios del colaborador, con apoyo económico y logístico.</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
+            <img src="" alt="">
+        </div>
+        <span class="num">09</span>
+      </div>
+      <h3>Vacaciones</h3>
+      <p>Relájate y disfruta tus vacaciones como se debe… ¡sin contar los sábados!</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#54545A">
+            <img src="" alt="">
+        </div>
+        <span class="num">10</span>
+      </div>
+      <h3>Salud mental</h3>
+      <p>Apoyo psicológico profesional para acompañarte en situaciones personales o laborales. ¡Estamos para ti!</p>
+    </div>
+ 
+    <div class="card">
+      <div class="card-image">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
+      </div>
+      <div class="top">
+        <div class="icon" style="background:#D81B60">
+            <img src="" alt="">
+        </div>
+        <span class="num">11</span>
+      </div>
+      <h3>Plataforma de aprendizaje</h3>
+      <p>Actualiza tus conocimientos y consulta todos nuestros lineamientos institucionales en línea.</p>
+    </div>
+ 
+  </div>
+</div>
+
+<style>
+.wrap{
+    max-width:1120px; margin:0 auto; padding:64px 24px 80px;
+}
+  .hero-image{
+    width:100%; aspect-ratio:1120/420; border-radius:var(--radius-lg); margin:0 0 48px;
+    background:var(--bg-main); border:1.5px dashed var(--border);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .hero-image img{
+    width:100%;
+    height:100%; object-fit:cover; display:block;
+}
+  .hero-image span{color:var(--text-secondary); font-size:.9rem;}
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  @media (max-width:900px){ .grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:560px){ .grid{grid-template-columns:1fr;} }
+  .card{background:var(--bg-main); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px; display:flex; flex-direction:column; gap:12px;}
+ 
+  .top{display:flex; align-items:center; gap:12px;}
+  .icon{width:42px; height:42px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .icon svg{width:22px; height:22px; stroke:#fff; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;}
+  .card h3{margin:0; font-size:1rem; font-weight:600; color:var(--text-main);}
+  .card p{margin:0; color:var(--text-secondary); font-size:.88rem; line-height:1.55;}
+  .card p b{color:var(--text-main); font-weight:600;}
+  .card-image {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+}
+
+.card-image img {
+    width: 100%;
+    height: 90%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+</style>
 
 
 
