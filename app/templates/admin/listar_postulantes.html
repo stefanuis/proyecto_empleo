@@ -1,4 +1,8 @@
 {% extends 'admin/base.html' %}
+
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin_listar_postulantes.css') }}">
+{% endblock %}
  
 {% block titulo %}
 Postulantes - {{ vacante.titulo }}
@@ -132,6 +136,27 @@ Postulantes - {{ vacante.titulo }}
         </table>
     </div>
 </form>
+{% if pagination and pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+<div class="vac-paginador">
+
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
+       href="{% if pagination.has_prev %}{{ url_for('admin.listar_postulantes', id=vacante.id, **dict(args, page=pagination.prev_num)) }}{% else %}#{% endif %}">
+        ← Anterior
+    </a>
+
+    <span class="vac-paginador-info">
+        Página {{ pagination.page }} de {{ pagination.pages }}
+        · {{ pagination.total }} postulante{{ 's' if pagination.total != 1 }}
+    </span>
+
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
+       href="{% if pagination.has_next %}{{ url_for('admin.listar_postulantes', id=vacante.id, **dict(args, page=pagination.next_num)) }}{% else %}#{% endif %}">
+        Siguiente →
+    </a>
+
+</div>
+{% endif %}
  
 <div id="modal-citar" class="vacante-modal-overlay" style="display:none;">
     <div class="vacante-modal-caja">
@@ -166,268 +191,99 @@ Postulantes - {{ vacante.titulo }}
     </div>
 </div>
 
-<style>
-.filtros-avanzados-panel {
-    background: #fff;
-    border: 1px solid #e2e5e9;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.post-filtros-grid-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.post-filtros-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.vac-filtro-grupo {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.filtro-grupo-titulo {
-    font-size: 13px;
-    font-weight: 600;
-    color: #444;
-    margin: 0;
-}
-
-.vac-filtro-grupo select,
-.vac-filtro-grupo input[type="text"] {
-    padding: 9px 12px;
-    border: 1px solid #d5d9dd;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #222;
-    background-color: #fafbfc;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    width: 100%;
-}
-
-.vac-filtro-grupo select:focus,
-.vac-filtro-grupo input[type="text"]:focus {
-    outline: none;
-    border-color: var(--primary);
-    background-color: #fff;
-}
-
-.vac-filtro-grupo input[type="text"]::placeholder {
-    color: #9aa1a8;
-}
-
-.post-filtros-acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding-top: 12px;
-    border-top: 1px solid #eef0f2;
-}
-
-.btn-primary,
-.btn-secondary {
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: background-color 0.15s ease, transform 0.05s ease;
-}
-
-.btn-sm {
-    padding: 9px 18px;
-    font-size: 13px;
-}
-
-.btn-primary {
-    background-color: var(--primary);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background-color: var(--primary);
-}
-
-.btn-secondary {
-    background-color: #f1f3f5;
-    color: #444;
-    border: 1px solid #d5d9dd;
-}
-
-.btn-secondary:hover {
-    background-color: #fff;
-}
-
-.btn-primary:active,
-.btn-secondary:active {
-    transform: scale(0.98);
-}
-
-.post-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.post-titulo {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin: 0 0 4px 0;
-}
-
-.post-subtitulo {
-    font-size: 14px;
-    color: #6b7280;
-    margin: 0;
-}
-
-.vac-tabla-container {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-}
-
-.vac-tabla {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-    table-layout: auto;
-}
-
-.vac-tabla thead {
-    background: var(--primary);
-}
-
-.vac-tabla thead th {
-    color: #fff;
-    text-align: left;
-    padding: 14px 16px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.vac-tabla tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: var(--transition);
-}
-
-.vac-tabla tbody td {
-    padding: 14px 16px;
-    color: var(--text-main);
-    vertical-align: middle;
-}
-
-.vacante-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999999;
-    align-items: center;
-    justify-content: center;
-}
-
-.vacante-modal-caja {
-    position: relative;
-    background: #fff;
-    border-radius: 10px;
-    padding: 24px;
-    width: 90%;
-    max-width: 420px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-cerrar {
-    position: absolute;
-    top: 10px;
-    right: 14px;
-    border: none;
-    background: transparent;
-    font-size: 28px;
-    line-height: 1;
-    cursor: pointer;
-    color: #666;
-}
-
-.modal-cerrar:hover {
-    color: #222;
-}
-
-@media (max-width: 900px) {
-    .post-filtros-grid-3 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    .post-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .post-filtros-grid-3,
-    .post-filtros-grid-2 {
-        grid-template-columns: 1fr;
-    }
-
-    .post-filtros-acciones {
-        flex-direction: column-reverse;
-    }
-
-    .post-filtros-acciones .btn-primary,
-    .post-filtros-acciones .btn-secondary {
-        width: 100%;
-        text-align: center;
-    }
-
-    .vacante-modal-caja {
-        width: 95%;
-        padding: 20px;
-    }
-}
-</style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
-    console.log("JavaScript de reprogramación cargado");
-
-    const modal = document.getElementById("modal-reprogramar");
-    const botones = document.querySelectorAll(".btn-reprogramar");
-
-    console.log("Modal:", modal);
-    console.log("Botones encontrados:", botones.length);
-
-    botones.forEach(function (boton) {
-
-        boton.addEventListener("click", function () {
-
-            console.log("Botón Reprogramar presionado");
-            console.log("URL:", boton.dataset.url);
-
-            modal.style.display = "flex";
-
+ 
+    const checkTodos   = document.getElementById("seleccionar-todos");
+    const checks       = document.querySelectorAll(".checkbox-postulante");
+    const contador     = document.getElementById("contador-seleccionados");
+    const btnCitar     = document.getElementById("btn-citar-seleccionados");
+    const formCitar    = document.getElementById("form-citar");
+    const inputIds     = document.getElementById("input-ids-seleccionados");
+ 
+    const modal        = document.getElementById("modal-citar");
+    const resumen      = document.getElementById("modal-resumen");
+    const campoFecha   = document.getElementById("modal-fecha");
+    const campoHora    = document.getElementById("modal-hora");
+    const campoLugar   = document.getElementById("modal-lugar");
+    const campoMensaje = document.getElementById("modal-mensaje");
+ 
+    // ids de las filas marcadas (como números)
+    function idsSeleccionados() {
+        return Array.from(document.querySelectorAll(".checkbox-postulante:checked"))
+                    .map(c => Number(c.dataset.id));
+    }
+ 
+    function actualizarContador() {
+        const n = idsSeleccionados().length;
+        contador.textContent = n + (n === 1 ? " postulante seleccionado" : " postulantes seleccionados");
+    }
+ 
+    // Marcar / desmarcar todos
+    if (checkTodos) {
+        checkTodos.addEventListener("change", function () {
+            checks.forEach(c => c.checked = checkTodos.checked);
+            actualizarContador();
         });
-
+    }
+ 
+    // Cada checkbox individual
+    checks.forEach(function (c) {
+        c.addEventListener("change", function () {
+            if (!c.checked && checkTodos) checkTodos.checked = false;
+            actualizarContador();
+        });
     });
-
+ 
+    // Abrir el modal
+    btnCitar.addEventListener("click", function () {
+        const n = idsSeleccionados().length;
+        if (n === 0) {
+            alert("Selecciona al menos un postulante.");
+            return;
+        }
+        resumen.textContent = "Se enviará un correo a " + n + " postulante(s).";
+        modal.style.display = "flex";
+    });
+ 
+    function cerrarModal() {
+        modal.style.display = "none";
+    }
+ 
+    document.getElementById("modal-cerrar").addEventListener("click", cerrarModal);
+    document.getElementById("modal-cancelar").addEventListener("click", cerrarModal);
+ 
+    // Cerrar al hacer clic fuera de la caja
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) cerrarModal();
+    });
+ 
+    // Confirmar: arma el JSON y envía el formulario
+    document.getElementById("modal-confirmar").addEventListener("click", function () {
+        const ids = idsSeleccionados();
+ 
+        if (ids.length === 0) {
+            alert("Selecciona al menos un postulante.");
+            return;
+        }
+        if (!campoFecha.value || !campoHora.value) {
+            alert("Indica la fecha y la hora de la entrevista.");
+            return;
+        }
+ 
+        inputIds.value = JSON.stringify({
+            ids: ids,
+            fecha: campoFecha.value,
+            hora: campoHora.value,
+            lugar: campoLugar.value.trim(),
+            mensaje: campoMensaje.value.trim()
+        });
+ 
+        formCitar.submit();
+    });
+ 
+    actualizarContador();
 });
 </script>
  

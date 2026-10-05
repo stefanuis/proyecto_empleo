@@ -1,9 +1,13 @@
 {% extends 'admin/base.html' %}
 
+{% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin_listar_vacante.css') }}">
+{% endblock %}
+
 {% block contenido %}
 
 <form class="filtros-vacantes-admin" method="GET" action="{{ url_for('admin.listar_vacantes') }}">
- 
+
   <div class="input-buscar buscador-vacantes">
     <i class="ti ti-search"></i>
     <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
@@ -11,19 +15,19 @@
       Buscar
     </button>
   </div>
- 
+
   <div class="vac-filtros-info">
     <p class="vac-filtros-info-texto"></p>
   </div>
- 
+
   <div class="filtros-avanzados-panel">
- 
+
     <div class="filtros-avanzados-grupos">
- 
+
       <!-- Grupo: Vacante -->
       <div class="vac-filtro-grupo">
         <p class="filtro-grupo-titulo">Vacante</p>
- 
+
         <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
           <option value="">Todas las áreas de aplicación</option>
           {% for value, label in areas %}
@@ -34,7 +38,7 @@
             {% endif %}
           {% endfor %}
         </select>
- 
+
         <select name="vacantes" class="vac-filtro-select">
           <option value="">Todas las vacantes</option>
           {% for v in todas_las_vacantes %}
@@ -43,16 +47,16 @@
             </option>
           {% endfor %}
         </select>
- 
+
         <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">
           Selecciona el área o la vacante que deseas filtrar.
         </p>
       </div>
- 
+
       <!-- Grupo: Requisitos del puesto -->
       <div class="vac-filtro-grupo">
         <p class="filtro-grupo-titulo">Requisitos del puesto</p>
- 
+
         <select name="nivel" class="vac-filtro-select">
           <option value="">Todos los niveles</option>
           <option value="Bachillerato"    {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
@@ -64,17 +68,17 @@
           <option value="doctorado"       {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
         </select>
       </div>
- 
+
       <!-- Grupo: Estado y fechas -->
       <div class="vac-filtro-grupo">
         <p class="filtro-grupo-titulo">Estado y fechas</p>
- 
+
         <select name="estado" class="vac-filtro-select vac-filtro-select-estado">
           <option value="">Estados</option>
           <option value="Activa"  {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
           <option value="Cerrada" {% if estado_seleccionado == 'Cerrada' %}selected{% endif %}>Cerrada</option>
         </select>
- 
+
         <div class="vac-filtro-fechas">
           <div>
             <label class="vac-filtro-label">Publicada desde</label>
@@ -86,9 +90,9 @@
           </div>
         </div>
       </div>
- 
+
     </div>
- 
+
     <div class="vac-filtros-acciones">
       <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
         Restablecer
@@ -97,11 +101,11 @@
         Aplicar filtros
       </button>
     </div>
- 
+
   </div>
- 
+
 </form>
- 
+
 <div class="vac-tabla-container">
   <table class="vac-tabla">
     <thead>
@@ -160,12 +164,37 @@
           </td>
           <td>
             <div class="vac-acciones">
+
               <a href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}" class="btn-secondary btn-sm">
-                Ver postulantes
+                Ver postulantes ({{ conteos.get(vacante.id, 0) }})
               </a>
+
               <a href="{{ url_for('admin.editar_vacante', id=vacante.id) }}" class="btn-primary btn-sm">
                 Editar
               </a>
+
+              <!-- Cerrar / Reabrir -->
+              <form method="POST"
+                    action="{{ url_for('admin.cambiar_estado_vacante', id=vacante.id) }}"
+                    style="display:inline;"
+                    data-confirmar="{% if vacante.estado == 'Activa' %}¿Cerrar esta vacante? Dejará de recibir postulaciones.{% else %}¿Reabrir esta vacante?{% endif %}">
+                <button type="submit" class="btn-secondary btn-sm">
+                  {{ 'Cerrar' if vacante.estado == 'Activa' else 'Reabrir' }}
+                </button>
+              </form>
+
+              <!-- Eliminar: solo si no tiene postulaciones -->
+              {% if conteos.get(vacante.id, 0) == 0 %}
+              <form method="POST"
+                    action="{{ url_for('admin.eliminar_vacante', id=vacante.id) }}"
+                    style="display:inline;"
+                    data-confirmar="¿Eliminar esta vacante definitivamente? Esta acción no se puede deshacer.">
+                <button type="submit" class="btn-secondary btn-sm" style="color:var(--badge-red-text);">
+                  Eliminar
+                </button>
+              </form>
+              {% endif %}
+
             </div>
           </td>
         </tr>
@@ -175,251 +204,40 @@
         </tr>
       {% endfor %}
     </tbody>
-
   </table>
-
 </div>
 
-<style>
-.buscador-vacantes {
-    flex: 1;
-}
+{% if pagination and pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+<div class="vac-paginador">
 
-.vac-filtros-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 14px;
-}
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
+       href="{% if pagination.has_prev %}{{ url_for('admin.listar_vacantes', **dict(args, page=pagination.prev_num)) }}{% else %}#{% endif %}">
+        ← Anterior
+    </a>
 
-.vac-filtros-info-texto {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 0;
-}
+    <span class="vac-paginador-info">
+        Página {{ pagination.page }} de {{ pagination.pages }}
+        · {{ pagination.total }} vacante{{ 's' if pagination.total != 1 }}
+    </span>
 
-.filtros-avanzados-panel {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 8px;
-    margin-bottom: 16px;
-}
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
+       href="{% if pagination.has_next %}{{ url_for('admin.listar_vacantes', **dict(args, page=pagination.next_num)) }}{% else %}#{% endif %}">
+        Siguiente →
+    </a>
 
-.filtros-avanzados-grupos {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-}
+</div>
+{% endif %}
 
-.filtro-grupo-titulo {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    margin: 0 0 8px;
-}
-
-.vac-filtro-select {
-    width: 100%;
-}
-
-.vac-filtro-select-area,
-.vac-filtro-select-estado {
-    margin-bottom: 8px;
-}
-
-.vac-filtro-ayuda {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 6px 0 0;
-}
-
-.vac-filtro-fechas {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.vac-filtro-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 3px;
-}
-
-.vac-filtros-acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-}
-
-.vac-tabla-vacia {
-    text-align: center;
-    padding: 30px;
-}
-
-.vac-filtro-grupo select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    cursor: pointer;
-    outline: none;
-    transition: var(--transition);
-}
-
-.vac-filtro-grupo select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-ultra-light);
-}
-
-.vac-filtro-grupo select:hover {
-    border-color: var(--primary-mid);
-}
-
-.vac-filtro-grupo input[type="date"] {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: var(--transition);
-}
-
-.vac-filtro-grupo input[type="date"]:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-ultra-light);
-}
-
-.filtros-vacantes-admin .input-buscar {
-    flex: 1;
-    min-width: 220px;
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
-}
-
-.filtros-vacantes-admin .input-buscar input {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 12px 10px 38px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: var(--transition);
-}
-
-.filtros-vacantes-admin .input-buscar .btn-secondary {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
-
-.vac-tabla-container {
-    width: 100%;
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-}
-
-.vac-tabla {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-    table-layout: auto;
-}
-
-.vac-tabla thead {
-    background: var(--primary);
-}
-
-.vac-tabla thead th {
-    color: #fff;
-    text-align: left;
-    padding: 14px 16px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.vac-tabla tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: var(--transition);
-}
-
-.vac-tabla tbody tr:hover {
-    background: var(--bg-hover, #fafafa);
-}
-
-.vac-tabla tbody td {
-    padding: 14px 16px;
-    color: var(--text-main);
-    vertical-align: middle;
-}
-
-.vac-estado-activa {
-    display: inline-block;
-    background: #d1f5e0;
-    color: #157347;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.vac-estado-cerrada {
-    display: inline-block;
-    background: #f1f1f1;
-    color: #666;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.vac-badge-por-vencer {
-    background: #fff3cd;
-    color: #856404;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    margin-left: 6px;
-    white-space: nowrap;
-}
-
-.vac-badge-vencida {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    margin-left: 6px;
-    white-space: nowrap;
-}
-
-.vac-acciones {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-</style>
+<script>
+// Pide confirmación en cualquier formulario con data-confirmar
+document.querySelectorAll('form[data-confirmar]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        if (!confirm(form.dataset.confirmar)) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
 
 {% endblock %}

@@ -4,73 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Bolsa de Empleo</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/ppal.css') }}">
-    <style>
-        /* Estilos adicionales específicos para la página de registro */
-        .register-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--bg-soft) 0%, #fff 100%);
-            padding: 40px 20px;
-        }
-        
-        .register-container {
-            max-width: 620px;
-            width: 100%;
-            margin: 0 auto;
-        }
-        
-        .register-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        
-        .register-header h1 {
-            font-family: 'DM Serif Display', serif;
-            font-size: 32px;
-            color: var(--text-main);
-            margin-bottom: 8px;
-        }
-        
-        .register-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
-        .password-strength {
-            margin-top: 8px;
-            height: 4px;
-            background: var(--bg-soft);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-        
-        .strength-bar {
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease, background 0.3s ease;
-            border-radius: 2px;
-        }
-        
-        .strength-text {
-            font-size: 10px;
-            margin-top: 4px;
-            color: var(--text-secondary);
-        }
-        
-        @media (max-width: 640px) {
-            .register-page {
-                padding: 20px 16px;
-            }
-            
-            [style*="grid-template-columns: 1fr 1fr"] {
-                grid-template-columns: 1fr !important;
-                gap: 0 !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/templates_registro.css') }}">
 </head>
 <body class="register-page">
     <div class="register-container">

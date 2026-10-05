@@ -1244,6 +1244,13 @@ def vacantes():
     nivel = request.args.get("nivel", "").strip()
     estado = request.args.get("estado", "Activa")
 
+    # Solo se aceptan los dos estados válidos; cualquier otro valor vuelve a "Activa"
+    if estado not in ("Activa", "Cerrada"):
+        estado = "Activa"
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 12   # par, porque la cuadrícula es de 2 columnas
+
     query = Vacante.query.filter_by(estado=estado)
 
     if accion == "buscar":
@@ -1257,7 +1264,24 @@ def vacantes():
         if nivel:
             query = query.filter(Vacante.nivel_academico == nivel)
 
-    vacantes = query.order_by(Vacante.fecha_publicacion.desc()).all()
+    # El id desempata fechas iguales para que el orden entre páginas sea estable
+    query = query.order_by(Vacante.fecha_publicacion.desc(), Vacante.id.desc())
+
+    total = query.count()
+    total_paginas = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, total_paginas))   # evita páginas fuera de rango
+
+    vacantes = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    pagination = {
+        "page": page,
+        "pages": total_paginas,
+        "total": total,
+        "has_prev": page > 1,
+        "has_next": page < total_paginas,
+        "prev_num": page - 1,
+        "next_num": page + 1,
+    }
 
     areas_aplicacion = (
         VacanteForm
@@ -1268,6 +1292,7 @@ def vacantes():
     return render_template(
         "usuario/vacantes.html",
         vacantes=vacantes,
+        pagination=pagination,
         areas=areas_aplicacion,
         q=q,
         area_aplicacion_seleccionada=area_aplicacion,

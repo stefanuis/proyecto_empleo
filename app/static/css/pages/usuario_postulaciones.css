@@ -1,0 +1,42 @@
+/* ==================================================
+   BADGES DE ESTADO - POSTULACIONES
+   ================================================== */
+ 
+.tag-estado {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+ 
+.estado-postulado {
+    background: #fde2ea;
+    color: #c2185b;
+}
+ 
+.estado-revision {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+ 
+.estado-entrevista {
+    background: #ffe8cc;
+    color: #b45309;
+}
+ 
+.estado-contratado {
+    background: #d1f5e0;
+    color: #157347;
+}
+ 
+.estado-rechazado {
+    background: #f8d7da;
+    color: #721c24;
+}
+ 
+.estado-retirada {
+    background: #e9ecef;
+    color: #495057;
+}

@@ -34,7 +34,16 @@ def create_app():
         return{
             "anio": 2026,
             "version": "0.01",
-            "titulo": "Principal mi Usuario"
+            "titulo": "Principal mi Usuario",
+            "LIMITES": {
+            "academica": 4,
+            "experiencia": 4,
+            "cursos": 5,
+            "competencias": 6,
+            "referencias": 3,
+            "referencias_personales": 3,
+            "discapacidades": 3
+           }
         }
 
     return app

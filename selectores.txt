@@ -1,0 +1,487 @@
+﻿9: :root {
+63: * {
+70: html {
+75: body {
+92: .icon {
+109: .icon-home {
+115: .icon-user {
+120: .icon-briefcase {
+125: .icon-clipboard-check {
+130: .icon-settings {
+135: .icon-notification  {
+139: .icon-notification  {
+143: .icon-lock-password{
+147: .icon-clipboard-data{
+151: .icon-http-delete-off{
+157: .icon-logout {
+167: .floating-navbar {
+195: .navbar-container {
+207: .navbar-end {
+215: .navbar-start {
+219: .navbar-logo {
+225: .navbar-logo img {
+232: .navbar-titulo {
+252: .navbar-hamburger {
+284: .navbar-hamburger span {
+299: .navbar-hamburger:hover {
+303: .navbar-hamburger:active {
+312: .navbar-notificacion {
+336: .navbar-notificacion:hover {
+340: .navbar-notificacion:active {
+349: .navbar-usuario {
+366: .usuario-iniciales {
+377: .usuario-nombre {
+398: .sidebar {
+425: .sidebar.collapsed {
+434: .sidebar ul {
+438: .sidebar li {
+448: .sidebar .toggle-header  {
+475: .sidebar .toggle-header:hover {
+485: .sidebar-section {
+489: .sidebar-section-label {
+511: .sidebar.collapsed .sidebar-section-label {
+520: .sidebar-nav {
+524: .sidebar-nav li {
+533: .sidebar-link {
+568: .sidebar-link:hover {
+573: .sidebar-link:hover .sidebar-icon {
+577: .sidebar-link.active {
+582: .sidebar-link.active .sidebar-icon {
+591: .sidebar-icon {
+610: .sidebar-text {
+614: .sidebar.collapsed .sidebar-text {
+625: .sidebar-badge {
+645: .sidebar.collapsed .sidebar-badge {
+654: .sidebar-divider {
+662: .sidebar hr {
+675: .sidebar-toggle-section {
+681: .toggle-header {
+707: .toggle-header:hover {
+712: .toggle-header .sidebar-icon {
+724: .toggle-header .sidebar-text {
+728: .toggle-arrow {
+738: .toggle-arrow.open {
+747: .toggle-content {
+766: .toggle-content.open {
+774: .toggle-content li {
+778: .toggle-content a {
+798: .toggle-content a:hover {
+804: .toggle-header.active {
+810: .toggle-header.active .sidebar-icon {
+819: .sidebar.collapsed .toggle-content {
+827: .sidebar.collapsed .toggle-arrow {
+831: .sidebar.collapsed .toggle-header .sidebar-text {
+837: .sidebar.collapsed .toggle-header {
+843: .sidebar.collapsed .toggle-header .sidebar-icon {
+854: .sidebar-toggle {
+862: .sidebar-toggle-btn {
+890: .sidebar-toggle-btn:hover {
+901: .sidebar-overlay {
+913: .sidebar-overlay.active {
+922: .contenedor {
+943: .contenido {
+954: .contenido h1 {
+962: .contenido h2 {
+970: .contenido p {
+981: .main-content {
+993: .main-content.expanded {
+1002: .app-layout {
+1021: .encabezado {
+1035: .encabezado .fecha {
+1043: .encabezado h1 {
+1051: .encabezado .subtitulo {
+1059: .badge-perfil {
+1083: .kpis {
+1093: .kpi-card {
+1109: .kpi-icono {
+1129: .kpi-valor {
+1137: .kpi-label {
+1150: .perfil-banner {
+1170: .perfil-banner .texto {
+1176: .perfil-banner h3 {
+1186: .perfil-banner p {
+1194: .barra-progreso {
+1206: .barra-progreso-relleno {
+1216: .btn-completar {
+1236: .btn-completar:hover {
+1245: .seccion-titulo {
+1255: .seccion-titulo h2 {
+1263: .seccion-titulo a {
+1273: .seccion-titulo a:hover {
+1279: .btn-postular {
+1301: .btn-postular:hover {
+1312: .container {
+1325: .page-header {
+1329: .page-header h1 {
+1339: .page-header p {
+1347: .page-header-row {
+1364: .card {
+1378: .card h2 {
+1388: .card p {
+1396: .card-header {
+1406: .card-title {
+1414: .card-actions {
+1427: .job-card {
+1454: .job-card:hover {
+1462: .job-card.featured {
+1466: .job-logo {
+1490: .job-info {
+1496: .job-title {
+1506: .job-company {
+1514: .job-meta {
+1524: .job-card-aside {
+1536: .job-salary {
+1544: .job-date {
+1555: .stats-grid {
+1565: .stat-card {
+1583: .stat-icon {
+1603: .stat-value {
+1613: .stat-label {
+1621: .stat-delta {
+1629: .stat-delta.up {
+1633: .stat-delta.down {
+1642: .btn-primary {
+1675: .btn-primary:hover {
+1683: .btn-primary:active {
+1687: .btn-secondary {
+1719: .btn-secondary:hover {
+1725: .btn-outline {
+1757: .btn-outline:hover {
+1761: .btn-ghost {
+1791: .btn-ghost:hover {
+1797: .btn-icon {
+1808: .btn-sm {
+1814: .btn-lg {
+1825: .form-group {
+1829: .form-label {
+1841: .form-label .required {
+1847: .form-hint {
+1855: .form-control {
+1877: .form-control:focus {
+1884: .form-control::placeholder {
+1888: .form-control:disabled {
+1896: select.form-control {
+1908: textarea.form-control {
+1914: .form-control.is-invalid {
+1921: .form-error {
+1935: .input-group {
+1941: .input-group .form-control {
+1951: .input-group .btn-primary {
+1959: .input-addon {
+1983: .input-group .input-addon + .form-control {
+1995: .form-check {
+2010: .form-check input[type="radio"] {
+2019: .form-check-label {
+2030: table {
+2038: .table-wrapper {
+2046: th {
+2064: td {
+2076: tr:last-child td {
+2080: tr:hover td {
+2084: .table-empty {
+2099: .badge {
+2117: .badge-green {
+2122: .badge-blue {
+2127: .badge-orange {
+2132: .badge-red {
+2137: .badge-gray {
+2142: .badge-pink {
+2152: .tag {
+2176: .tag-remove {
+2188: .tag-remove:hover {
+2197: .search-bar {
+2221: .search-bar:focus-within {
+2228: .search-bar .search-icon {
+2238: .search-bar input {
+2254: .search-bar input::placeholder {
+2263: .filters-row {
+2275: .filter-chip {
+2306: .filter-chip:hover {
+2312: .filter-chip.active {
+2325: .pagination {
+2337: .page-btn {
+2369: .page-btn:hover {
+2377: .page-btn.active {
+2385: .page-btn:disabled {
+2396: .modal-overlay {
+2420: .modal-overlay.open {
+2426: .modal {
+2448: .modal-overlay.open .modal {
+2454: .modal-header {
+2466: .modal-title {
+2474: .modal-close {
+2492: .modal-close:hover {
+2496: .modal-body {
+2500: .modal-footer {
+2517: .toast-container {
+2532: .toast {
+2558: .toast.success {
+2562: .toast.error {
+2566: .toast.info {
+2571: from {
+2576: to {
+2587: .tabs {
+2597: .tab-btn {
+2623: .tab-btn:hover {
+2627: .tab-btn.active {
+2640: .avatar {
+2648: .avatar-placeholder {
+2666: .avatar-sm {
+2672: .avatar-md {
+2678: .avatar-lg {
+2689: .divider {
+2702: .empty-state {
+2710: .empty-state .empty-icon {
+2720: .empty-state h3 {
+2730: .empty-state p {
+2741: .skeleton {
+2758: 0% {
+2762: 100% {
+2772: [data-tooltip] {
+2776: [data-tooltip]::after {
+2808: [data-tooltip]:hover::after {
+2817: .dropdown {
+2823: .dropdown-menu {
+2847: .dropdown-menu.open {
+2854: from {
+2859: to {
+2865: .dropdown-item {
+2885: .dropdown-item:hover {
+2889: .dropdown-item.danger {
+2893: .dropdown-divider {
+2906: .progress-bar {
+2916: .progress-fill {
+2931: .alert {
+2951: .alert-danger {
+2959: .alert-info {
+2967: .alert-warning {
+2975: .alert-success {
+2988: .footer {
+3019: .contenedor-padre {
+3025: .contenedor-formulario {
+3043: .titulo-personal {
+3051: .contenedor-formulario h2 {
+3055: .form-grid {
+3066: .campo {
+3072: .campo-completo {
+3076: .form-botones {
+3092: .btn-eliminar-fila {
+3119: .btn-eliminar-fila:hover {
+3135: .vacantes {
+3139: .contenedor {
+3143: .contenido {
+3152: .contenedor-formulario h2 {
+3160: .form-grid {
+3167: .campo label {
+3175: .campo .form-control {
+3186: .campo .form-control:focus {
+3193: .campo .error {
+3204: .btn-primary {
+3217: .btn-primary:hover {
+3224: .btn-secondary {
+3237: .btn-secondary:hover {
+3244: .contenedor-formulario {
+3260: .floating-navbar {
+3280: .navbar-hamburger {
+3284: .navbar-logo img {
+3288: .navbar-titulo {
+3296: .navbar-end {
+3300: .navbar-notificacion {
+3307: .navbar-usuario {
+3320: .sidebar {
+3335: .sidebar.mobile-open {
+3344: .sidebar.collapsed {
+3350: .sidebar.collapsed.mobile-open {
+3354: .sidebar.collapsed .sidebar-text {
+3360: .sidebar.collapsed .sidebar-section-label {
+3364: .sidebar.collapsed .sidebar-badge {
+3368: .sidebar.collapsed .toggle-header {
+3374: .sidebar.collapsed .toggle-header .sidebar-text {
+3380: .sidebar.collapsed .toggle-header .sidebar-icon {
+3386: .sidebar.collapsed .toggle-arrow {
+3395: .sidebar-overlay {
+3410: .sidebar-overlay.active {
+3419: .contenedor {
+3434: .contenido {
+3443: .main-content.expanded {
+3449: .app-layout {
+3460: .page-header-row {
+3475: .floating-navbar {
+3488: .navbar-hamburger {
+3495: .navbar-hamburger span {
+3504: .navbar-logo img {
+3508: .navbar-titulo {
+3515: .navbar-end {
+3519: .navbar-notificacion {
+3526: .navbar-usuario {
+3533: .usuario-iniciales {
+3537: .contenedor {
+3541: .contenido {
+3545: .stats-grid {
+3549: .job-card {
+3553: .job-card-aside {
+3561: .form-grid {
+3565: .contenedor-formulario {
+3573: .form-botones {
+3588: .navbar-titulo {
+3594: .navbar-logo img {
+3600: .navbar-hamburger {
+3607: .navbar-notificacion {
+3615: .main-area {
+3620: .topbar-vacantes {
+3631: .topbar-vacantes .topbar-title {
+3638: .topbar-vacantes .topbar-actions i {
+3644: .page-content {
+3649: .filtros {
+3656: .input-buscar {
+3662: .input-buscar i {
+3671: .input-buscar input {
+3680: .filtros select {
+3691: .filtros select:focus {
+3697: .grid-vacantes {
+3707: .card-vacante {
+3729: .card-header {
+3744: .icono {
+3766: .icono-azul {
+3772: .icono-teal {
+3783: .card-titulos {
+3789: .card-cargo {
+3801: .card-categoria {
+3816: .card-tags {
+3826: .tag {
+3847: .card-footer {
+3866: .card-fecha {
+3881: .btn-postular {
+3903: .btn-postular:hover {
+3914: .btn-full {
+3930: .btn-full:disabled {
+3943: .aviso-cerrada {
+3960: .empty-state {
+3978: .empty-icon {
+3986: .empty-state h3 {
+3998: .empty-state p {
+4015: .grid-vacantes {
+4021: .card-vacante {
+4034: .grid-postulaciones {
+4038: .grid-postulaciones .card-vacante {
+4042: .card-header {
+4047: .tag-estado {
+4052: .estado-postulado {
+4057: .estado-en-revisión {
+4062: .estado-entrevista {
+4067: .estado-contratado {
+4072: .estado-rechazado {
+4078: .stepper {
+4083: .paso-wrap {
+4088: .paso {
+4095: .circulo {
+4109: .paso-label {
+4116: .paso.activo .circulo {
+4121: .paso.activo .paso-label {
+4126: .paso.completado .circulo {
+4132: .paso.completado .paso-label {
+4136: .linea {
+4144: .linea-completada {
+4151: .card-config {
+4159: .config-header {
+4166: .config-header h3 {
+4172: .config-sub {
+4179: .config-form {
+4185: .campo {
+4191: .campo label {
+4197: .campo input {
+4205: .campo input:focus {
+4209: .config-form .btn-postular {
+4215: .fila-toggle {
+4224: .fila-toggle:last-of-type {
+4228: .toggle-titulo {
+4235: .toggle-sub {
+4241: .switch {
+4249: .switch input {
+4255: .slider {
+4264: .slider::before {
+4276: .switch input:checked + .slider {
+4280: .switch input:checked + .slider::before {
+4284: form + .btn-postular {
+4289: .btn-secundario {
+4296: .btn-secundario:hover {
+4301: .card-peligro {
+4305: .icono-rojo {
+4308: .btn-eliminar {
+4319: .btn-eliminar:hover {
+4326: .filtros-vacantes-admin {
+4333: .filtros-vacantes-admin .input-buscar {
+4339: .filtros-vacantes-admin .input-buscar i {
+4352: .filtros-vacantes-admin .input-buscar input {
+4366: .filtros-vacantes-admin select {
+4381: .filtros-vacantes-admin select:focus {
+4386: .filtros-postulantes {
+4390: .filtros-postulantes select {
+4400: .filtros-postulantes select:focus {
+4406: .bienvenida-header {
+4413: .dashboard-fecha {
+4419: .dashboard-saludo {
+4426: .kpi-grid {
+4454: .barra-progreso-container {
+4463: .barra-progreso-header {
+4470: .paso-nombre {
+4477: .paso-contador {
+4485: .barra-progreso-wrapper {
+4494: .barra-progreso {
+4502: .pasos-indicador {
+4508: .paso-punto {
+4517: .paso-punto.completado {
+4522: .paso-punto.activo {
+4531: .beneficios-clinica {
+4536: .beneficios-banner img {
+4544: .beneficios-header h2 {
+4549: .beneficios-header p {
+4556: .beneficios-grid {
+4563: .beneficio-card {
+4571: .beneficio-card:hover {
+4575: .beneficio-icono {
+4581: .beneficio-card h3 {
+4586: .beneficio-card p {
+4593: .beneficios-cta {
+4598: .beneficios-grid {
+4603: .perfil {
+4621: .perfil::before {
+4632: .perfil::after {
+4643: .perfil .texto {
+4648: .perfil .texto h3 {
+4654: .perfil .texto p {
+4662: .perfil a {
+4676: .perfil a:hover {
+4682: .campo-checkbox {
+4688: .campo-checkbox input[type="checkbox"] {
+4696: .campo-checkbox label {
+4702: .campo-completo {
+4706: .funciones-chips-container {
+4714: .chip-funcion {
+4726: .chip-funcion-quitar {
+4738: .chip-funcion-quitar:hover {
+4743: .funciones-input-row {
+4748: .funcion-input {
+4756: .funcion-input:focus {
+4761: .btn-agregar-funcion {
+4773: .btn-agregar-funcion:hover {
+4777: .funciones-lista-hidden {
+4783: .tabs-notas {
+4789: .tab-btn {
+4800: .tab-btn.active {
+4807: .tab-content {
+4813: .tab-content.active {
+4817: .tab-content .form-control {
+4823: .perfil {
+4830: .perfil a {
+4840: .barra-progreso-container {
+4845: .paso-nombre {
+4849: .paso-contador {
+4853: .barra-progreso-wrapper {
+4859: .barra-progreso-container {
+4864: .barra-progreso-header {
+4870: .paso-nombre {
+4874: .paso-contador {
+4878: .barra-progreso-wrapper {
+4882: .paso-punto {
+4887: .paso-punto.activo {

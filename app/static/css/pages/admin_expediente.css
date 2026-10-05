@@ -1,0 +1,33 @@
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e5e9;
+    flex-wrap: wrap;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    order: 1;
+}
+
+.logo-principal {
+    order: 2;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.logo-principal img {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+.card-actions {
+    order: 3;
+}

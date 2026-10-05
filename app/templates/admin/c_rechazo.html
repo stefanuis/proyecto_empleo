@@ -1,0 +1,63 @@
+<!-- c_rechazo.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado de tu postulación</title>
+</head>
+<body style="margin:0;padding:20px;background:#F5F5F5;font-family:'DM Sans',Arial,sans-serif;">
+    <table cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #E0E0E0;">
+        <tr>
+            <td style="background:#d9d9d9;padding:24px 30px;text-align:center;">
+                <img src="cid:logo_color"
+                    alt="Clínica Panamericana"
+                    style="max-width:220px;height:auto;">
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:35px 30px;">
+                <h2 style="font-size:20px;font-weight:600;color:#212121;margin:0 0 12px 0;">
+                    Hola, {{ nombres }}
+                </h2>
+
+                <p style="font-size:14px;line-height:1.6;color:#757575;margin:0 0 20px 0;">
+                    Gracias por tu interés en trabajar con nosotros y por el tiempo que dedicaste a nuestro proceso de selección.
+                </p>
+
+                <!-- Vacante -->
+                <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#FBEAF0;border:1px solid #F4C0D1;border-radius:10px;margin:0 0 24px 0;">
+                    <tr>
+                        <td style="padding:16px 20px;">
+                            <span style="font-size:12px;color:#54545A;">Vacante a la que te postulaste</span><br>
+                            <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ vacante }}</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size:14px;line-height:1.6;color:#212121;margin:0 0 16px 0;">
+                    Después de revisar tu perfil, te informamos que <strong>en esta ocasión no fuiste seleccionado(a)</strong> para continuar en el proceso.
+                </p>
+
+                <p style="font-size:14px;line-height:1.6;color:#757575;margin:0 0 20px 0;">
+                    Esta decisión no resta valor a tu experiencia y formación. Conservaremos tu hoja de vida para futuras oportunidades y te animamos a seguir postulándote a otras vacantes que se ajusten a tu perfil.
+                </p>
+
+                <p style="font-size:14px;line-height:1.6;color:#212121;margin:0;">
+                    Te deseamos muchos éxitos en tu búsqueda.<br>
+                    <strong>Equipo de Gestión Humana</strong>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td style="background:#F5F5F5;padding:20px 30px;text-align:center;border-top:1px solid #E0E0E0;">
+                <p style="font-size:12px;color:#757575;margin:4px 0;">
+                    <strong>Clinica Panamericana</strong>
+                </p>
+                <p style="font-size:11px;color:#9e9e9e;margin:4px 0;">
+                    © 2026 Clinica Panamericana. Todos los derechos reservados.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

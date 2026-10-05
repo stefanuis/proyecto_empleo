@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <title>{{ titulo }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/ppal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block page_css %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
 </head>
 

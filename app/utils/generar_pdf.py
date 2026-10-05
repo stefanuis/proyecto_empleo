@@ -24,6 +24,9 @@ from reportlab.platypus import (
     Image, HRFlowable
 )
 from reportlab.lib.enums import TA_RIGHT
+from xml.sax.saxutils import escape
+from reportlab.platypus import KeepTogether
+
 
 
 # ---------------------------------------------------------------------------
@@ -125,11 +128,32 @@ def _fecha(valor):
         return valor.strftime('%d %b %Y')
     except AttributeError:
         return str(valor)
+def _t(valor):
+    """Texto seguro para Paragraph (escapa & < >) o '—' si está vacío."""
+    return escape(str(valor)) if valor not in (None, '') else '—'
 
-def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=None, familiar=None, referencias=None):
+def _mes(f):
+    return f.strftime('%b %Y') if f else '—'
+
+def _tabla_simple(encabezados, filas, anchos):
+    t = Table([encabezados] + filas, colWidths=anchos, repeatRows=1)
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f3f5')),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8.5),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e5e9')),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    return t
+
+def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=None,
+                           familiar=None, referencias=None, experiencia=None,
+                           cursos=None, competencias=None,
+                           referencias_personales=None, discapacidades=None):
     """
-    Genera el PDF del expediente completo:
-    encabezado + personal + contacto + académica + familiar + referencias.
+    Genera el PDF del expediente (solo datos de texto, sin documentos ni adjuntos).
     Devuelve un BytesIO listo para enviar con send_file().
     """
     buffer = io.BytesIO()
@@ -138,17 +162,17 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         topMargin=1.5 * cm, bottomMargin=1.5 * cm,
         leftMargin=1.8 * cm, rightMargin=1.8 * cm,
     )
-
+ 
     elementos = []
-
-    # ---- Encabezado con logo (como tu .card-header) ----
+ 
+    # ---- Encabezado con logo ----
     logo_path = os.path.join(os.path.dirname(__file__), '..', 'static', 'img', 'logo_color.png')
     try:
         logo = Image(logo_path, width=2.8 * cm, height=1.4 * cm)
         logo.hAlign = 'RIGHT'
     except Exception:
-        logo = Paragraph('', style_subtitulo)  # si no encuentra el logo, no truena
-
+        logo = Paragraph('', style_subtitulo)
+ 
     tabla_header = Table(
         [[Paragraph('Hoja de vida del postulante', style_titulo_doc), logo]],
         colWidths=[13 * cm, 4 * cm]
@@ -159,15 +183,17 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         ('RIGHTPADDING', (0, 0), (-1, -1), 0),
     ]))
     elementos.append(tabla_header)
-    elementos.append(HRFlowable(width='100%', thickness=1, color=colors.HexColor('#e2e5e9'), spaceBefore=8, spaceAfter=14))
-
+    elementos.append(HRFlowable(width='100%', thickness=1,
+                                color=colors.HexColor('#e2e5e9'),
+                                spaceBefore=8, spaceAfter=14))
+ 
     # ---- Nombre + vacante + badge de estado ----
     nombre_completo = f"{personal.nombres} {personal.apellidos}"
     texto_vacante = f"Postuló a: {vacante.titulo}"
     estado = getattr(post, 'estado', None)
     color_estado = COLOR_ESTADO.get(estado, colors.HexColor('#9ca3af'))
     etiqueta_estado = ETIQUETA_ESTADO.get(estado, estado or '—')
-
+ 
     badge = Table([[Paragraph(etiqueta_estado, style_badge)]], colWidths=[3.2 * cm])
     badge.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, -1), color_estado),
@@ -176,21 +202,19 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
         ('ROUNDEDCORNERS', [6, 6, 6, 6]),
     ]))
-
+ 
     bloque_nombre = [
-        Paragraph(nombre_completo, style_nombre),
-        Paragraph(texto_vacante, style_subtitulo),
+        Paragraph(_t(nombre_completo), style_nombre),
+        Paragraph(_t(texto_vacante), style_subtitulo),
     ]
-    tabla_nombre_badge = Table(
-        [[bloque_nombre, badge]], colWidths=[13 * cm, 4 * cm]
-    )
+    tabla_nombre_badge = Table([[bloque_nombre, badge]], colWidths=[13 * cm, 4 * cm])
     tabla_nombre_badge.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('LEFTPADDING', (0, 0), (-1, -1), 0),
     ]))
     elementos.append(tabla_nombre_badge)
     elementos.append(Spacer(1, 10))
-
+ 
     # ---- Información personal ----
     elementos.append(Paragraph('Información personal', style_h3))
     documento = f"{personal.tipo_doc or ''} {personal.num_doc or ''}".strip()
@@ -199,7 +223,7 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
     ])) or '—'
     if getattr(personal, 'vive_rural', None) == 'si':
         ubicacion += ' (zona rural)'
-
+ 
     pares_personal = [
         ('Documento', documento or '—'),
         ('Fecha de expedición', _fecha(personal.fecha_exp_doc)),
@@ -213,14 +237,8 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
     elementos.append(_fila_datos(pares_personal))
     elementos.append(Spacer(1, 4))
     elementos.append(Paragraph('Ubicación', style_label))
-    elementos.append(Paragraph(ubicacion, style_valor))
-
-    if getattr(personal, 'ruta_foto_doc', None):
-        elementos.append(Paragraph(
-            'Documento de identidad: (archivo adjunto disponible en el sistema)',
-            style_valor
-        ))
-
+    elementos.append(Paragraph(_t(ubicacion), style_valor))
+ 
     # ---- Contacto ----
     elementos.append(Paragraph('Contacto', style_h3))
     pares_contacto = [
@@ -229,7 +247,7 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         ('Celular alterno', personal.num_cel_dos),
     ]
     elementos.append(_fila_datos(pares_contacto))
-
+ 
     if contacto:
         elementos.append(Spacer(1, 6))
         elementos.append(Paragraph('Contacto de emergencia', style_label))
@@ -240,48 +258,8 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
             ('Núm. residencia', contacto.num_residencia),
         ]
         elementos.append(_fila_datos(pares_emergencia))
-
-    # ---- Información académica ----
-    elementos.append(Paragraph('Información académica', style_h3))
-    if academica:
-        for est in academica:
-            titulo = est.titulo or est.nivel or '—'
-            estado_est = getattr(est, 'estado', None) or '—'
-
-            fila_titulo = Table(
-                [[Paragraph(f"<b>{titulo}</b>", style_valor),
-                  Paragraph(estado_est, style_label)]],
-                colWidths=[13.5 * cm, 3.5 * cm]
-            )
-            fila_titulo.setStyle(TableStyle([
-                ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ]))
-            elementos.append(fila_titulo)
-
-            institucion = f"{est.institucion or '—'} — {est.pais_institucion or '—'}"
-            elementos.append(Paragraph(institucion, style_valor))
-
-            detalle = (
-                f"Nivel: {est.nivel or '—'} · Área: {est.area or '—'} · "
-                f"Finalización: {est.mes_finalizacion or '—'}/{est.anno_finalizacion or '—'} · "
-                f"Intensidad: {est.intensidad_horaria or '—'}h"
-            )
-            if getattr(est, 'convalidacion', False):
-                detalle += " · Convalidado"
-            elementos.append(Paragraph(detalle, style_label))
-
-            if getattr(est, 'ruta_soporte', None):
-                elementos.append(Paragraph(
-                    'Soporte: (archivo adjunto disponible en el sistema)', style_label
-                ))
-
-            elementos.append(Spacer(1, 10))
-    else:
-        elementos.append(Paragraph('No registró información académica.', style_label))
-
-    # ---- Información familiar ----
+        
+  # ---- Información familiar ----
     elementos.append(Paragraph('Información familiar', style_h3))
     if familiar:
         pares_familiar = [
@@ -291,44 +269,142 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
         elementos.append(_fila_datos(pares_familiar))
     else:
         elementos.append(Paragraph('No registró información familiar.', style_label))
-
+ 
     elementos.append(Spacer(1, 10))
-
+    # ---- Información académica ----
+    elementos.append(Paragraph('Información académica', style_h3))
+    if academica:
+        for est in academica:
+            titulo = est.titulo or est.nivel or '—'
+            estado_est = getattr(est, 'estado', None) or '—'
+ 
+            fila_titulo = Table(
+                [[Paragraph(f"<b>{_t(titulo)}</b>", style_valor),
+                  Paragraph(_t(estado_est), style_label)]],
+                colWidths=[13.5 * cm, 3.5 * cm]
+            )
+            fila_titulo.setStyle(TableStyle([
+                ('LEFTPADDING', (0, 0), (-1, -1), 0),
+                ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ]))
+            elementos.append(fila_titulo)
+ 
+            institucion = f"{est.institucion or '—'} — {est.pais_institucion or '—'}"
+            elementos.append(Paragraph(_t(institucion), style_valor))
+ 
+            detalle = (
+                f"Nivel: {est.nivel or '—'} · Área: {est.area or '—'} · "
+                f"Finalización: {est.mes_finalizacion or '—'}/{est.anno_finalizacion or '—'} · "
+                f"Intensidad: {est.intensidad_horaria or '—'}h"
+            )
+            if getattr(est, 'convalidacion', False):
+                detalle += " · Convalidado"
+            elementos.append(Paragraph(_t(detalle), style_label))
+            elementos.append(Spacer(1, 10))
+    else:
+        elementos.append(Paragraph('No registró información académica.', style_label))
+ 
+    # ---- Experiencia laboral ----
+    elementos.append(Paragraph('Experiencia laboral', style_h3))
+    if experiencia:
+        for exp in experiencia:
+            fin = 'Actualidad' if exp.actual else _mes(exp.fecha_salida)
+            entidad = _t(exp.entidad) + (f" — {_t(exp.area)}" if exp.area else '')
+            lugar = ", ".join(filter(None, [exp.municipio, exp.departamento, exp.pais]))
+            detalle = f"{_mes(exp.fecha_ingreso)} – {fin}"
+            if lugar:
+                detalle += f" · {_t(lugar)}"
+            if exp.motivo and not exp.actual:
+                detalle += f" · Motivo de retiro: {_t(exp.motivo)}"
+            if exp.otro:
+                detalle += f" · {_t(exp.otro)}"
+ 
+            bloque = [
+                Paragraph(f"<b>{_t(exp.cargo)}</b>", style_valor),
+                Paragraph(entidad, style_valor),
+                Paragraph(detalle, style_label),
+            ]
+            for f in (exp.funciones or []):
+                bloque.append(Paragraph(f"• {_t(f.funcion)}", style_valor))
+            bloque.append(Spacer(1, 10))
+            elementos.append(KeepTogether(bloque))
+    else:
+        elementos.append(Paragraph('No registró experiencia laboral.', style_label))
+ 
+    # ---- Cursos ----
+    elementos.append(Paragraph('Cursos', style_h3))
+    if cursos:
+        filas = [[
+            Paragraph(_t(c.nombre), style_valor),
+            Paragraph(_t(c.institucion), style_valor),
+            Paragraph(_t(c.area), style_valor),
+            Paragraph(_t(c.horas), style_valor),
+            Paragraph(c.fecha_realizacion.strftime('%d/%m/%Y') if c.fecha_realizacion else '—', style_valor),
+            Paragraph('Sí' if c.certificado else 'No', style_valor),
+        ] for c in cursos]
+        elementos.append(_tabla_simple(
+            ['Curso', 'Institución', 'Área', 'Horas', 'Fecha', 'Certificado'],
+            filas, [4.5 * cm, 3.8 * cm, 3 * cm, 1.4 * cm, 2.3 * cm, 2 * cm]))
+    else:
+        elementos.append(Paragraph('No registró cursos.', style_label))
+ 
+    # ---- Competencias ----
+    elementos.append(Paragraph('Competencias', style_h3))
+    if competencias:
+        filas = [[Paragraph(_t(c.competencia), style_valor),
+                  Paragraph(_t(c.nivel), style_valor),
+                  Paragraph(f"{c.experiencia} años" if c.experiencia else '—', style_valor)]
+                 for c in competencias]
+        elementos.append(_tabla_simple(['Competencia', 'Nivel', 'Experiencia'],
+                                       filas, [8 * cm, 4.5 * cm, 4.5 * cm]))
+    else:
+        elementos.append(Paragraph('No registró competencias.', style_label))
+ 
+  
+ 
     # ---- Referencias ----
     elementos.append(Paragraph('Referencias', style_h3))
     if referencias:
-        encabezados = ['Nombre', 'Parentesco', 'Empresa', 'Teléfono', 'Ciudad', 'Autoriza']
-        filas = [encabezados]
-
+        filas = []
         for ref in referencias:
-            nombre_ref = f"{ref.nombres} {ref.apellidos}"
             autoriza = 'Sí' if getattr(ref, 'autoriza', None) == 'si' else 'No'
             filas.append([
-                nombre_ref,
-                ref.parentesco or '—',
-                ref.empresa or '—',
-                ref.telefono or '—',
-                ref.ciudad or '—',
-                autoriza,
+                Paragraph(_t(f"{ref.nombres} {ref.apellidos}"), style_valor),
+                Paragraph(_t(ref.parentesco), style_valor),
+                Paragraph(_t(ref.empresa), style_valor),
+                Paragraph(_t(ref.telefono), style_valor),
+                Paragraph(_t(ref.ciudad), style_valor),
+                Paragraph(autoriza, style_valor),
             ])
-
-        tabla_referencias = Table(
-            filas,
-            colWidths=[4 * cm, 2.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm]
-        )
-        tabla_referencias.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f3f5')),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 8.5),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e5e9')),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ]))
-        elementos.append(tabla_referencias)
+        elementos.append(_tabla_simple(
+            ['Nombre', 'Parentesco', 'Empresa', 'Teléfono', 'Ciudad', 'Autoriza'],
+            filas, [4 * cm, 2.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm]))
     else:
         elementos.append(Paragraph('No registró referencias.', style_label))
-
+ 
+    # ---- Referencias personales ----
+    elementos.append(Paragraph('Referencias personales', style_h3))
+    if referencias_personales:
+        filas = [[Paragraph(_t(f"{r.nombres or ''} {r.apellidos or ''}".strip()), style_valor),
+                  Paragraph(_t(r.parentesco), style_valor),
+                  Paragraph(_t(r.telefono), style_valor)]
+                 for r in referencias_personales]
+        elementos.append(_tabla_simple(['Nombre', 'Parentesco', 'Teléfono'],
+                                       filas, [8 * cm, 4.5 * cm, 4.5 * cm]))
+    else:
+        elementos.append(Paragraph('No registró referencias personales.', style_label))
+ 
+    # ---- Discapacidades (solo si existen: dato sensible) ----
+    if discapacidades:
+        elementos.append(Paragraph('Discapacidades', style_h3))
+        for d in discapacidades:
+            bloque = [Paragraph(f"<b>{_t(d.categoria)}</b>", style_valor)]
+            if d.descripcion:
+                bloque.append(Paragraph(_t(d.descripcion), style_valor))
+            bloque.append(Spacer(1, 6))
+            elementos.append(KeepTogether(bloque))
+ 
     doc.build(elementos)
     buffer.seek(0)
     return buffer

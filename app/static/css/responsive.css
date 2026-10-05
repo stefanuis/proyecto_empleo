@@ -1,0 +1,384 @@
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .kpis,
+  .vacantes {
+    grid-template-columns: 1fr;
+  }
+
+  .contenedor {
+    flex-direction: column;
+  }
+
+  .contenido {
+    padding: 20px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MÓVIL
+   HASTA 768px
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  /* -------------------------------------------------------
+     NAVBAR
+     EL NAVBAR SIEMPRE PERMANECE VISIBLE
+     ------------------------------------------------------- */
+
+  .floating-navbar {
+    position: fixed;
+
+    top: 8px;
+    left: 8px !important;
+    right: 8px !important;
+
+    width: auto;
+
+    height: 60px;
+
+    padding: 0 12px;
+
+    border-radius: 14px;
+
+    z-index: 950;
+  }
+
+  /* LA HAMBURGUESA APARECE SOLO EN MÓVIL */
+
+  .navbar-hamburger {
+    display: flex !important;
+  }
+
+  .navbar-logo img {
+    height: 40px;
+  }
+
+  .navbar-titulo {
+    font-size: 15px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .navbar-start,
+  .navbar-end {
+    gap: 8px;
+  }
+
+  .navbar-notificacion {
+    width: 36px;
+    height: 36px;
+
+    font-size: 16px;
+  }
+
+  .navbar-usuario {
+    min-width: 38px;
+    height: 38px;
+
+    padding: 0 9px;
+  }
+
+
+  /* -------------------------------------------------------
+     SIDEBAR MÓVIL
+     OCULTO HASTA PULSAR LA HAMBURGUESA
+     ------------------------------------------------------- */
+
+  .sidebar {
+    width: var(--sidebar-width) !important;
+
+    top: 0;
+    left: 0;
+
+    height: 100vh;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.3s ease;
+
+    z-index: 1100;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+
+  /* -------------------------------------------------------
+     EN MÓVIL NO EXISTE EL COLAPSADO DE ESCRITORIO
+     ------------------------------------------------------- */
+
+  .sidebar.collapsed {
+    width: var(--sidebar-width) !important;
+
+    transform: translateX(-100%);
+  }
+
+  .sidebar.collapsed.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed .sidebar-text {
+    opacity: 1;
+
+    pointer-events: auto;
+  }
+
+  .sidebar.collapsed .sidebar-section-label {
+    opacity: 1;
+  }
+
+  .sidebar.collapsed .sidebar-badge {
+    opacity: 1;
+  }
+
+  .sidebar.collapsed .toggle-header {
+    padding: 7px 22px;
+
+    justify-content: flex-start;
+  }
+
+  .sidebar.collapsed .toggle-header .sidebar-text {
+    opacity: 1;
+
+    pointer-events: auto;
+  }
+
+  .sidebar.collapsed .toggle-header .sidebar-icon {
+    font-size: 17px;
+
+    width: 22px;
+  }
+
+  .sidebar.collapsed .toggle-arrow {
+    display: block;
+  }
+
+
+  /* -------------------------------------------------------
+     OVERLAY
+     ------------------------------------------------------- */
+
+  .sidebar-overlay {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.45);
+
+    z-index: 1050;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+
+  /* -------------------------------------------------------
+     CONTENEDOR
+     ------------------------------------------------------- */
+
+  .contenedor {
+    width: 100%;
+
+    margin-left: 0 !important;
+
+    margin-top: 84px;
+
+    min-height: calc(100vh - 100px);
+  }
+
+
+  /* -------------------------------------------------------
+     CONTENIDO
+     ------------------------------------------------------- */
+
+  .contenido {
+    width: 100%;
+
+    margin-left: 0 !important;
+
+    padding: 20px 16px;
+  }
+
+  .main-content,
+  .main-content.expanded {
+    margin-left: 0 !important;
+
+    padding: 20px 16px;
+  }
+
+  .app-layout {
+    margin-left: 0 !important;
+
+    padding-top: 0;
+  }
+
+
+  /* -------------------------------------------------------
+     PAGE HEADER
+     ------------------------------------------------------- */
+
+  .page-header-row {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — CELULARES PEQUEÑOS
+   HASTA 480px
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .floating-navbar {
+    top: 8px;
+
+    left: 8px !important;
+    right: 8px !important;
+
+    height: 56px;
+
+    padding: 0 10px;
+  }
+
+  /* HAMBURGUESA SIGUE VISIBLE */
+
+  .navbar-hamburger {
+    display: flex !important;
+
+    width: 36px;
+    height: 36px;
+  }
+
+  .navbar-hamburger span {
+    display: block;
+
+    width: 18px;
+    height: 2px;
+
+    background: var(--primary);
+  }
+
+  .navbar-logo img {
+    height: 35px;
+  }
+
+  .navbar-titulo {
+    font-size: 14px;
+
+    max-width: 130px;
+  }
+
+  .navbar-start,
+  .navbar-end {
+    gap: 6px;
+  }
+
+  .navbar-notificacion {
+    width: 34px;
+    height: 34px;
+
+    font-size: 15px;
+  }
+
+  .navbar-usuario {
+    min-width: 36px;
+    height: 36px;
+
+    padding: 0 8px;
+  }
+
+  .usuario-iniciales {
+    font-size: 11px;
+  }
+
+  .contenedor {
+    margin-top: 78px;
+  }
+
+  .contenido {
+    padding: 16px 12px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card {
+    flex-wrap: wrap;
+  }
+
+  .job-card-aside {
+    flex-direction: row;
+
+    width: 100%;
+
+    justify-content: space-between;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contenedor-formulario {
+    width: 100%;
+
+    padding: 18px;
+
+    margin: 10px auto;
+  }
+
+  .form-botones {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+}
+
+
+/* =========================================================
+   CELULARES MUY PEQUEÑOS
+   HASTA 360px
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+  .navbar-titulo {
+    font-size: 12px;
+
+    max-width: 105px;
+  }
+
+  .navbar-logo img {
+    height: 32px;
+  }
+
+  /* SE MANTIENE LA HAMBURGUESA */
+
+  .navbar-hamburger {
+    display: flex !important;
+
+    width: 34px;
+    height: 34px;
+  }
+
+  .navbar-notificacion {
+    display: none;
+  }
+}
+

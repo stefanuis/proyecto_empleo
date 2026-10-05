@@ -15,7 +15,8 @@
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
-            <div id="experiencia-container">
+            {# Máximo de funciones por experiencia. Cámbialo aquí o pasa max_funciones desde la ruta. #}
+            <div id="experiencia-container" data-max-filas="{{ LIMITES.experiencia }}" data-fila-selector=".experiencia-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#experiencia-contador" data-max-funciones="{{ max_funciones|default(4) }}">
                 {% for entry in form.Info_experiencia %}
                 <div class="experiencia-fila" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
@@ -68,12 +69,12 @@
                         </div>
 
                         <div class="campo campo-completo">
-                            <label>Funciones realizadas</label>
+                            <label>Funciones más importantes realizadas <span class="funciones-contador"></span></label>
 
                             <div class="funciones-chips-container"></div>
 
                             <div class="funciones-input-row">
-                                <input type="text" class="funcion-input" placeholder="Escribe una función y presiona agregar">
+                                <input type="text" class="funcion-input" maxlength="150" placeholder="Escribe una función y presiona agregar">
                                 <button type="button" class="btn-agregar-funcion">+ Agregar</button>
                             </div>
 
@@ -90,6 +91,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+            <span id="experiencia-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
                 <button type="submit"
@@ -126,12 +128,10 @@
                 <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
             </div>
 
-            <!-- ============ NUEVO: checkbox en la plantilla clonable ============ -->
             <div class="campo campo-checkbox">
                 <input type="checkbox" class="campo-actual" name="Info_experiencia-__INDEX__-actual">
                 <label>Trabajo actualmente </label>
             </div>
-            <!-- =================================================================== -->
 
             <div class="campo campo-motivo-salida">
                 <label>Motivo de salida</label>
@@ -168,12 +168,12 @@
 
 
             <div class="campo campo-completo">
-                <label>Funciones realizadas</label>
+                <label>Funciones más importantes realizadas <span class="funciones-contador"></span></label>
 
                 <div class="funciones-chips-container"></div>
 
                 <div class="funciones-input-row">
-                    <input type="text" class="funcion-input" placeholder="Escribe una función y presiona Enter">
+                    <input type="text" class="funcion-input" maxlength="150" placeholder="Escribe una función y presiona Enter">
                     <button type="button" class="btn-agregar-funcion">+ Agregar</button>
                 </div>
 
@@ -199,6 +199,9 @@ document.addEventListener("DOMContentLoaded", function () {
         "btn-agregar-curso"
     );
 
+    // Máximo de funciones por experiencia (viene de data-max-funciones)
+    const MAX_FUNCIONES = parseInt(container.dataset.maxFunciones, 10) || 4;
+
     let contador = container.querySelectorAll(
         ".experiencia-fila"
     ).length;
@@ -210,6 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const input = fila.querySelector(".funcion-input");
         const btnAgregarFuncion = fila.querySelector(".btn-agregar-funcion");
         const campoOculto = fila.querySelector(".funciones-lista-hidden");
+        const contadorTexto = fila.querySelector(".funciones-contador");
 
         if (!contenedorChips || !input || !btnAgregarFuncion || !campoOculto) {
             return;
@@ -223,6 +227,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
         function guardarFunciones(funciones) {
             campoOculto.value = funciones.join("|");
+        }
+
+        // Muestra "2/4" y bloquea el campo cuando se llega al máximo
+        function actualizarEstado() {
+            const total = obtenerFunciones().length;
+            const lleno = total >= MAX_FUNCIONES;
+
+            if (contadorTexto) {
+                contadorTexto.textContent = "(" + total + "/" + MAX_FUNCIONES + ")";
+            }
+
+            input.disabled = lleno;
+            btnAgregarFuncion.disabled = lleno;
+            input.placeholder = lleno
+                ? "Máximo de " + MAX_FUNCIONES + " funciones alcanzado"
+                : "Escribe una función y presiona agregar";
         }
 
         function renderizarChips() {
@@ -246,19 +266,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 chip.appendChild(btnQuitar);
                 contenedorChips.appendChild(chip);
             });
+            actualizarEstado();
         }
 
         function agregarFuncion() {
-            const texto = input.value.trim();
+            // "|" es el separador de la lista, así que no puede ir dentro del texto
+            const texto = input.value.replace(/\|/g, " ").trim();
             if (!texto) return;
 
             const funciones = obtenerFunciones();
+
+            if (funciones.length >= MAX_FUNCIONES) {
+                return;
+            }
+
             funciones.push(texto);
             guardarFunciones(funciones);
             renderizarChips();
 
             input.value = "";
-            input.focus();
+            if (!input.disabled) input.focus();
         }
 
         btnAgregarFuncion.addEventListener("click", agregarFuncion);

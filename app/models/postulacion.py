@@ -7,8 +7,11 @@ class Postulacion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     id_usuario = db.Column(db.Integer)
     id_vacante = db.Column(db.Integer)
-    estado = db.Column(db.String(30), default='pendiente')
+    estado = db.Column(db.String(30), default='postulado')
     notas_reclutador = db.Column(db.Text)
+    notas_psicologia = db.Column(db.Text)
+    notas_talento_humano = db.Column(db.Text)
+    fecha_correo_rechazo = db.Column(db.DateTime)
     fecha_postulacion = db.Column(db.DateTime, default=datetime.now)
     fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
  

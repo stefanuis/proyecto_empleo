@@ -1,0 +1,215 @@
+.filtros-avanzados-panel {
+    background: #fff;
+    border: 1px solid #e2e5e9;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.post-filtros-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.vac-filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filtro-grupo-titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin: 0;
+}
+
+.vac-filtro-grupo select,
+.vac-filtro-grupo input[type="text"],
+.vac-filtro-grupo input[type="date"] {
+    padding: 9px 12px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #222;
+    background-color: #fafbfc;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    width: 100%;
+}
+
+.vac-filtro-grupo select:focus,
+.vac-filtro-grupo input[type="text"]:focus,
+.vac-filtro-grupo input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+.vac-filtro-grupo input::placeholder {
+    color: #9aa1a8;
+}
+
+.post-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 12px;
+    border-top: 1px solid #eef0f2;
+}
+
+.btn-primary,
+.btn-secondary {
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.btn-sm {
+    padding: 9px 18px;
+    font-size: 13px;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #f1f3f5;
+    color: #444;
+    border: 1px solid #d5d9dd;
+}
+
+.btn-secondary:hover {
+    background-color: #fff;
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+    transform: scale(0.98);
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.post-titulo {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px 0;
+}
+
+.post-subtitulo {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.vac-tabla-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.vac-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: auto;
+}
+
+.vac-tabla thead {
+    background: var(--primary);
+}
+
+.vac-tabla thead th {
+    color: #fff;
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.vac-tabla tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.vac-tabla tbody td {
+    padding: 14px 16px;
+    color: var(--text-main);
+    vertical-align: middle;
+}
+
+.vac-paginador {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.vac-paginador-btn {
+    padding: 8px 16px;
+    border: 1px solid #d5d9dd;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+}
+
+.vac-paginador-btn:hover {
+    background: #f1f3f5;
+}
+
+.vac-paginador-btn.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+}
+
+.vac-paginador-info {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    .post-filtros-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .post-filtros-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .post-filtros-acciones {
+        flex-direction: column-reverse;
+    }
+
+    .post-filtros-acciones .btn-primary,
+    .post-filtros-acciones .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+}

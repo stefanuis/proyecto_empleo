@@ -35,6 +35,10 @@ from app.models.contacto import Contacto
 from app.models.academica import Info_academica
 from app.models.personal import Personal
 from app.models.familiar import Familiar
+from app.models.cursos import Cursos
+from app.models.competencias import Competencias
+from app.models.referencias_personales import ReferenciasPersonales
+from app.models.discapacidades import Discapacidades
 from app.models.referencias import Referencias
 from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
@@ -185,6 +189,10 @@ def inicial():
         )
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+# Asegúrate de tener estos imports arriba de principal.py:
+# from sqlalchemy import func
+# from datetime import datetime, timedelta
+
 
 @admin_bp.route("/vacantes")
 @login_required
@@ -201,7 +209,9 @@ def listar_vacantes():
     estado = request.args.get("estado", "").strip()
     fecha_desde = request.args.get("fecha_publicacion_desde", "").strip()
     fecha_hasta = request.args.get("fecha_publicacion_hasta", "").strip()
-    
+
+    page = request.args.get("page", 1, type=int)
+    per_page = 15
 
     todas_las_vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
 
@@ -216,9 +226,7 @@ def listar_vacantes():
             query = query.filter(Vacante.area == area)
 
         if area_aplicacion:
-            query = query.filter(
-                Vacante.area_aplicacion == area_aplicacion
-            )
+            query = query.filter(Vacante.area_aplicacion == area_aplicacion)
 
         if vacante_id:
             try:
@@ -235,9 +243,7 @@ def listar_vacantes():
         if fecha_desde:
             try:
                 fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
-                query = query.filter(
-                    Vacante.fecha_publicacion >= fecha_desde_dt
-                )
+                query = query.filter(Vacante.fecha_publicacion >= fecha_desde_dt)
             except ValueError:
                 pass
 
@@ -245,21 +251,43 @@ def listar_vacantes():
             try:
                 fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d")
                 fecha_hasta_dt += timedelta(days=1)
-                query = query.filter(
-                    Vacante.fecha_publicacion < fecha_hasta_dt
-                )
+                query = query.filter(Vacante.fecha_publicacion < fecha_hasta_dt)
             except ValueError:
                 pass
 
-    vacantes = query.order_by(
-        Vacante.fecha_publicacion.desc()
-    ).all()
+    # ---- Paginación en SQL (el id desempata para que el orden sea estable) ----
+    query = query.order_by(Vacante.fecha_publicacion.desc(), Vacante.id.desc())
+    paginado = db.paginate(query, page=page, per_page=per_page, error_out=False)
+    vacantes = paginado.items
+
+    pagination = {
+        "page": paginado.page,
+        "pages": paginado.pages,
+        "total": paginado.total,
+        "has_prev": paginado.has_prev,
+        "has_next": paginado.has_next,
+        "prev_num": paginado.prev_num,
+        "next_num": paginado.next_num,
+    }
+
+    # ---- Cantidad de postulaciones por vacante (solo las de esta página) ----
+    ids_pagina = [v.id for v in vacantes]
+    conteos = {}
+    if ids_pagina:
+        conteos = dict(
+            db.session.query(Postulacion.id_vacante, func.count(Postulacion.id))
+            .filter(Postulacion.id_vacante.in_(ids_pagina))
+            .group_by(Postulacion.id_vacante)
+            .all()
+        )
 
     areas_aplicacion = VacanteForm.area_aplicacion.kwargs["choices"]
 
     return render_template(
         "admin/listar_vacante.html",
         vacantes=vacantes,
+        pagination=pagination,
+        conteos=conteos,
         todas_las_vacantes=todas_las_vacantes,
         areas=areas_aplicacion,
         q=q,
@@ -269,7 +297,7 @@ def listar_vacantes():
         nivel_seleccionado=nivel,
         estado_seleccionado=estado,
         fecha_publicacion_desde_valor=fecha_desde,
-        fecha_publicacion_hasta_valor=fecha_hasta
+        fecha_publicacion_hasta_valor=fecha_hasta,
     )
 
 
@@ -321,6 +349,44 @@ def editar_vacante(id):
         return render_template("admin/crear_vacantes.html", form=form)  # reutiliza el mismo template
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+@admin_bp.route("/vacantes/<int:id>/cambiar-estado", methods=["POST"])
+@login_required
+def cambiar_estado_vacante(id):
+    if session.get("rol") != "admin":
+        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
+
+    vacante = Vacante.query.get_or_404(id)
+
+    if vacante.estado == 'Activa':
+        vacante.estado = 'Cerrada'
+        flash(f'La vacante "{vacante.titulo}" fue cerrada.', 'success')
+    else:
+        vacante.estado = 'Activa'
+        flash(f'La vacante "{vacante.titulo}" fue reabierta.', 'success')
+
+    db.session.commit()
+    return redirect(request.referrer or url_for('admin.listar_vacantes'))
+
+@admin_bp.route("/vacantes/<int:id>/eliminar", methods=["POST"])
+@login_required
+def eliminar_vacante(id):
+    if session.get("rol") != "admin":
+        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
+
+    vacante = Vacante.query.get_or_404(id)
+
+    total = Postulacion.query.filter_by(id_vacante=id).count()
+    if total > 0:
+        flash(f'No se puede eliminar "{vacante.titulo}": tiene {total} postulación(es). '
+              'Ciérrala en su lugar.', 'error')
+        return redirect(url_for('admin.listar_vacantes'))
+
+    titulo = vacante.titulo
+    db.session.delete(vacante)
+    db.session.commit()
+    flash(f'La vacante "{titulo}" fue eliminada.', 'success')
+    return redirect(url_for('admin.listar_vacantes'))
+
 
 @admin_bp.route("/vacantes/<int:id>/postulantes", methods=["GET"])
 @login_required
@@ -335,6 +401,9 @@ def listar_postulantes(id):
     nivel_estudios = request.args.get('nivel_estudios', '').strip()
     titulo_estudios = request.args.get('titulo_estudios', '').strip()
     funcion_buscar = request.args.get('funcion', '').strip()
+ 
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
  
     query = db.session.query(
         Postulacion,
@@ -413,10 +482,27 @@ def listar_postulantes(id):
             Postulacion.id_usuario.in_(db.session.query(subq_funcion.c.id_usuario))
         )
  
-    resultados = query.order_by(Postulacion.fecha_postulacion.desc()).all()
+    # ---- Paginación en SQL ----
+    # El id desempata fechas iguales para que el orden entre páginas sea estable.
+    query = query.order_by(Postulacion.fecha_postulacion.desc(), Postulacion.id.desc())
  
-    # Agregamos nivel académico más alto y experiencia total por cada fila,
-    # usando id_usuario (no el id propio de Personal)
+    total = query.count()
+    total_paginas = max(1, (total + per_page - 1) // per_page)
+    page = max(1, min(page, total_paginas))   # evita páginas fuera de rango
+ 
+    resultados = query.offset((page - 1) * per_page).limit(per_page).all()
+ 
+    pagination = {
+        'page': page,
+        'pages': total_paginas,
+        'total': total,
+        'has_prev': page > 1,
+        'has_next': page < total_paginas,
+        'prev_num': page - 1,
+        'next_num': page + 1,
+    }
+ 
+    # Nivel académico y experiencia solo para las filas de la página actual
     postulaciones = []
     for postulacion, personal in resultados:
         nivel = obtener_nivel_mas_alto(postulacion.id_usuario)
@@ -428,12 +514,14 @@ def listar_postulantes(id):
         "admin/listar_postulantes.html",
         vacante=vacante,
         postulaciones=postulaciones,
+        pagination=pagination,
         estado_seleccionado=estado,
         experiencia_seleccionada=experiencia_minima,
         nivel_estudios_seleccionado=nivel_estudios,
         titulo_estudios_seleccionado=titulo_estudios,
         funcion_seleccionada=funcion_buscar
     )
+ 
 
 @admin_bp.route('/postulacion/<int:id>/documentos/descargar-zip')
 @login_required
@@ -483,9 +571,14 @@ def ver_expediente(id):
 
         personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
         contacto = Contacto.query.filter_by(id_usuario=post.id_usuario).first()
-        academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
         familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
+        academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
+        experiencia=Experiencia.query.filter_by(id_usuario=post.id_usuario).order_by(Experiencia.fecha_ingreso.desc()).all()
+        cursos=Cursos.query.filter_by(id_usuario=post.id_usuario).order_by(Cursos.fecha_realizacion.desc()).all()
+        competencias=Competencias.query.filter_by(id_usuario=post.id_usuario).all()
         referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
+        referencias_personales=ReferenciasPersonales.query.filter_by(id_usuario=post.id_usuario).all()
+        discapacidades=Discapacidades.query.filter_by(id_usuario=post.id_usuario).all()
         documentos = OtrosDocumentos.query.filter_by(id_usuario=post.id_usuario).all()
 
         return render_template('admin/expediente.html',
@@ -493,71 +586,93 @@ def ver_expediente(id):
                                 vacante=vacante,
                                 personal=personal,
                                 contacto=contacto,
-                                academica=academica,
                                 familiar=familiar,
+                                academica=academica,
+                                experiencia=experiencia,
+                                cursos=cursos,
+                                competencias=competencias,
                                 referencias=referencias,
+                                referencias_personales=referencias_personales,
+                                discapacidades=discapacidades,
                                 documentos=documentos)
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+
 @admin_bp.route("/postulacion/<int:id>/actualizar", methods=["POST"])
 @login_required
 def actualizar_postulacion(id):
-    if session.get("rol") == "admin":
-        postulacion = Postulacion.query.get_or_404(id)
+    if session.get("rol") != "admin":
+        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
 
-        nuevo_estado = request.form["estado"]
-        postulacion.estado = nuevo_estado
-        postulacion.notas_reclutador = request.form["notas_reclutador"]
-        postulacion.fecha_actualizacion = datetime.now()
+    postulacion = Postulacion.query.get_or_404(id)
 
-        if nuevo_estado == 'contratado':
-            otras_postulaciones = Postulacion.query.filter(
-                Postulacion.id_usuario == postulacion.id_usuario,
-                Postulacion.id != postulacion.id,
-                Postulacion.estado.notin_(['contratado', 'rechazado', 'retirada'])
-            ).all()
+    nuevo_estado = request.form.get("estado", postulacion.estado)
+    postulacion.estado = nuevo_estado
+    postulacion.notas_reclutador = request.form.get("notas_reclutador", "")
+    postulacion.notas_psicologia = request.form.get("notas_psicologia", "")
+    postulacion.notas_talento_humano = request.form.get("notas_talento_humano", "")
+    postulacion.fecha_actualizacion = datetime.now()
 
-            for otra in otras_postulaciones:
-                otra.estado = 'retirada'
-                otra.fecha_actualizacion = datetime.now()
+    if nuevo_estado == 'contratado':
+        otras_postulaciones = Postulacion.query.filter(
+            Postulacion.id_usuario == postulacion.id_usuario,
+            Postulacion.id != postulacion.id,
+            Postulacion.estado.notin_(['contratado', 'rechazado', 'retirada'])
+        ).all()
 
-        db.session.commit()
+        for otra in otras_postulaciones:
+            otra.estado = 'retirada'
+            otra.fecha_actualizacion = datetime.now()
 
-        return redirect(url_for('admin.listar_postulantes', id=postulacion.id_vacante))
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
-    
+    db.session.commit()
+
+    return redirect(url_for('admin.listar_postulantes', id=postulacion.id_vacante))
+
 @admin_bp.route('/admin/postulantes/<int:id>/descargar-expediente')
 @login_required
 def descargar_expediente(id):
+    if session.get("rol") != "admin":
+        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
 
-     post = Postulacion.query.get_or_404(id)
+    post = Postulacion.query.get_or_404(id)
+    uid = post.id_usuario
 
-     personal = Personal.query.filter_by(
-            id_usuario=post.id_usuario
-        ).first_or_404()
+    personal = Personal.query.filter_by(id_usuario=uid).first_or_404()
+    vacante = Vacante.query.get_or_404(post.id_vacante)
 
-     vacante = Vacante.query.get_or_404(
-            post.id_vacante
-        )
+    contacto = Contacto.query.filter_by(id_usuario=uid).first()
+    familiar = Familiar.query.filter_by(id_usuario=uid).first()
 
-     contacto = Contacto.query.filter_by(
-            id_usuario=post.id_usuario
-        ).first()
+    academica = Info_academica.query.filter_by(id_usuario=uid).all()
+    referencias = Referencias.query.filter_by(id_usuario=uid).all()
 
-     academica = Info_academica.query.filter_by(
-                 id_usuario=post.id_usuario
-             ).first()
-     familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
+    experiencia = (Experiencia.query.filter_by(id_usuario=uid)
+                   .order_by(Experiencia.fecha_ingreso.desc()).all())
+    cursos = (Cursos.query.filter_by(id_usuario=uid)
+              .order_by(Cursos.fecha_realizacion.desc()).all())
+    competencias = Competencias.query.filter_by(id_usuario=uid).all()
+    referencias_personales = ReferenciasPersonales.query.filter_by(id_usuario=uid).all()
+    discapacidades = Discapacidades.query.filter_by(id_usuario=uid).all()
 
-     referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
+    buffer = generar_pdf_expediente(
+        personal=personal,
+        vacante=vacante,
+        post=post,
+        contacto=contacto,
+        academica=academica,
+        familiar=familiar,
+        referencias=referencias,
+        experiencia=experiencia,
+        cursos=cursos,
+        competencias=competencias,
+        referencias_personales=referencias_personales,
+        discapacidades=discapacidades,
+    )
 
-     buffer = generar_pdf_expediente(personal, vacante, post, contacto, academica, familiar, referencias)
-
-     return send_file(
+    return send_file(
         buffer,
         as_attachment=True,
-        download_name=f'expediente_{personal.nombres}_{personal.apellidos}.pdf',
+        download_name=f'Hoja_de_vida_{personal.nombres}_{personal.apellidos}.pdf',
         mimetype='application/pdf'
     )
 
@@ -701,7 +816,7 @@ def listar_hoja_vida():
         }
 
     return render_template(
-        'listar_hojas de vida.html',
+        'listar_hojas_de_vida.html',
         vacantes=vacantes,
         postulantes=postulantes,
         vacante_seleccionada=vacante_id,
@@ -748,7 +863,7 @@ def descargar_expedientes_zip():
                 personal, vacante, post, contacto, academica, familiar, referencias
             )
 
-            nombre_archivo = f"expediente_{personal.nombres}_{personal.apellidos}_{post.id}.pdf"
+            nombre_archivo = f"Hoja_de_vida_{personal.nombres}_{personal.apellidos}_{post.id}.pdf"
             zf.writestr(nombre_archivo, pdf_buffer.read())
 
     zip_buffer.seek(0)
@@ -756,7 +871,7 @@ def descargar_expedientes_zip():
     return send_file(
         zip_buffer,
         as_attachment=True,
-        download_name='expedientes.zip',
+        download_name='hojas_de_vida.zip',
         mimetype='application/zip',
     )
 
@@ -792,7 +907,6 @@ def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje, link_con
         print("ERROR SMTP al enviar citación:")
         print(type(e))
         print(str(e))
-
 
 @admin_bp.route("admin/citaciones")
 @login_required
@@ -1034,3 +1148,64 @@ def reprogramar_citacion(id):
         url_for("admin.listar_citaciones")
     )
 
+def enviar_correo_rechazo(email, nombres, vacante):
+    try:
+        msg = Message(
+            subject='Resultado de tu postulación',
+            sender='noresponder@clinpanamericana.com',
+            recipients=[email]
+        )
+        with open("app/static/img/logo_color.png", "rb") as f:
+            msg.attach(
+                filename="logo_color.png",
+                content_type="image/png",
+                data=f.read(),
+                disposition="inline",
+                headers={"Content-ID": "<logo_color>"}
+            )
+        msg.html = render_template(
+            "c_rechazo.html",
+            nombres=nombres,
+            vacante=vacante,
+        )
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print("ERROR SMTP al enviar rechazo:")
+        print(type(e))
+        print(str(e))
+        return False
+
+@admin_bp.route("/postulacion/<int:id>/enviar-rechazo", methods=["POST"])
+@login_required
+def enviar_rechazo(id):
+    if session.get("rol") != "admin":
+        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
+
+    postulacion = Postulacion.query.get_or_404(id)
+
+    if postulacion.estado != 'rechazado':
+        flash('Solo se puede enviar este correo a postulaciones en estado "Rechazado".', 'error')
+        return redirect(url_for('admin.ver_expediente', id=id))
+
+    candidato = User.query.get(postulacion.id_usuario)
+    vacante = Vacante.query.get(postulacion.id_vacante)
+
+    if not candidato or not candidato.correo or not vacante:
+        flash('El candidato no tiene correo registrado.', 'warning')
+        return redirect(url_for('admin.ver_expediente', id=id))
+
+    enviado = enviar_correo_rechazo(
+        email=candidato.correo,
+        nombres=candidato.nombres,
+        vacante=vacante.titulo,
+    )
+
+    if enviado:
+        postulacion.fecha_correo_rechazo = datetime.now()
+        db.session.commit()
+        flash('Correo de rechazo enviado al candidato.', 'success')
+    else:
+        flash('No se pudo enviar el correo. Intenta de nuevo.', 'error')
+
+    return redirect(url_for('admin.ver_expediente', id=id))

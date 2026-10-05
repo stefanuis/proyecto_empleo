@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BolsaEmpleos — Dashboard</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/ppal.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/templates_inicial.css') }}">
   <script src="{{ url_for('static', filename='js/ppal.js') }}"></script>
 </head>
 <body>
@@ -132,13 +133,6 @@
   <script src="app.js"></script>
 
   <!-- Responsive: ajustar grid del dashboard -->
-  <style>
-    @media (max-width: 900px) {
-      .dashboard-grid {
-        grid-template-columns: 1fr !important;
-      }
-    }
-  </style>
 
 </body>
 </html>

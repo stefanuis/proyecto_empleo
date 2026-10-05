@@ -28,7 +28,7 @@
 
             {{ form.hidden_tag() }}
 
-            <div id="referencias-container">
+            <div id="referencias-container" data-max-filas="{{ LIMITES.referencias }}" data-fila-selector=".referencia-fila" data-boton-agregar="#btn-agregar-referencia" data-contador="#referencias-contador">
                 {% for entry in form.Info_referencias %}
                 <div class="referencia-fila" data-index="{{ loop.index0 }}">
 
@@ -109,6 +109,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-referencia">+ Agregar referencia</button>
+            <span id="referencias-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
 

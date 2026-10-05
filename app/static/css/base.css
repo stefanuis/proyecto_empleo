@@ -1,0 +1,87 @@
+
+/* =============================================
+   BOLSA DE EMPLEO — ESTILOS GLOBALES
+   Sistema de diseño: rosa #D81B60 + gris #54545A
+   ============================================= */
+
+@import url("./fonts.css");
+
+:root {
+  --primary: #D81B60;
+  --primary-hover: #9E1548;
+  --primary-mid: #E0568C;
+  --primary-light: #F4C0D1;
+  --primary-ultra-light: #FBEAF0;
+
+  --secondary: #54545A;
+
+  --bg-main: #FFFFFF;
+  --bg-soft: #F1F1F2;
+  --border: #DCDCDE;
+
+  --text-main: #2C2C2A;
+  --text-sidebar: #FFFFFF;
+  --text-secondary: #54545A;
+
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+  --navbar-height: 80px;
+
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --transition: 0.2s ease;
+
+  --badge-green: #E8F5E9;
+  --badge-green-text: #2E7D32;
+
+  --badge-blue: #E3F2FD;
+  --badge-blue-text: #1565C0;
+
+  --badge-orange: #FFF3E0;
+  --badge-orange-text: #E65100;
+
+  --badge-red: #FCE4EC;
+  --badge-red-text: #C62828;
+
+  --badge-gray: #F1F1F2;
+  --badge-gray-text: var(--secondary);
+
+  --badge-pink-bg: var(--primary-ultra-light);
+  --badge-pink-text: var(--primary);
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  font-family: "Poppins", sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-soft);
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 1.6;
+
+  display: flex;
+  flex-direction: column;
+
+  min-height: 100vh;
+}
+
+

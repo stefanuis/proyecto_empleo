@@ -27,7 +27,7 @@
 
             {{ form.hidden_tag() }}
 
-            <div id="discapacidades-container">
+            <div id="discapacidades-container" data-max-filas="{{ LIMITES.discapacidades }}" data-fila-selector=".discapacidad-fila" data-boton-agregar="#btn-agregar-discapacidad" data-contador="#discapacidades-contador">
                 {% for entry in form.Info_discapacidades %}
                 <div class="discapacidad-fila" data-index="{{ loop.index0 }}">
 
@@ -78,6 +78,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-discapacidad">+ Agregar</button>
+            <span id="discapacidades-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
 

@@ -1,0 +1,120 @@
+/* ==================================================
+   CONTENEDOR GENERAL DEL FORMULARIO DE FILTROS
+   ================================================== */
+
+.filtros {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+
+/* ==================================================
+   BUSCADOR
+   ================================================== */
+
+.buscador-vacantes {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.buscador-vacantes i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-secondary);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.buscador-vacantes input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: var(--transition);
+}
+
+.buscador-vacantes input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.buscador-vacantes .btn-secondary {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+
+/* ==================================================
+   SELECTS DE FILTRO
+   ================================================== */
+
+.vac-filtros-selects {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.vac-filtro-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+}
+
+.vac-filtro-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.vac-filtro-select:hover {
+    border-color: var(--primary-mid);
+}
+
+
+/* ==================================================
+   BOTONES DE ACCIÓN
+   ================================================== */
+
+.vac-filtros-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+
+/* ==================================================
+   RESPONSIVE
+   ================================================== */
+
+@media (max-width: 768px) {
+    .vac-filtros-selects {
+        grid-template-columns: 1fr;
+    }
+
+    .vac-filtros-acciones {
+        justify-content: stretch;
+    }
+
+    .vac-filtros-acciones button {
+        flex: 1;
+    }
+}

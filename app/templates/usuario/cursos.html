@@ -16,7 +16,7 @@
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
-            <div id="cursos-container">
+            <div id="cursos-container" data-max-filas="{{ LIMITES.cursos }}" data-fila-selector=".curso-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#cursos-contador">
                 {% for entry in form.Info_curso %}
                 <div class="curso-fila" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
@@ -51,6 +51,7 @@
             </div>
 
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
+            <span id="cursos-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
                 <button type="submit"

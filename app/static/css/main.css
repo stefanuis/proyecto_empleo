@@ -1,0 +1,10 @@
+/* =============================================
+   MAIN.CSS - punto de entrada de los estilos
+   El orden importa: lo de abajo pisa a lo de arriba
+   ============================================= */
+
+@import url("./base.css");
+@import url("./layout.css");
+@import url("./components.css");
+@import url("./paginas.css");
+@import url("./responsive.css");
