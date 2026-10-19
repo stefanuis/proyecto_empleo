@@ -64,8 +64,7 @@ def login_post():
         return redirect(url_for("admin.inicial"))
     else:
         #print("Este no es admin")
-        return redirect(url_for("usuario.principal"))
-
+        return redirect(url_for("usuario.continuar_wizard"))
 
 
 

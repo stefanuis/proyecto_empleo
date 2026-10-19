@@ -9,10 +9,10 @@ from wtforms import (
 from wtforms.validators import (
     DataRequired,
     Optional,
-    Email,
     Length,
     NumberRange
 )
+from app.constantes import GRUPO_ETNICO_OPCIONES
 
 
 class InfoPersonalForm(FlaskForm):
@@ -80,15 +80,6 @@ class InfoPersonalForm(FlaskForm):
         validators=[Optional()]
     )
 
-    email = StringField(
-        "Correo electrónico",
-        validators=[
-            Optional(),
-            Email(),
-            Length(max=150)
-        ]
-    )
-
     num_cel = StringField(
         "Celular principal",
         validators=[
@@ -107,31 +98,21 @@ class InfoPersonalForm(FlaskForm):
 
     grupo_etnico = SelectField(
         "Grupo étnico",
-        choices=[
-            ("", "Seleccione"),
-            ("Ninguno", "Ninguno"),
-            ("Indígena", "Indígena"),
-            ("Afrocolombiano", "Afrocolombiano"),
-            ("Otro", "Otro")
-        ],
+        choices=GRUPO_ETNICO_OPCIONES,
         validators=[Optional()]
     )
 
 
-    departamento = StringField(
+    departamento = SelectField(
         "Departamento de Nacimiento",
-        validators=[
-            Optional(),
-            Length(max=50)
-        ]
+        choices=[("", "Seleccione")],
+        validators=[Optional()]
     )
 
-    municipio = StringField(
+    municipio = SelectField(
         "Municipio de Nacimiento",
-        validators=[
-            Optional(),
-            Length(max=50)
-        ]
+        choices=[("", "Seleccione")],
+        validators=[Optional()]
     )
 
     barrio = StringField(

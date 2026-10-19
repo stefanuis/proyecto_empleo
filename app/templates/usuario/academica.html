@@ -2,62 +2,91 @@
 
 {% block contenido %}
 <div class="contenedor-padre">
-    <div class="contenedor-formulario">
-        <h2>Formación Académica</h2>
+    <div class="contenedor-formulario form-card">
+
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        {% if mensaje_regla %}
+            <div class="form-error" role="alert">{{ mensaje_regla }}</div>
+        {% endif %}
+        {% if errores_formulario %}
+            <div role="alert">
+                {% for error in errores_formulario %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
             <div id="academica-container" data-max-filas="{{ LIMITES.academica }}" data-fila-selector=".academica-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#academica-contador">
                 {% for entry in form.Info_academica %}
-                <div class="academica-fila" data-index="{{ loop.index0 }}">
+                <div class="academica-fila registro-item" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
                     {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    <div class="form-grid">
-                        <div class="campo">
-                            {{ entry.nivel.label }}
-                            {{ entry.nivel(class="form-control") }}
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            {{ entry.nivel.label(class="form-label") }}
+                            {{ entry.nivel(class="form-control" + (" is-invalid" if entry.nivel.errors else "")) }}
+                            {% for error in entry.nivel.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.estado.label }}
-                            {{ entry.estado(class="form-control campo-estado") }}
+                        <div class="form-group">
+                            {{ entry.estado.label(class="form-label") }}
+                            {{ entry.estado(class="form-control campo-estado" + (" is-invalid" if entry.estado.errors else "")) }}
+                            {% for error in entry.estado.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.area.label }}
-                            {{ entry.area(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.area.label(class="form-label") }}
+                            {{ entry.area(class="form-control" + (" is-invalid" if entry.area.errors else "")) }}
+                            {% for error in entry.area.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.titulo.label }}
-                            {{ entry.titulo(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.titulo.label(class="form-label") }}
+                            {{ entry.titulo(class="form-control" + (" is-invalid" if entry.titulo.errors else "")) }}
+                            {% for error in entry.titulo.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.institucion.label }}
-                            {{ entry.institucion(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.institucion.label(class="form-label") }}
+                            {{ entry.institucion(class="form-control" + (" is-invalid" if entry.institucion.errors else "")) }}
+                            {% for error in entry.institucion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.pais_institucion.label }}
-                            {{ entry.pais_institucion(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.pais_institucion.label(class="form-label") }}
+                            {{ entry.pais_institucion(class="form-control" + (" is-invalid" if entry.pais_institucion.errors else "")) }}
+                            {% for error in entry.pais_institucion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo campo-finalizacion">
-                            {{ entry.mes_finalizacion.label }}
-                            {{ entry.mes_finalizacion(class="form-control") }}
+                        <div class="form-group campo-finalizacion">
+                            {{ entry.mes_finalizacion.label(class="form-label") }}
+                            {{ entry.mes_finalizacion(class="form-control" + (" is-invalid" if entry.mes_finalizacion.errors else ""), min="1", max="12", placeholder="Mes (1 a 12)") }}
+                            {% for error in entry.mes_finalizacion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo campo-finalizacion">
-                            {{ entry.anno_finalizacion.label }}
-                            {{ entry.anno_finalizacion(class="form-control") }}
+                        <div class="form-group campo-finalizacion">
+                            {{ entry.anno_finalizacion.label(class="form-label") }}
+                            {{ entry.anno_finalizacion(class="form-control" + (" is-invalid" if entry.anno_finalizacion.errors else ""), min="1950", max=anio_actual, maxlength="4", placeholder="Año (por ejemplo, 2022)") }}
+                            {% for error in entry.anno_finalizacion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                     </div>
 
-                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                 <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
                 </div>
                 {% endfor %}
             </div>
@@ -66,14 +95,10 @@
             <span id="academica-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
             </div>
@@ -83,12 +108,12 @@
 
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-academica-vacia">
-    <div class="academica-fila" data-index="__INDEX__">
+    <div class="academica-fila registro-item" data-index="__INDEX__">
         <input type="hidden" name="Info_academica-__INDEX__-registro_id" value="">
         <input type="hidden" class="campo-eliminar" name="Info_academica-__INDEX__-eliminar" value="0">
-        <div class="form-grid">
-            <div class="campo">
-              <label>Nivel</label>
+        <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nivel</label>
               <select class="form-control" name="Info_academica-__INDEX__-nivel">
                   <option value="" disabled selected>Nivel de formacion academica</option>
                   <option value="Bachillerato">Bachillerato</option>
@@ -100,8 +125,8 @@
                   <option value="doctorado">doctorado</option>
               </select>
             </div>
-            <div class="campo">
-            <label>Estado académico</label>
+            <div class="form-group">
+            <label class="form-label">Estado académico</label>
                <select class="form-control campo-estado" name="Info_academica-__INDEX__-estado">
                    <option value="" disabled selected>Estado academico</option>
                    <option value="en_curso">En curso</option>
@@ -111,8 +136,8 @@
                    <option value="cancelado">Cancelado</option>
                </select>
             </div>
-            <div class="campo">
-                <label>Área</label>
+            <div class="form-group">
+                <label class="form-label">Área</label>
                 <select class="form-control" name="Info_academica-__INDEX__-area">
                     <option value="" disabled selected>
                         Selecciona un área
@@ -150,28 +175,28 @@
                     <option value="Trabajo Social">Trabajo Social</option>
                 </select>
             </div>
-            <div class="campo">
-                <label>Título</label>
+            <div class="form-group">
+                <label class="form-label">Título</label>
                 <input class="form-control" name="Info_academica-__INDEX__-titulo">
             </div>
-            <div class="campo">
-                <label>Institución</label>
+            <div class="form-group">
+                <label class="form-label">Institución</label>
                 <input class="form-control" name="Info_academica-__INDEX__-institucion">
             </div>
-            <div class="campo">
-                <label>País institución</label>
+            <div class="form-group">
+                <label class="form-label">País institución</label>
                 <input class="form-control" name="Info_academica-__INDEX__-pais_institucion">
             </div>
-             <div class="campo campo-finalizacion">
-                <label>Mes finalización</label>
-                <input type="number" class="form-control" name="Info_academica-__INDEX__-mes_finalizacion">
+             <div class="form-group campo-finalizacion">
+                <label class="form-label">Mes finalización</label>
+                <input type="number" class="form-control" name="Info_academica-__INDEX__-mes_finalizacion" min="1" max="12" placeholder="Mes (1 a 12)">
             </div>
-            <div class="campo campo-finalizacion">
-                <label>Año finalización</label>
-                <input type="number" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion">
+            <div class="form-group campo-finalizacion">
+                <label class="form-label">Año finalización</label>
+                <input type="number" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion" min="1950" max="{{ anio_actual }}" maxlength="4" placeholder="Año (por ejemplo, 2022)">
             </div>
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
     </div>
 </template>
 

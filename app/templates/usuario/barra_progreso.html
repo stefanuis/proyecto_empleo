@@ -18,14 +18,12 @@
 
   <div class="pasos-indicador">
     {% for i in range(1, total_pasos + 1) %}
-      <button type="submit"
-              form="form-wizard"
-              name="ir_a_paso"
-              value="{{ pasos_rutas[i - 1] }}"
+      <a {% if i <= paso_habilitado_hasta %}href="{{ url_for('usuario.' + pasos_rutas[i - 1]) }}"{% else %}aria-disabled="true"{% endif %}
+              {% if i == paso_actual %}aria-current="step"{% endif %}
               title="{{ nombres_cortos_pasos[pasos_rutas[i - 1]] }}"
               class="paso-punto {% if i < paso_actual %}completado{% elif i == paso_actual %}activo{% endif %}"
-              {% if i > paso_actual %}disabled{% endif %}>
-      </button>
+              {% if i > paso_habilitado_hasta %}tabindex="-1"{% endif %}>
+      </a>
     {% endfor %}
   </div>
 

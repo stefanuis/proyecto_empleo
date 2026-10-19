@@ -335,6 +335,10 @@
     grid-template-columns: 1fr;
   }
 
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
   .contenedor-formulario {
     width: 100%;
 
@@ -381,4 +385,3 @@
     display: none;
   }
 }
-

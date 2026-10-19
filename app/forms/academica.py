@@ -146,7 +146,11 @@ class InforAcademicaItemForm(Form):
         "Mes de finalización",
         validators=[
             Optional(),
-            NumberRange(min=1, max=12)
+            NumberRange(
+                min=1,
+                max=12,
+                message="El mes debe ser un número entre 1 y 12.",
+            )
         ]
     )
 
@@ -154,7 +158,7 @@ class InforAcademicaItemForm(Form):
         "Año de finalización",
         validators=[
             Optional(),
-            NumberRange(min=1950, max=2030)
+            NumberRange(min=1950)
         ]
     )
 

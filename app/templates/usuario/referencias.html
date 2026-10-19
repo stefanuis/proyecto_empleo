@@ -8,26 +8,30 @@
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        <!-- Mostrar mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                        {{ message }}
-                        <button type="button"
-                                class="btn-close"
-                                data-bs-dismiss="alert">
-                        </button>
-                    </div>
+        {% if mensaje_regla %}
+            <div class="form-error" role="alert">{{ mensaje_regla }}</div>
+        {% endif %}
+        {% if errores_formulario %}
+            <div role="alert">
+                {% for error in errores_formulario %}
+                    <span class="form-error">{{ error }}</span>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
+            </div>
+        {% endif %}
 
 
         <form method="POST" id="form-wizard" novalidate>
 
             {{ form.hidden_tag() }}
 
+            <label class="campo-checkbox">
+                <input type="checkbox" id="no-tengo-referencias"
+                       name="no_tengo_referencias" value="1"
+                       {% if no_tengo %}checked{% endif %}>
+                No tengo referencias laborales
+            </label>
+
+            <div id="referencias-registros">
             <div id="referencias-container" data-max-filas="{{ LIMITES.referencias }}" data-fila-selector=".referencia-fila" data-boton-agregar="#btn-agregar-referencia" data-contador="#referencias-contador">
                 {% for entry in form.Info_referencias %}
                 <div class="referencia-fila" data-index="{{ loop.index0 }}">
@@ -40,18 +44,18 @@
                         <!-- Nombres -->
                         <div class="campo">
                             {{ entry.nombres.label }}
-                            {{ entry.nombres(class="form-control") }}
+                            {{ entry.nombres(class="form-control" + (" is-invalid" if entry.nombres.errors else "")) }}
                             {% for error in entry.nombres.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
                         <!-- Apellidos -->
                         <div class="campo">
                             {{ entry.apellidos.label }}
-                            {{ entry.apellidos(class="form-control") }}
+                            {{ entry.apellidos(class="form-control" + (" is-invalid" if entry.apellidos.errors else "")) }}
                             {% for error in entry.apellidos.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -60,16 +64,16 @@
                             {{ entry.parentesco.label }}
                             {{ entry.parentesco(class="form-control") }}
                             {% for error in entry.parentesco.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
                         <!-- Empresa -->
                         <div class="campo">
                             {{ entry.empresa.label }}
-                            {{ entry.empresa(class="form-control") }}
+                            {{ entry.empresa(class="form-control" + (" is-invalid" if entry.empresa.errors else "")) }}
                             {% for error in entry.empresa.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -78,7 +82,7 @@
                             {{ entry.telefono.label }}
                             {{ entry.telefono(class="form-control") }}
                             {% for error in entry.telefono.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -87,16 +91,16 @@
                             {{ entry.ciudad.label }}
                             {{ entry.ciudad(class="form-control") }}
                             {% for error in entry.ciudad.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
                         <!-- Autoriza -->
                         <div class="campo">
                             {{ entry.autoriza.label }}
-                            {{ entry.autoriza(class="form-control") }}
+                            {{ entry.autoriza(class="form-control" + (" is-invalid" if entry.autoriza.errors else "")) }}
                             {% for error in entry.autoriza.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -110,17 +114,14 @@
 
             <button type="button" class="btn-secondary" id="btn-agregar-referencia">+ Agregar referencia</button>
             <span id="referencias-contador" class="funciones-contador"></span>
+            </div>
 
             <div class="form-botones">
 
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
 
@@ -186,6 +187,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnAgregar = document.getElementById(
         "btn-agregar-referencia"
     );
+    const casillaNoTengo = document.getElementById("no-tengo-referencias");
+    const registros = document.getElementById("referencias-registros");
+
+    function actualizarDeclaracion() {
+        registros.hidden = casillaNoTengo.checked;
+        registros.querySelectorAll("input, select, textarea, button").forEach(function (campo) {
+            campo.disabled = casillaNoTengo.checked;
+        });
+    }
+
+    casillaNoTengo.addEventListener("change", actualizarDeclaracion);
+    actualizarDeclaracion();
 
     let contador = container.querySelectorAll(
         ".referencia-fila"

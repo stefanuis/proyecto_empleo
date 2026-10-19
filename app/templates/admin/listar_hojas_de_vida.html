@@ -157,7 +157,7 @@
 
                     <td>
                         {% if post.personal %}
-                            <div>{{ post.personal.email or '—' }}</div>
+                            <div>{{ post.usuario.correo if post.usuario else '—' }}</div>
                             <div style="color:var(--text-secondary); font-size:12.5px;">
                                 {{ post.personal.num_cel or '' }}
                             </div>

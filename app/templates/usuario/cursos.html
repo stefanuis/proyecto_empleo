@@ -7,15 +7,28 @@
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        {% if mensaje_regla %}
+            <div class="form-error" role="alert">{{ mensaje_regla }}</div>
+        {% endif %}
+        {% if errores_formulario %}
+            <div role="alert">
+                {% for error in errores_formulario %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
+            <label class="campo-checkbox">
+                <input type="checkbox" id="no-tengo-cursos"
+                       name="no_tengo_cursos" value="1"
+                       {% if no_tengo %}checked{% endif %}>
+                No tengo cursos
+            </label>
+
+            <div id="cursos-registros">
             <div id="cursos-container" data-max-filas="{{ LIMITES.cursos }}" data-fila-selector=".curso-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#cursos-contador">
                 {% for entry in form.Info_curso %}
                 <div class="curso-fila" data-index="{{ loop.index0 }}">
@@ -25,23 +38,31 @@
                     <div class="form-grid">
                         <div class="campo">
                             {{ entry.nombre.label }}
-                            {{ entry.nombre(class="form-control") }}
+                            {{ entry.nombre(class="form-control" + (" is-invalid" if entry.nombre.errors else "")) }}
+                            {% for error in entry.nombre.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.institucion.label }}
-                            {{ entry.institucion(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.area.label }}
-                            {{ entry.area(class="form-control") }}
+                            {{ entry.institucion(class="form-control" + (" is-invalid" if entry.institucion.errors else "")) }}
+                            {% for error in entry.institucion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.horas.label }}
                             {{ entry.horas(class="form-control") }}
+                            {% for error in entry.horas.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.fecha_realizacion.label }}
                             {{ entry.fecha_realizacion(class="form-control") }}
+                            {% for error in entry.fecha_realizacion.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
                     </div>
 
@@ -52,16 +73,13 @@
 
             <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
             <span id="cursos-contador" class="funciones-contador"></span>
+            </div>
 
             <div class="form-botones">
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
             </div>
@@ -112,6 +130,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnAgregar = document.getElementById(
         "btn-agregar-curso"
     );
+    const casillaNoTengo = document.getElementById("no-tengo-cursos");
+    const registros = document.getElementById("cursos-registros");
+
+    function actualizarDeclaracion() {
+        registros.hidden = casillaNoTengo.checked;
+        registros.querySelectorAll("input, select, textarea, button").forEach(function (campo) {
+            campo.disabled = casillaNoTengo.checked;
+        });
+    }
+
+    casillaNoTengo.addEventListener("change", actualizarDeclaracion);
+    actualizarDeclaracion();
 
     let contador = container.querySelectorAll(
         ".curso-fila"

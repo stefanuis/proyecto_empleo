@@ -20,6 +20,7 @@
     <div class="contenedor">
         {% include 'admin_maestro/menu.html' %}
         <main class="contenido">
+            {% include "_alertas.html" %}
             {% block contenido %}
             {% endblock %}
         </main>
@@ -28,6 +29,7 @@
     {% include 'admin_maestro/footer.html' %}
 
 </body>
+<script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
 
 <script>
 

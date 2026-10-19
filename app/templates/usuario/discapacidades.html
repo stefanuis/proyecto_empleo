@@ -8,20 +8,13 @@
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        <!-- Mostrar mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                        {{ message }}
-                        <button type="button"
-                                class="btn-close"
-                                data-bs-dismiss="alert">
-                        </button>
-                    </div>
+        {% if errores_formulario %}
+            <div role="alert">
+                {% for error in errores_formulario %}
+                    <span class="form-error">{{ error }}</span>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
+            </div>
+        {% endif %}
 
         <form method="POST" id="form-wizard" enctype="multipart/form-data" novalidate>
 
@@ -39,9 +32,9 @@
                         <!-- Categoría -->
                         <div class="campo">
                             {{ entry.categoria.label }}
-                            {{ entry.categoria(class="form-control") }}
+                            {{ entry.categoria(class="form-control" + (" is-invalid" if entry.categoria.errors else "")) }}
                             {% for error in entry.categoria.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -50,7 +43,7 @@
                             {{ entry.descripcion.label }}
                             {{ entry.descripcion(class="form-control") }}
                             {% for error in entry.descripcion.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -65,7 +58,7 @@
                             {{ entry.ruta_certificado.label }}
                             {{ entry.ruta_certificado(class="form-control") }}
                             {% for error in entry.ruta_certificado.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
 
@@ -82,14 +75,10 @@
 
             <div class="form-botones">
 
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
 
@@ -109,13 +98,11 @@
             <div class="campo">
                 <label>Categoría de discapacidad</label>
                 <select class="form-control" name="Info_discapacidades-__INDEX__-categoria">
-                    <option value="" disabled selected>Selecciona una categoría</option>
-                    <option value="Física">Física</option>
-                    <option value="Sensorial">Sensorial</option>
-                    <option value="Cognitiva">Cognitiva</option>
-                    <option value="Psicosocial">Psicosocial</option>
-                    <option value="Múltiple">Múltiple</option>
-                    <option value="Otra">Otra</option>
+                    {% for valor, etiqueta in DISCAPACIDAD_CATEGORIAS %}
+                        <option value="{{ valor }}"{% if not valor %} disabled selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="campo">

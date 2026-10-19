@@ -31,12 +31,11 @@ from app.models.vacante import Vacante
 from app.forms.vacante import VacanteForm
 from app.models.postulacion import Postulacion
 from app.models.personal import Personal
-from app.models.contacto import Contacto
+from app.models.perfil_profesional import PerfilProfesional
+from app.models.perfil_funcion import PerfilFuncion
+from app.models.funcion_area import FuncionArea
 from app.models.academica import Info_academica
-from app.models.personal import Personal
-from app.models.familiar import Familiar
 from app.models.cursos import Cursos
-from app.models.competencias import Competencias
 from app.models.referencias_personales import ReferenciasPersonales
 from app.models.discapacidades import Discapacidades
 from app.models.referencias import Referencias
@@ -567,15 +566,22 @@ def descargar_documentos_candidato(id):
 def ver_expediente(id):
     if(session["rol"] == "admin"):
         post = Postulacion.query.get_or_404(id)
+        usuario = User.query.get_or_404(post.id_usuario)
         vacante = Vacante.query.get_or_404(post.id_vacante)
 
         personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
-        contacto = Contacto.query.filter_by(id_usuario=post.id_usuario).first()
-        familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
+        perfil_profesional = PerfilProfesional.query.filter_by(
+            id_usuario=post.id_usuario
+        ).first()
+        funciones_perfil = FuncionArea.query.join(
+            PerfilFuncion,
+            PerfilFuncion.id_funcion == FuncionArea.id,
+        ).filter(
+            PerfilFuncion.id_usuario == post.id_usuario,
+        ).order_by(FuncionArea.nombre).all()
         academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
         experiencia=Experiencia.query.filter_by(id_usuario=post.id_usuario).order_by(Experiencia.fecha_ingreso.desc()).all()
         cursos=Cursos.query.filter_by(id_usuario=post.id_usuario).order_by(Cursos.fecha_realizacion.desc()).all()
-        competencias=Competencias.query.filter_by(id_usuario=post.id_usuario).all()
         referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
         referencias_personales=ReferenciasPersonales.query.filter_by(id_usuario=post.id_usuario).all()
         discapacidades=Discapacidades.query.filter_by(id_usuario=post.id_usuario).all()
@@ -583,14 +589,14 @@ def ver_expediente(id):
 
         return render_template('admin/expediente.html',
                                 post=post,
+                                usuario=usuario,
                                 vacante=vacante,
                                 personal=personal,
-                                contacto=contacto,
-                                familiar=familiar,
+                                perfil_profesional=perfil_profesional,
+                                funciones_perfil=funciones_perfil,
                                 academica=academica,
                                 experiencia=experiencia,
                                 cursos=cursos,
-                                competencias=competencias,
                                 referencias=referencias,
                                 referencias_personales=referencias_personales,
                                 discapacidades=discapacidades,
@@ -636,12 +642,11 @@ def descargar_expediente(id):
 
     post = Postulacion.query.get_or_404(id)
     uid = post.id_usuario
+    usuario = User.query.get_or_404(uid)
 
     personal = Personal.query.filter_by(id_usuario=uid).first_or_404()
     vacante = Vacante.query.get_or_404(post.id_vacante)
 
-    contacto = Contacto.query.filter_by(id_usuario=uid).first()
-    familiar = Familiar.query.filter_by(id_usuario=uid).first()
 
     academica = Info_academica.query.filter_by(id_usuario=uid).all()
     referencias = Referencias.query.filter_by(id_usuario=uid).all()
@@ -650,7 +655,6 @@ def descargar_expediente(id):
                    .order_by(Experiencia.fecha_ingreso.desc()).all())
     cursos = (Cursos.query.filter_by(id_usuario=uid)
               .order_by(Cursos.fecha_realizacion.desc()).all())
-    competencias = Competencias.query.filter_by(id_usuario=uid).all()
     referencias_personales = ReferenciasPersonales.query.filter_by(id_usuario=uid).all()
     discapacidades = Discapacidades.query.filter_by(id_usuario=uid).all()
 
@@ -658,13 +662,11 @@ def descargar_expediente(id):
         personal=personal,
         vacante=vacante,
         post=post,
-        contacto=contacto,
+        usuario=usuario,
         academica=academica,
-        familiar=familiar,
         referencias=referencias,
         experiencia=experiencia,
         cursos=cursos,
-        competencias=competencias,
         referencias_personales=referencias_personales,
         discapacidades=discapacidades,
     )
@@ -759,6 +761,7 @@ def listar_hoja_vida():
 
         for post in todos:
             post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
+            post.usuario = User.query.get(post.id_usuario)
             post.vacante = Vacante.query.get(post.id_vacante)
             post.completitud = calcular_completitud_perfil(post.id_usuario)
             post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
@@ -801,6 +804,7 @@ def listar_hoja_vida():
 
         for post in postulantes:
             post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
+            post.usuario = User.query.get(post.id_usuario)
             post.vacante = Vacante.query.get(post.id_vacante)
             post.completitud = calcular_completitud_perfil(post.id_usuario)
             post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
@@ -852,15 +856,19 @@ def descargar_expedientes_zip():
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         for post in postulantes_unicos:
+            usuario = User.query.get_or_404(post.id_usuario)
             personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
             vacante = Vacante.query.get(post.id_vacante)
-            contacto = Contacto.query.filter_by(id_usuario=post.id_usuario).first()
             academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
-            familiar = Familiar.query.filter_by(id_usuario=post.id_usuario).first()
             referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
 
             pdf_buffer = generar_pdf_expediente(
-                personal, vacante, post, contacto, academica, familiar, referencias
+                personal=personal,
+                vacante=vacante,
+                post=post,
+                academica=academica,
+                referencias=referencias,
+                usuario=usuario,
             )
 
             nombre_archivo = f"Hoja_de_vida_{personal.nombres}_{personal.apellidos}_{post.id}.pdf"
@@ -1088,9 +1096,10 @@ def reprogramar_citacion(id):
     personal = Personal.query.filter_by(
         id_usuario=postulacion.id_usuario
     ).first()
+    usuario = User.query.get(postulacion.id_usuario)
 
-    if not personal:
-        flash("No se encontró la información del candidato.", "error")
+    if not personal or not usuario or not usuario.correo:
+        flash("No se encontró la información de contacto de la cuenta del candidato.", "error")
         return redirect(url_for("admin.listar_citaciones"))
 
     citacion.fecha = datetime.strptime(
@@ -1129,7 +1138,7 @@ def reprogramar_citacion(id):
     )
 
     enviar_correo_citacion(
-        email=personal.email,
+        email=usuario.correo,
         nombres=personal.nombres,
         fecha=fecha,
         hora=hora,

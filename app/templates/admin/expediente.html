@@ -111,12 +111,34 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         {% endif %}
     </div>
 
+    {% if perfil_profesional %}
+    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Perfil profesional</h3>
+    <div class="form-grid">
+        <div class="campo">
+            <label class="form-label">Área de aplicación</label>
+            <p>{{ perfil_profesional.area_aplicacion or '—' }}</p>
+        </div>
+        <div class="campo campo-completo">
+            <label class="form-label">Descripción del perfil</label>
+            <p>{{ perfil_profesional.descripcion or '—' }}</p>
+        </div>
+        <div class="campo campo-completo">
+            <label class="form-label">Funciones que domina</label>
+            {% if funciones_perfil %}
+                <p>{{ funciones_perfil | map(attribute='nombre') | join(', ') }}</p>
+            {% else %}
+                <p>—</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- ── Contacto ── -->
     <h3 style="border-top:1px solid var(--border); padding-top:20px;">Contacto</h3>
     <div class="form-grid">
         <div class="campo">
             <label class="form-label">Correo</label>
-            <p>{{ personal.email or '—' }}</p>
+            <p>{{ usuario.correo or '—' }}</p>
         </div>
         <div class="campo">
             <label class="form-label">Celular</label>
@@ -127,39 +149,6 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
             <p>{{ personal.num_cel_dos or '—' }}</p>
         </div>
     </div>
-
-    {% if contacto %}
-    <h4 style="margin-top:16px; color:var(--text-secondary); font-size:13.5px;">Contacto de emergencia</h4>
-    <div class="form-grid">
-        <div class="campo">
-            <label class="form-label">Nombre</label>
-            <p>{{ contacto.nombre }} {{ contacto.apellido }} ({{ contacto.parentesco or '—' }})</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Teléfono</label>
-            <p>{{ contacto.tel or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Núm. residencia</label>
-            <p>{{ contacto.num_residencia or '—' }}</p>
-        </div>
-    </div>
-    {% endif %}
-
-      <!-- ── Información familiar ── -->
-    {% if familiar %}
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información familiar</h3>
-    <div class="form-grid">
-        <div class="campo">
-            <label class="form-label">Personas en el hogar</label>
-            <p>{{ familiar.personas_casa if familiar.personas_casa is not none else '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Dependen económicamente</label>
-            <p>{{ familiar.dependen_eco if familiar.dependen_eco is not none else '—' }}</p>
-        </div>
-    </div>
-    {% endif %}
 
         <!-- ── Información académica ── -->
         <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información académica</h3>
@@ -202,7 +191,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 <p style="font-size:12.5px; color:var(--text-secondary);">
                     {{ exp.fecha_ingreso.strftime('%b %Y') if exp.fecha_ingreso else '—' }} –
                     {{ 'Actualidad' if exp.actual else (exp.fecha_salida.strftime('%b %Y') if exp.fecha_salida else '—') }}
-                    {% if exp.municipio %} · {{ exp.municipio }}, {{ exp.departamento }}, {{ exp.pais }}{% endif %}
+                    {% if exp.municipio or exp.departamento or exp.pais %} · {{ [exp.municipio, exp.departamento, exp.pais] | select | join(', ') }}{% endif %}
                     {% if exp.motivo and not exp.actual %} · Motivo de retiro: {{ exp.motivo }}{% endif %}
                     {% if exp.otro %} · {{ exp.otro }}{% endif %}
                 </p>
@@ -230,14 +219,6 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                     {{ c.fecha_realizacion.strftime('%d/%m/%Y') if c.fecha_realizacion else '—' }}
                 </p>
             </div>
-        {% endfor %}
-    {% endif %}
-
-        <!-- ── Competencias ── -->
-    {% if competencias %}
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Competencias</h3>
-        {% for comp in competencias %}
-            <span class="tag">{{ comp.competencia }}{% if comp.nivel %} · {{ comp.nivel }}{% endif %}{% if comp.experiencia %} · {{ comp.experiencia }} años{% endif %}</span>
         {% endfor %}
     {% endif %}
 
@@ -296,7 +277,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         {% if discapacidades %}
         <h3 style="border-top:1px solid var(--border); padding-top:20px;">Discapacidades</h3>
         {% for d in discapacidades %}
-            <span class="tag">{{ d.tipo or d.nombre or '—' }}</span>
+            <span class="tag">{{ d.categoria or '—' }}</span>
         {% endfor %}
         {% endif %}
             <!-- ── Documentos adicionales ── -->

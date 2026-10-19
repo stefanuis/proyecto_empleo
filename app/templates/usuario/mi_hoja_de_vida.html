@@ -1,0 +1,306 @@
+{% extends 'usuario/base.html' %}
+
+{% block titulo %}Mi hoja de vida{% endblock %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <main class="contenedor-formulario form-card hv-resume">
+        <header class="hv-header">
+            <h1>Mi hoja de vida</h1>
+            <!-- La descarga se conectará a la ruta de la Parte B. -->
+            <button type="button" class="btn-secondary" disabled>
+                Descargar PDF
+            </button>
+            <div class="form-grid-2 hv-data-grid hv-header-details">
+                <div class="hv-data">
+                    <span class="hv-label">Nombre completo</span>
+                    <span class="hv-value">{{ nombre_completo or '—' }}</span>
+                </div>
+                <div class="hv-data">
+                    <span class="hv-label">Área de aplicación</span>
+                    <span class="hv-value">{{ perfil_profesional.area_aplicacion or '—' if perfil_profesional else '—' }}</span>
+                </div>
+                <div class="hv-data">
+                    <span class="hv-label">Correo</span>
+                    <span class="hv-value">{{ correo or '—' }}</span>
+                </div>
+                <div class="hv-data">
+                    <span class="hv-label">Teléfono</span>
+                    <span class="hv-value">{{ personal.num_cel or '—' if personal else '—' }}</span>
+                </div>
+                <div class="hv-data">
+                    <span class="hv-label">Municipio</span>
+                    <span class="hv-value">{{ personal.municipio or '—' if personal else '—' }}</span>
+                </div>
+                <div class="hv-data">
+                    <span class="hv-label">Departamento</span>
+                    <span class="hv-value">{{ personal.departamento or '—' if personal else '—' }}</span>
+                </div>
+                <div class="hv-header-edit">
+                    <a href="{{ pasos_urls.personal }}"
+                       class="{{ 'btn-secondary' if completitud.secciones.personal else 'btn-primary' }} btn-sm">
+                        {{ 'Editar datos' if completitud.secciones.personal else 'Completar datos personales' }}
+                    </a>
+                </div>
+            </div>
+            {% if not completitud.secciones.personal %}
+                <div class="alert alert-warning">Completa tus datos personales.</div>
+            {% endif %}
+        </header>
+
+        <section class="hv-progress" aria-labelledby="hv-progress-title">
+            <div class="hv-progress-heading">
+                <h2 id="hv-progress-title">Avance de tu perfil</h2>
+                <span>{{ completitud.porcentaje }}%</span>
+            </div>
+            <progress class="hv-progress-track"
+                      value="{{ completitud.porcentaje }}"
+                      max="100">{{ completitud.porcentaje }}%</progress>
+            {% if secciones_faltantes %}
+                <div class="alert alert-warning hv-progress-missing">
+                    <p>Te falta completar:</p>
+                    <ul>
+                        {% for nombre, url in secciones_faltantes %}
+                            <li><a href="{{ url }}">{{ nombre }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% else %}
+                <div class="alert alert-success">Tu perfil está completo.</div>
+            {% endif %}
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.perfil_profesional %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Perfil profesional</h2>
+                <a href="{{ pasos_urls.perfil_profesional }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.perfil_profesional else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.perfil_profesional else 'Editar' }}
+                </a>
+            </div>
+            {% if not completitud.secciones.perfil_profesional %}
+                <div class="alert alert-warning">Completa tu perfil profesional y selecciona al menos una función.</div>
+            {% endif %}
+            <div class="hv-data">
+                <span class="hv-label">Descripción</span>
+                <span class="hv-value">{{ perfil_profesional.descripcion or '—' if perfil_profesional else '—' }}</span>
+            </div>
+            <div class="hv-data hv-functions">
+                <span class="hv-label">Funciones que dominas</span>
+                {% if funciones_visibles %}
+                    <ul class="hv-chips">
+                        {% for funcion in funciones_visibles %}
+                            <li>{{ funcion.nombre }}</li>
+                        {% endfor %}
+                        {% if funciones_adicionales %}
+                            <li>+{{ funciones_adicionales }} más</li>
+                        {% endif %}
+                    </ul>
+                {% else %}
+                    <span class="hv-value">—</span>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.academica %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Formación académica</h2>
+                <a href="{{ pasos_urls.academica }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.academica else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.academica else 'Editar' }}
+                </a>
+            </div>
+            {% if not completitud.secciones.academica %}
+                <div class="alert alert-warning">Agrega tu formación académica.</div>
+            {% elif not estudios %}
+                <p class="hv-empty">—</p>
+            {% endif %}
+            {% for estudio in estudios %}
+                <article class="hv-record">
+                    <div class="form-grid-2 hv-data-grid">
+                        <div class="hv-data">
+                            <span class="hv-label">Título</span>
+                            <span class="hv-value">{{ estudio.titulo or '—' }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Institución</span>
+                            <span class="hv-value">{{ estudio.institucion or '—' }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Nivel</span>
+                            <span class="hv-value">{{ estudio.nivel or '—' }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Finalización</span>
+                            <span class="hv-value">{% if estudio.estado == 'en_curso' %}En curso{% else %}{{ estudio.anno_finalizacion or '—' }}{% endif %}</span>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+            {% if estudios_adicionales %}
+                <a class="hv-see-all" href="{{ pasos_urls.academica }}">Ver todos</a>
+            {% endif %}
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.experiencia %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Experiencia laboral</h2>
+                <a href="{{ pasos_urls.experiencia }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.experiencia else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.experiencia else 'Editar' }}
+                </a>
+            </div>
+            <div class="hv-data hv-total">
+                <span class="hv-label">Experiencia total</span>
+                <span class="hv-value">{{ experiencia_total }}</span>
+            </div>
+            {% if not completitud.secciones.experiencia %}
+                <div class="alert alert-warning">Agrega tu experiencia laboral.</div>
+            {% elif not experiencias %}
+                <p class="hv-empty">—</p>
+            {% endif %}
+            {% for experiencia in experiencias %}
+                <article class="hv-record">
+                    <div class="form-grid-2 hv-data-grid">
+                        <div class="hv-data">
+                            <span class="hv-label">Cargo</span>
+                            <span class="hv-value">{{ experiencia.cargo }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Empresa</span>
+                            <span class="hv-value">{{ experiencia.empresa }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Periodo</span>
+                            <span class="hv-value">{{ experiencia.periodo }}</span>
+                        </div>
+                        <div class="hv-data">
+                            <span class="hv-label">Duración</span>
+                            <span class="hv-value">{{ experiencia.duracion }}</span>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+            {% if experiencias_adicionales %}
+                <a class="hv-see-all" href="{{ pasos_urls.experiencia }}">Ver todos</a>
+            {% endif %}
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.cursos %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Cursos</h2>
+                <a href="{{ pasos_urls.cursos }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.cursos else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.cursos else 'Editar' }}
+                </a>
+            </div>
+            {% if not cursos %}
+                <p class="hv-empty">{{ 'Agrega tus cursos.' if not completitud.secciones.cursos else '—' }}</p>
+            {% endif %}
+            {% for curso in cursos %}
+                <article class="hv-record hv-line">
+                    <span class="hv-value">{{ curso.nombre or '—' }} · {{ curso.institucion or '—' }} · {{ curso.fecha_realizacion.year if curso.fecha_realizacion else '—' }}</span>
+                </article>
+            {% endfor %}
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.referencias %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Referencias laborales</h2>
+                <a href="{{ pasos_urls.referencias }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.referencias else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.referencias else 'Editar' }}
+                </a>
+            </div>
+            {% if not referencias %}
+                <p class="hv-empty">{{ 'Agrega referencias laborales.' if not completitud.secciones.referencias else '—' }}</p>
+            {% endif %}
+            {% for referencia in referencias %}
+                <article class="hv-record hv-line">
+                    <span class="hv-value">{{ ((referencia.nombres or '') ~ ' ' ~ (referencia.apellidos or '')).strip() or '—' }} · {{ referencia.empresa or referencia.parentesco or '—' }} · {{ referencia.telefono or '—' }}</span>
+                </article>
+            {% endfor %}
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.referencias_personales %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Referencias personales</h2>
+                <a href="{{ pasos_urls.referencias_personales }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.referencias_personales else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.referencias_personales else 'Editar' }}
+                </a>
+            </div>
+            {% if not referencias_personales %}
+                <p class="hv-empty">{{ 'Agrega referencias personales.' if not completitud.secciones.referencias_personales else '—' }}</p>
+            {% endif %}
+            {% for referencia in referencias_personales %}
+                <article class="hv-record hv-line">
+                    <span class="hv-value">{{ ((referencia.nombres or '') ~ ' ' ~ (referencia.apellidos or '')).strip() or '—' }} · {{ referencia.parentesco or '—' }} · {{ referencia.telefono or '—' }}</span>
+                </article>
+            {% endfor %}
+        </section>
+
+        <section class="hv-section">
+            <div class="hv-section-heading">
+                <h2>Discapacidades</h2>
+                <a href="{{ pasos_urls.discapacidades }}"
+                   class="{{ 'btn-secondary' if discapacidades else 'btn-primary' }} btn-sm">
+                    {{ 'Editar' if discapacidades else 'Completar' }}
+                </a>
+            </div>
+            {% if discapacidades %}
+                <ul class="hv-simple-list">
+                    {% for discapacidad in discapacidades %}
+                        <li>{{ discapacidad.categoria or '—' }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="hv-empty">—</p>
+            {% endif %}
+        </section>
+
+        <section class="hv-section">
+            <div class="hv-section-heading">
+                <h2>Grupo étnico</h2>
+                <a href="{{ pasos_urls.personal }}"
+                   class="{{ 'btn-secondary' if personal and personal.grupo_etnico else 'btn-primary' }} btn-sm">
+                    {{ 'Editar' if personal and personal.grupo_etnico else 'Completar' }}
+                </a>
+            </div>
+            <div class="hv-data">
+                <span class="hv-label">Grupo étnico</span>
+                <span class="hv-value">{{ personal.grupo_etnico or '—' if personal else '—' }}</span>
+            </div>
+        </section>
+
+        <section class="hv-section{% if not completitud.secciones.documentos %} hv-section--incomplete{% endif %}">
+            <div class="hv-section-heading">
+                <h2>Documentos</h2>
+                <a href="{{ pasos_urls.documentos }}"
+                   class="{{ 'btn-primary' if not completitud.secciones.documentos else 'btn-secondary' }} btn-sm">
+                    {{ 'Completar' if not completitud.secciones.documentos else 'Editar' }}
+                </a>
+            </div>
+            {% if documentos %}
+                <ul class="hv-simple-list">
+                    {% for documento in documentos %}
+                        <li>{{ documento.tipo or 'Otro' }}: {{ documento.nombre or '—' }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="hv-empty">{{ 'Carga tus documentos.' if not completitud.secciones.documentos else '—' }}</p>
+            {% endif %}
+            <div class="hv-doc-status">
+                <div class="hv-data">
+                    <span class="hv-label">Tipos disponibles aún no cargados</span>
+                    {% if documentos_faltantes %}
+                        <span class="hv-value">{{ documentos_faltantes | join(', ') }}</span>
+                    {% else %}
+                        <span class="hv-value">—</span>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}

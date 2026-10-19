@@ -1,4 +1,7 @@
 
+from datetime import date, datetime
+
+
 def fila_vacia(entry, campos):
     valores = []
 
@@ -55,60 +58,9 @@ def validar_personal(entry):
             errores.append(
             "El género es obligatorio."
         )
-    if not entry.email.data:
-            errores.append(
-            "El correo es obligatorio."
-        )
-   
-
     return errores
 
     
-def validar_contacto(entry):
-
-    errores = []
-
-    if not entry.nombres.data:
-        errores.append(
-            "El nombre del contacto es obligatorio."
-        )
-
-    if not entry.apellidos.data:
-        errores.append(
-            "Los apellidos del contacto son obligatorios."
-        )
-
-    if not entry.parentesco.data:
-        errores.append(
-            "El parentesco es obligatorio."
-        )
-
-    if not entry.tel.data:
-            errores.append(
-                "El teléfono es obligatorio."
-
-
-            )
-    return errores
-
-
-def validar_familiar(entry):
-
-    errores = []
-
-    if not entry.personas_casa.data:
-        errores.append(
-            "El número de personas en casa es obligatorio."
-        )
-
-    if not entry.dependen_eco.data:
-        errores.append(
-            "El número de dependientes económicos es obligatorio."
-        )
-
-    return errores
-     
-     
 def validar_academica(entry):
 
         errores= []
@@ -125,42 +77,144 @@ def validar_academica(entry):
         if not entry.institucion.data:
             errores.append("La institución es obligatoria.")
 
-    # Solo exigir mes/año de finalización si el estado es "finalizado"
         if entry.estado.data == "finalizado":
+            hoy = date.today()
+            campo_mes = entry.mes_finalizacion
+            campo_anno = entry.anno_finalizacion
+            mes_raw = (campo_mes.raw_data or [""])[0].strip()
+            anno_raw = (campo_anno.raw_data or [""])[0].strip()
+            mes = campo_mes.data
+            anno = campo_anno.data
+            mes_valido = isinstance(mes, int) and 1 <= mes <= 12
+            anno_valido = (
+                isinstance(anno, int)
+                and len(anno_raw) == 4
+                and anno_raw.isdigit()
+                and 1950 <= anno <= hoy.year
+            )
 
-            if not entry.mes_finalizacion.data:
-                errores.append("El mes de finalización es obligatorio.")
+            if not mes_raw:
+                campo_mes.errors = [
+                    *campo_mes.errors,
+                    "El mes de finalización es obligatorio.",
+                ]
+            elif not mes_valido:
+                campo_mes.errors = [
+                    *campo_mes.errors,
+                    "El mes debe ser un número entre 1 y 12.",
+                ]
 
-            if not entry.anno_finalizacion.data:
-                errores.append("El año de finalización es obligatorio.")
+            if not anno_raw:
+                campo_anno.errors = [
+                    *campo_anno.errors,
+                    "El año de finalización es obligatorio.",
+                ]
+            elif not anno_valido:
+                campo_anno.errors = [
+                    *campo_anno.errors,
+                    f"El año debe estar entre 1950 y {hoy.year}.",
+                ]
+
+            if (
+                mes_valido
+                and anno_valido
+                and anno == hoy.year
+                and mes > hoy.month
+            ):
+                campo_mes.errors = [
+                    *campo_mes.errors,
+                    "La fecha de finalización no puede ser futura.",
+                ]
 
         return errores       
         
             
-def validar_experiencia(entry):
-        errores= []
-        
-        if not entry.entidad.data:
-            errores.append("El nombre de la entidad/empresa es obligatorio.")
+def a_fecha(valor):
+    if isinstance(valor, datetime):
+        return valor.date()
+    if isinstance(valor, date):
+        return valor
+    return None
 
-        if not entry.area.data:
-            errores.append("El área de trabajo es obligatoria.")
 
-        if not entry.cargo.data:
-            errores.append("El cargo es obligatorio.")
+def rangos_se_cruzan(inicio_a, fin_a, inicio_b, fin_b):
+    inicio_a = a_fecha(inicio_a)
+    fin_a = a_fecha(fin_a)
+    inicio_b = a_fecha(inicio_b)
+    fin_b = a_fecha(fin_b)
+    return bool(
+        inicio_a
+        and fin_a
+        and inicio_b
+        and fin_b
+        and inicio_a <= fin_b
+        and inicio_b <= fin_a
+    )
 
-        if not entry.fecha_ingreso.data:
-            errores.append("La fecha de ingreso es obligatoria.")
 
-    # Solo exigir motivo y fecha de salida si NO trabaja actualmente ahí
-        if not entry.actual.data:
-            if not entry.motivo.data:
-                errores.append("El motivo de salida es obligatorio.")
+def _fecha_minima_por_edad(fecha_nacimiento, edad):
+    try:
+        return fecha_nacimiento.replace(year=fecha_nacimiento.year + edad)
+    except ValueError:
+        return fecha_nacimiento.replace(
+            year=fecha_nacimiento.year + edad,
+            day=28,
+        )
 
-            if not entry.fecha_salida.data:
-                errores.append("La fecha de salida es obligatoria.")
 
-        return errores       
+def validar_experiencia(
+    entry,
+    fecha_nacimiento=None,
+    validar_rango_fechas=True,
+    hoy=None,
+):
+    errores = []
+    hoy = hoy or date.today()
+    fecha_ingreso = a_fecha(entry.fecha_ingreso.data)
+    fecha_salida = a_fecha(entry.fecha_salida.data)
+    nacimiento = a_fecha(fecha_nacimiento)
+
+    if not entry.entidad.data:
+        errores.append("El nombre de la entidad/empresa es obligatorio.")
+
+    if not entry.area.data:
+        errores.append("El área de trabajo es obligatoria.")
+
+    if not entry.cargo.data:
+        errores.append("El cargo es obligatorio.")
+
+    if not fecha_ingreso:
+        errores.append("La fecha de ingreso es obligatoria.")
+
+    if validar_rango_fechas:
+        if fecha_ingreso:
+            if fecha_ingreso < date(1950, 1, 1):
+                errores.append("La fecha de ingreso debe ser desde 1950.")
+            if fecha_ingreso > hoy:
+                errores.append("La fecha de ingreso no puede ser futura.")
+            if nacimiento:
+                edad_minima = _fecha_minima_por_edad(nacimiento, 14)
+                if fecha_ingreso < edad_minima:
+                    errores.append(
+                        "La fecha de ingreso no puede ser anterior a los 14 años."
+                    )
+
+        if fecha_salida:
+            if fecha_salida > hoy:
+                errores.append("La fecha de salida no puede ser futura.")
+            if fecha_ingreso and fecha_salida < fecha_ingreso:
+                errores.append(
+                    "La fecha de salida no puede ser anterior al ingreso."
+                )
+
+    if not entry.actual.data:
+        if not entry.motivo.data:
+            errores.append("El motivo de salida es obligatorio.")
+
+        if not fecha_salida:
+            errores.append("La fecha de salida es obligatoria.")
+
+    return errores
      
 
 def validar_cursos(entry):
@@ -179,21 +233,6 @@ def validar_cursos(entry):
             )
 
         return errores     
-def validar_competencias(entry):
-
-        errores= []
-
-        if not entry.competencia.data:
-            errores.append(
-                "La competencia es obligatoria."
-            )
-
-        if not entry.nivel.data:
-            errores.append(
-                "El nivel es obligatorio."
-            )
-        return errores     
-
 def validar_referencias(entry):
     
         
@@ -254,4 +293,3 @@ def validar_discapacidades(entry):
                 "La categoría de discapacidad es obligatoria."
             )
         return errores   
-

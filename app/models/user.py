@@ -26,6 +26,7 @@ class User(UserMixin, db.Model):
                                      onupdate=lambda: datetime.now())
     ultimo_login         = db.Column(db.DateTime, nullable=True)  # None hasta que haga su 1er login
     rol = db.Column(db.String(50), default="usuario", nullable=False)
+    paso_maximo = db.Column(db.String(50), nullable=True)
 
     token = db.Column(db.String(255), unique=True, index=True, nullable=True)
     token_envio = db.Column(db.DateTime)
@@ -57,7 +58,6 @@ class User(UserMixin, db.Model):
         texto += f"ultimo_login: {self.ultimo_login}"
         texto += f"rol: {self.rol}"
     
-
 
 
 

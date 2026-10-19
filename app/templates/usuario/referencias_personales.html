@@ -7,11 +7,16 @@
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        {% if mensaje_regla %}
+            <div class="form-error" role="alert">{{ mensaje_regla }}</div>
+        {% endif %}
+        {% if errores_formulario %}
+            <div role="alert">
+                {% for error in errores_formulario %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
@@ -25,30 +30,30 @@
                     <div class="form-grid">
                         <div class="campo">
                             {{ entry.nombres.label }}
-                            {{ entry.nombres(class="form-control") }}
+                            {{ entry.nombres(class="form-control" + (" is-invalid" if entry.nombres.errors else "")) }}
                             {% for error in entry.nombres.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.apellidos.label }}
-                            {{ entry.apellidos(class="form-control") }}
+                            {{ entry.apellidos(class="form-control" + (" is-invalid" if entry.apellidos.errors else "")) }}
                             {% for error in entry.apellidos.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.parentesco.label }}
-                            {{ entry.parentesco(class="form-control") }}
+                            {{ entry.parentesco(class="form-control" + (" is-invalid" if entry.parentesco.errors else "")) }}
                             {% for error in entry.parentesco.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.telefono.label }}
-                            {{ entry.telefono(class="form-control") }}
+                            {{ entry.telefono(class="form-control" + (" is-invalid" if entry.telefono.errors else "")) }}
                             {% for error in entry.telefono.errors %}
-                                <span class="error">{{ error }}</span>
+                                <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                     </div>
@@ -62,14 +67,10 @@
             <span id="referencias-personales-contador" class="funciones-contador"></span>
 
             <div class="form-botones">
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
             </div>

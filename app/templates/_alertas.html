@@ -1,0 +1,21 @@
+{% with mensajes_alerta = get_flashed_messages(with_categories=true) %}
+    {% if mensajes_alerta %}
+        <div class="alertas-globales">
+            {% for categoria, mensaje in mensajes_alerta %}
+                {% set categoria_alerta = "error" if categoria == "danger" else categoria %}
+                {% if categoria_alerta not in ["success", "error", "warning", "info"] %}
+                    {% set categoria_alerta = "info" %}
+                {% endif %}
+                <div class="alerta alerta-{{ categoria_alerta }}"
+                     role="alert"
+                     aria-live="assertive"
+                     {% if categoria_alerta in ["success", "info"] %}data-alerta-autocierre="6000"{% endif %}>
+                    <span class="alerta-mensaje">{{ mensaje }}</span>
+                    <button type="button" class="alerta-cerrar"
+                            aria-label="Cerrar alerta"
+                            data-alerta-cerrar>×</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}

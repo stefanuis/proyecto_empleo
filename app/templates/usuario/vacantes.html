@@ -76,7 +76,7 @@
                         <div class="{{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}"></div>
                         <div class="card-titulos">
                             <p class="card-cargo">{{ v.titulo }}</p>
-                            <p class="card-categoria">{{ v.area_aplicacion }}</p>
+                            <p class="card-categoria">{{ v.area_aplicacion or 'Área no especificada' }}</p>
                         </div>
                     </div>
 
@@ -101,6 +101,18 @@
                             Ver detalle
                         </a>
                     </div>
+                    {% set requisitos = requisitos_por_vacante.get(v.id, []) %}
+                    {% if requisitos %}
+                        <div class="aviso-compatibilidad" role="status">
+                            {% if perfil_profesional_faltante %}
+                                <a href="{{ url_for('usuario.perfil_profesional') }}">
+                                    Completa tu Perfil profesional para postularte.
+                                </a>
+                            {% else %}
+                                <span>{{ requisitos|join(' ') }}</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
             {% else %}
                 <div class="empty-state">

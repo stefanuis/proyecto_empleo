@@ -2,9 +2,7 @@
 """
 Módulo para generar el PDF del expediente del postulante usando ReportLab.
 
-PARTE 1: encabezado + información personal + contacto.
-(Las secciones de académica, familiar y referencias se agregan después,
-una vez validemos que esta parte se ve bien.)
+Incluye información personal, académica, experiencia y referencias.
 
 Uso típico desde una ruta de Flask:
 
@@ -148,10 +146,10 @@ def _tabla_simple(encabezados, filas, anchos):
     ]))
     return t
 
-def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=None,
-                           familiar=None, referencias=None, experiencia=None,
-                           cursos=None, competencias=None,
-                           referencias_personales=None, discapacidades=None):
+def generar_pdf_expediente(personal, vacante, post, academica=None,
+                           referencias=None, experiencia=None, cursos=None,
+                           referencias_personales=None, discapacidades=None,
+                           *, usuario):
     """
     Genera el PDF del expediente (solo datos de texto, sin documentos ni adjuntos).
     Devuelve un BytesIO listo para enviar con send_file().
@@ -242,33 +240,11 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
     # ---- Contacto ----
     elementos.append(Paragraph('Contacto', style_h3))
     pares_contacto = [
-        ('Correo', personal.email),
+        ('Correo', usuario.correo),
         ('Celular', personal.num_cel),
         ('Celular alterno', personal.num_cel_dos),
     ]
     elementos.append(_fila_datos(pares_contacto))
- 
-    if contacto:
-        elementos.append(Spacer(1, 6))
-        elementos.append(Paragraph('Contacto de emergencia', style_label))
-        nombre_contacto = f"{contacto.nombre} {contacto.apellido} ({contacto.parentesco or '—'})"
-        pares_emergencia = [
-            ('Nombre', nombre_contacto),
-            ('Teléfono', contacto.tel),
-            ('Núm. residencia', contacto.num_residencia),
-        ]
-        elementos.append(_fila_datos(pares_emergencia))
-        
-  # ---- Información familiar ----
-    elementos.append(Paragraph('Información familiar', style_h3))
-    if familiar:
-        pares_familiar = [
-            ('Personas en el hogar', familiar.personas_casa),
-            ('Dependen económicamente', familiar.dependen_eco),
-        ]
-        elementos.append(_fila_datos(pares_familiar))
-    else:
-        elementos.append(Paragraph('No registró información familiar.', style_label))
  
     elementos.append(Spacer(1, 10))
     # ---- Información académica ----
@@ -348,20 +324,6 @@ def generar_pdf_expediente(personal, vacante, post, contacto=None, academica=Non
             filas, [4.5 * cm, 3.8 * cm, 3 * cm, 1.4 * cm, 2.3 * cm, 2 * cm]))
     else:
         elementos.append(Paragraph('No registró cursos.', style_label))
- 
-    # ---- Competencias ----
-    elementos.append(Paragraph('Competencias', style_h3))
-    if competencias:
-        filas = [[Paragraph(_t(c.competencia), style_valor),
-                  Paragraph(_t(c.nivel), style_valor),
-                  Paragraph(f"{c.experiencia} años" if c.experiencia else '—', style_valor)]
-                 for c in competencias]
-        elementos.append(_tabla_simple(['Competencia', 'Nivel', 'Experiencia'],
-                                       filas, [8 * cm, 4.5 * cm, 4.5 * cm]))
-    else:
-        elementos.append(Paragraph('No registró competencias.', style_label))
- 
-  
  
     # ---- Referencias ----
     elementos.append(Paragraph('Referencias', style_h3))

@@ -39,7 +39,6 @@ def create_app():
             "academica": 4,
             "experiencia": 4,
             "cursos": 5,
-            "competencias": 6,
             "referencias": 3,
             "referencias_personales": 3,
             "discapacidades": 3

@@ -1,0 +1,91 @@
+{% extends 'usuario/base.html' %}
+
+{% block contenido %}
+<div class="contenedor-padre">
+    <div class="contenedor-formulario form-card">
+        {% include "usuario/barra_progreso.html" with context %}
+
+        {% if errores %}
+            <div class="perfil-profesional-errores" role="alert">
+                {% for error in errores %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" id="form-wizard" class="form-wizard" novalidate
+              data-funciones-url="{{ url_for('usuario.perfil_profesional_funciones') }}"
+              data-funciones-iniciales="{{ funciones_seleccionadas|list|tojson }}">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                <label for="area_aplicacion" class="form-label">Área de aplicación</label>
+                <select id="area_aplicacion" name="area_aplicacion" class="form-control">
+                    {% for valor, etiqueta in areas_aplicacion %}
+                        <option value="{{ valor }}"
+                                {% if valor == area_seleccionada %}selected{% endif %}>
+                            {{ etiqueta }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion" class="form-label">Descripción de tu perfil</label>
+                <textarea id="descripcion" name="descripcion" class="form-control"
+                          maxlength="500" rows="5"
+                          aria-describedby="perfil-descripcion-contador">{{ descripcion }}</textarea>
+                <div id="perfil-descripcion-contador" class="perfil-profesional-contador"
+                     aria-live="polite">{{ descripcion|length }} / 500</div>
+            </div>
+
+            <section class="perfil-profesional-funciones" aria-labelledby="funciones-titulo">
+                <h2 id="funciones-titulo" class="perfil-profesional-subtitulo">
+                    Funciones que dominas
+                </h2>
+                <p id="funciones-aviso" class="form-hint" role="status" hidden>
+                    Al cambiar de área, las funciones marcadas se reemplazarán.
+                </p>
+                <label for="buscar-funciones" class="form-label">Buscar funciones</label>
+                <input id="buscar-funciones" class="form-control" type="search"
+                       placeholder="Escribe para filtrar funciones" disabled>
+
+                <div id="funciones-mensaje" class="perfil-profesional-mensaje" role="status">
+                    Elige primero un área de aplicación para ver sus funciones.
+                </div>
+                <div id="funciones-lista" class="perfil-profesional-lista"
+                     aria-live="polite"></div>
+            </section>
+
+            <section class="perfil-profesional-vista-previa"
+                     aria-labelledby="funciones-seleccionadas-titulo">
+                <div class="perfil-profesional-vista-previa-cabecera">
+                    <h2 id="funciones-seleccionadas-titulo"
+                        class="perfil-profesional-subtitulo">Vista previa</h2>
+                    <span id="funciones-contador" class="perfil-profesional-contador"
+                          aria-live="polite">0 seleccionadas</span>
+                </div>
+                <p id="funciones-vacias" class="form-hint">
+                    Aún no has marcado funciones.
+                </p>
+                <ul id="funciones-seleccionadas" class="perfil-profesional-seleccionadas"></ul>
+            </section>
+
+            <div class="form-botones">
+                {% if paso_anterior %}
+                    <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                       class="btn-secondary">
+                        Anterior
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('usuario.principal') }}" class="btn-secondary">
+                        Anterior
+                    </a>
+                {% endif %}
+                <button type="submit" class="btn-primary">Guardar y continuar</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/perfil_profesional.js') }}" defer></script>
+{% endblock %}

@@ -90,33 +90,6 @@ class experienciaItemForm(Form):
         validators=[Optional()]
     )
 
-    pais = StringField(
-        "País",
-        validators=[
-            Optional(),
-            Length(max=50)
-        ]
-    )
-
-    departamento = StringField(
-        "Departamento",
-        validators=[
-            Optional(),
-            Length(max=50)
-        ]
-    )
-
-    municipio = StringField(
-        "Municipio",
-        validators=[
-            Optional(),
-            Length(max=50)
-        ]
-    )
-
-    funciones_lista = HiddenField()
-    
-
     ruta_soporte = FileField(
         "Documento soporte",
         validators=[
@@ -133,4 +106,3 @@ class experienciaForm(FlaskForm):
     )
 
     submit = SubmitField("Guardar y continuar")
-

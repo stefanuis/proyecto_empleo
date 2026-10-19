@@ -1,17 +1,28 @@
 # app/utils/perfil.py
 
-from app.usuario.constantes import NOMBRES_PASO, PASOS_seguimiento
+from app.usuario.constantes import NOMBRES_PASO, PASOS_seguimiento, REGLAS_PASO
 from app.models.personal import Personal
-from datetime import date
-from app.models.contacto import Contacto
-from app.models.familiar import Familiar
+from datetime import date, datetime
 from app.models.academica import Info_academica
 from app.models.experiencia import Experiencia
 from app.models.cursos import Cursos
-from app.models.competencias import Competencias
 from app.models.referencias import Referencias
 from app.models.referencias_personales import ReferenciasPersonales
 from app.models.docs import OtrosDocumentos
+from app.models.perfil_profesional import PerfilProfesional
+from app.models.perfil_funcion import PerfilFuncion
+from app.models.paso_omitido import PasoOmitido
+
+
+MODELOS_POR_PASO = {
+    "personal": Personal,
+    "academica": Info_academica,
+    "experiencia": Experiencia,
+    "cursos": Cursos,
+    "referencias": Referencias,
+    "referencias_personales": ReferenciasPersonales,
+    "documentos": OtrosDocumentos,
+}
 
 
 def existe_registro(modelo, id_usuario):
@@ -19,20 +30,36 @@ def existe_registro(modelo, id_usuario):
     return modelo.query.filter_by(id_usuario=id_usuario).first() is not None
 
 
+def perfil_profesional_completo(id_usuario):
+    perfil = PerfilProfesional.query.filter_by(id_usuario=id_usuario).first()
+    if not perfil or not (perfil.area_aplicacion or "").strip():
+        return False
+
+    return PerfilFuncion.query.filter_by(id_usuario=id_usuario).first() is not None
+
+
 def calcular_completitud_perfil(id_usuario):
-    secciones = {
-        "personal": existe_registro(Personal, id_usuario),
-        "contacto": existe_registro(Contacto, id_usuario),
-        "familiar": existe_registro(Familiar, id_usuario),
-        "academica": existe_registro(Info_academica, id_usuario),
-        "experiencia": existe_registro(Experiencia, id_usuario),
-        "cursos": existe_registro(Cursos, id_usuario),
-        "competencias": existe_registro(Competencias, id_usuario),
-        "referencias": existe_registro(Referencias, id_usuario),
-        "referencias_personales": existe_registro(ReferenciasPersonales, id_usuario),
-        "discapacidades": True,
-        "documentos": existe_registro(OtrosDocumentos, id_usuario),
-    }
+    secciones = {}
+    for paso, regla in REGLAS_PASO.items():
+        tipo = regla["tipo"]
+        if tipo == "opcional":
+            secciones[paso] = True
+        elif tipo == "perfil_profesional":
+            secciones[paso] = perfil_profesional_completo(id_usuario)
+        else:
+            modelo = MODELOS_POR_PASO[paso]
+            cantidad_registros = modelo.query.filter_by(
+                id_usuario=id_usuario
+            ).count()
+            tiene_registros = cantidad_registros >= regla.get("minimo", 1)
+            if tipo == "registros_o_declaracion":
+                tiene_declaracion = PasoOmitido.query.filter_by(
+                    id_usuario=id_usuario,
+                    paso=paso,
+                ).first() is not None
+                secciones[paso] = tiene_registros or tiene_declaracion
+            else:
+                secciones[paso] = tiene_registros
 
     total = len(secciones)
     completadas = sum(1 for esta_completa in secciones.values() if esta_completa)
@@ -93,10 +120,17 @@ def obtener_experiencia_total(id_usuario):
     for exp in registros:
         if not exp.fecha_ingreso:
             continue
+        fecha_inicio = (
+            exp.fecha_ingreso.date()
+            if isinstance(exp.fecha_ingreso, datetime)
+            else exp.fecha_ingreso
+        )
         fecha_fin = date.today() if exp.actual else exp.fecha_salida
+        if isinstance(fecha_fin, datetime):
+            fecha_fin = fecha_fin.date()
         if not fecha_fin:
             continue
-        total_dias += (fecha_fin - exp.fecha_ingreso).days
+        total_dias += (fecha_fin - fecha_inicio).days
  
     return round(total_dias / 365.25, 1)
  

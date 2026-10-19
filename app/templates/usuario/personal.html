@@ -7,186 +7,169 @@ Principal Usuario
 {% block contenido %}
 
     <div class="contenedor-padre">
-        <div class="contenedor-formulario">
+        <div class="contenedor-formulario form-card">
             <div class="titulo-personal">
 
             </div>
 
             {% include "usuario/barra_progreso.html" with context %}
 
-            <!-- Mostrar mensajes flash -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
             <form method="POST" id="form-wizard"  novalidate>
 
                 {{ form.hidden_tag() }}
 
-                <div class="form-grid">
+                <div class="form-grid-2">
 
-                    <div class="campo">
-                        {{ form.nombres.label }}
-                        {{ form.nombres(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.nombres.label(class="form-label") }}
+                        {{ form.nombres(class="form-control" + (" is-invalid" if form.nombres.errors else "")) }}
                         {% for error in form.nombres.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.apellidos.label }}
-                        {{ form.apellidos(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.apellidos.label(class="form-label") }}
+                        {{ form.apellidos(class="form-control" + (" is-invalid" if form.apellidos.errors else "")) }}
                         {% for error in form.apellidos.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.tipo_doc.label }}
-                        {{ form.tipo_doc(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.tipo_doc.label(class="form-label") }}
+                        {{ form.tipo_doc(class="form-control" + (" is-invalid" if form.tipo_doc.errors else "")) }}
                         {% for error in form.tipo_doc.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.num_doc.label }}
-                        {{ form.num_doc(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.num_doc.label(class="form-label") }}
+                        {{ form.num_doc(class="form-control" + (" is-invalid" if form.num_doc.errors else "")) }}
                         {% for error in form.num_doc.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.fecha_exp_doc.label }}
+                    <div class="form-group">
+                        {{ form.fecha_exp_doc.label(class="form-label") }}
                         {{ form.fecha_exp_doc(
-                                class="form-control",
+                                class="form-control" + (" is-invalid" if form.fecha_exp_doc.errors else ""),
                                 type="date"
                         ) }}
                         {% for error in form.fecha_exp_doc.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.fecha_nacimiento.label }}
+                    <div class="form-group">
+                        {{ form.fecha_nacimiento.label(class="form-label") }}
                         {{ form.fecha_nacimiento(
-                                class="form-control",
+                                class="form-control" + (" is-invalid" if form.fecha_nacimiento.errors else ""),
                                 type="date"
                         ) }}
                         {% for error in form.fecha_nacimiento.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.genero.label }}
-                        {{ form.genero(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.genero.label(class="form-label") }}
+                        {{ form.genero(class="form-control" + (" is-invalid" if form.genero.errors else "")) }}
                         {% for error in form.genero.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.email.label }}
-                        {{ form.email(class="form-control") }}
-                        {% for error in form.email.errors %}
-                            <span class="error">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-
-                    <div class="campo">
-                        {{ form.num_cel.label }}
-                        {{ form.num_cel(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.num_cel.label(class="form-label") }}
+                        {{ form.num_cel(class="form-control" + (" is-invalid" if form.num_cel.errors else "")) }}
                         {% for error in form.num_cel.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.num_cel_dos.label }}
-                        {{ form.num_cel_dos(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.num_cel_dos.label(class="form-label") }}
+                        {{ form.num_cel_dos(class="form-control" + (" is-invalid" if form.num_cel_dos.errors else "")) }}
                         {% for error in form.num_cel_dos.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.grupo_etnico.label }}
-                        {{ form.grupo_etnico(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.grupo_etnico.label(class="form-label") }}
+                        {{ form.grupo_etnico(class="form-control" + (" is-invalid" if form.grupo_etnico.errors else "")) }}
                         {% for error in form.grupo_etnico.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>  
 
-                    <div class="campo">
-                        {{ form.nacionalidad.label }}
-                        {{ form.nacionalidad(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.nacionalidad.label(class="form-label") }}
+                        {{ form.nacionalidad(class="form-control" + (" is-invalid" if form.nacionalidad.errors else "")) }}
                         {% for error in form.nacionalidad.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.departamento.label }}
-                        {{ form.departamento(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.departamento.label(class="form-label") }}
+                        {{ form.departamento(class="form-control" + (" is-invalid" if form.departamento.errors else "")) }}
                         {% for error in form.departamento.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.municipio.label }}
-                        {{ form.municipio(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.municipio.label(class="form-label") }}
+                        {{ form.municipio(class="form-control" + (" is-invalid" if form.municipio.errors else "")) }}
                         {% for error in form.municipio.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
+                        {% if ubicacion_guardada_no_valida %}
+                            <span class="form-hint">La ubicación guardada no coincide exactamente con la lista. Selecciona de nuevo el departamento y el municipio.</span>
+                        {% endif %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.barrio.label }}
-                        {{ form.barrio(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.barrio.label(class="form-label") }}
+                        {{ form.barrio(class="form-control" + (" is-invalid" if form.barrio.errors else "")) }}
                         {% for error in form.barrio.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo campo-completo">
-                        {{ form.direccion.label }}
-                        {{ form.direccion(class="form-control") }}
+                    <div class="form-group campo-completo">
+                        {{ form.direccion.label(class="form-label") }}
+                        {{ form.direccion(class="form-control" + (" is-invalid" if form.direccion.errors else "")) }}
                         {% for error in form.direccion.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.vive_rural.label }}
-                        {{ form.vive_rural(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.vive_rural.label(class="form-label") }}
+                        {{ form.vive_rural(class="form-control" + (" is-invalid" if form.vive_rural.errors else "")) }}
                         {% for error in form.vive_rural.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.estado_civil.label }}
-                        {{ form.estado_civil(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.estado_civil.label(class="form-label") }}
+                        {{ form.estado_civil(class="form-control" + (" is-invalid" if form.estado_civil.errors else "")) }}
                         {% for error in form.estado_civil.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
-                    <div class="campo">
-                        {{ form.personas_cargo.label }}
-                        {{ form.personas_cargo(class="form-control") }}
+                    <div class="form-group">
+                        {{ form.personas_cargo.label(class="form-label") }}
+                        {{ form.personas_cargo(class="form-control" + (" is-invalid" if form.personas_cargo.errors else "")) }}
                         {% for error in form.personas_cargo.errors %}
-                            <span class="error">{{ error }}</span>
+                            <span class="form-error">{{ error }}</span>
                         {% endfor %}
                     </div>
 
@@ -194,13 +177,10 @@ Principal Usuario
 
                 <div class="form-botones">
                     {% if paso_anterior %}
-                        <button type="submit"
-                                form="form-wizard"
-                                name="ir_a_paso"
-                                value="{{ paso_anterior }}"
-                                class="btn-secondary">
+                        <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                           class="btn-secondary">
                             Anterior
-                        </button>
+                        </a>
                     {% else %}
                         <a href="{{ url_for('usuario.principal') }}" class="btn-secondary">
                             Anterior
@@ -216,7 +196,8 @@ Principal Usuario
 
         </div>
     </div>
-
+    </div>
+    <script src="{{ url_for('static', filename='js/ubicacion_personal.js') }}" defer></script>
     <script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
     <script>
         flatpickr("#fecha_exp_doc", {

@@ -7,11 +7,18 @@
             </a>
         </li>
 
+        <li>
+            <a href="{{ url_for('usuario.mi_hoja_de_vida') }}">
+                <span class="icon icon-clipboard-data"></span>
+                <span class="sidebar-text">Mi hoja de vida</span>
+            </a>
+        </li>
+
         <hr>
 
         <!-- Sección MI PERFIL con toggle -->
         <li>
-            <a href="{{ url_for('usuario.personal') }}" >
+            <a href="{{ url_for('usuario.continuar_wizard') }}" >
                 <span class="icon icon-user"></span>
                 <span class="sidebar-text">Mi Perfil</span>
             </a>

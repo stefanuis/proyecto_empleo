@@ -16,24 +16,17 @@ from wtforms.validators import (
     Optional,
     Length
 )
+from app.constantes import DISCAPACIDAD_CATEGORIAS
 
 
-class discapacidadForm(Form):
+class discapacidadItemForm(Form):
 
     registro_id = HiddenField()
     eliminar = HiddenField(default="0")
 
     categoria = SelectField(
         "Categoría de discapacidad",
-        choices=[
-            ("", "Selecciona una categoría"),
-            ("Física", "Física"),
-            ("Sensorial", "Sensorial"),
-            ("Cognitiva", "Cognitiva"),
-            ("Psicosocial", "Psicosocial"),
-            ("Múltiple", "Múltiple"),
-            ("Otra", "Otra")
-        ],
+        choices=DISCAPACIDAD_CATEGORIAS,
         validators=[DataRequired()]
     )
 
@@ -59,3 +52,12 @@ class discapacidadForm(Form):
             )
         ]
     )
+
+
+class discapacidadForm(FlaskForm):
+    Info_discapacidades = FieldList(
+        FormField(discapacidadItemForm),
+        min_entries=0
+    )
+
+    submit = SubmitField("Guardar y continuar")

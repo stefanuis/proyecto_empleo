@@ -6,6 +6,7 @@
     <title>Registro - Bolsa de Empleo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/templates_registro.css') }}">
+    <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
 </head>
 <body class="register-page">
     <div class="register-container">
@@ -14,17 +15,7 @@
             <p>Únete a nuestra comunidad profesional</p>
         </div>
 
-        <!-- Mostrar mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        {% include "_alertas.html" %}
 
         <div class="card" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
             <form method="POST" action="{{ url_for('web.registro') }}" novalidate id="registroForm">

@@ -74,9 +74,21 @@
 
                 <form method="POST" action="{{ url_for('usuario.postular', id=vacante.id) }}" class="vacante-form-postular">
                     {% if vacante.estado == 'Activa' %}
-                        <button type="submit" class="btn-postular btn-full-lateral">
-                            Postularme
-                        </button>
+                        {% if requisitos_no_cumplidos %}
+                            <div class="aviso-compatibilidad" role="status">
+                                {% if perfil_profesional_faltante %}
+                                    <a href="{{ url_for('usuario.perfil_profesional') }}">
+                                        Completa tu Perfil profesional para postularte.
+                                    </a>
+                                {% else %}
+                                    <span>{{ requisitos_no_cumplidos|join(' ') }}</span>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <button type="submit" class="btn-postular btn-full-lateral">
+                                Postularme
+                            </button>
+                        {% endif %}
                     {% else %}
                         <p class="aviso-cerrada">
                             Esta vacante ya no está disponible.

@@ -16,7 +16,7 @@ Registro completo
         <div class="progreso-final">
             <div class="progreso-final-header">
                 <strong>Registro</strong>
-                <span>PASO 10 DE 10</span>
+                <span>PASO {{ total_pasos }} DE {{ total_pasos }}</span>
             </div>
             <div class="progress-bar">
                 <div class="progress-fill" style="width:100%;"></div>
@@ -38,6 +38,9 @@ Registro completo
             </a>
             <a href="{{ url_for('usuario.vacantes') }}" class="btn-primary">
                 Ver vacantes
+            </a>
+            <a href="{{ url_for('usuario.mi_hoja_de_vida') }}" class="btn-secondary">
+                Ver mi hoja de vida
             </a>
         </div>
 

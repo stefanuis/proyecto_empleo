@@ -76,7 +76,7 @@ Principal Usuario
         <div class="barra-progreso-relleno" style="width: {{ completitud.porcentaje }}%;"></div>
       </div>
     </div>
-    <a href="{{ url_for('usuario.' ~ completitud.primer_paso_faltante) }}" class="btn-completar">Completar perfil</a>
+    <a href="{{ url_for('usuario.continuar_wizard') }}" class="btn-completar">Completar perfil</a>
   </div>
   {% endif %}
 

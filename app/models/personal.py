@@ -39,10 +39,8 @@ class Personal(db.Model):
         texto = f"id: {self.id}"
         texto += f"nombres: {self.nombres}"
         texto += f"apellidos: {self.apellidos}"
-        texto += f"email: {self.email}"
         texto += f"num_cel: {self.num_cel}"
 
     
-
 
 

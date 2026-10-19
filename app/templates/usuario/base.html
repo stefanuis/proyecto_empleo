@@ -20,6 +20,7 @@
     <div class="contenedor">
         {% include 'usuario/menu.html' %}
         <main class="contenido">
+            {% include "_alertas.html" %}
             {% block contenido %}
             {% endblock %}
         </main>
@@ -27,6 +28,7 @@
 
     {% include 'usuario/footer.html' %}
     <script src="{{ url_for('static', filename='js/limite_filas.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
 </body>
 
 </html>

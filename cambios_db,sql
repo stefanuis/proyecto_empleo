@@ -1,0 +1,163 @@
+-- =====================================================================
+-- cambios_bd.sql  -  proyecto_empleo (MySQL)
+-- Reúne los cambios de base de datos hechos durante el desarrollo.
+-- Se puede correr varias veces: usa IF NOT EXISTS y un procedimiento
+-- que agrega columnas solo si todavía no existen.
+-- Antes de correrlo: seleccionar la base de datos destino (USE nombre_bd;)
+-- =====================================================================
+
+-- USE nombre_de_tu_base;
+
+-- ---------------------------------------------------------------------
+-- Ayudante: agrega una columna solo si no existe
+-- ---------------------------------------------------------------------
+DROP PROCEDURE IF EXISTS sp_agregar_columna;
+DELIMITER //
+CREATE PROCEDURE sp_agregar_columna(
+    IN p_tabla VARCHAR(64),
+    IN p_columna VARCHAR(64),
+    IN p_definicion VARCHAR(255)
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = p_tabla
+          AND COLUMN_NAME = p_columna
+    ) THEN
+        SET @sql = CONCAT('ALTER TABLE `', p_tabla, '` ADD COLUMN `', p_columna, '` ', p_definicion);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END //
+DELIMITER ;
+
+-- ---------------------------------------------------------------------
+-- 1. Wizard: paso más lejano alcanzado por el usuario
+-- ---------------------------------------------------------------------
+CALL sp_agregar_columna('tbl_usuario', 'paso_maximo', 'VARCHAR(50) NULL');
+
+-- ---------------------------------------------------------------------
+-- 2. Pasos declarados como "No tengo ..." (pasos obligatorios)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tbl_paso_omitido (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    paso VARCHAR(50) NOT NULL,
+    fecha_declaracion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_usuario_paso (id_usuario, paso),
+    CONSTRAINT fk_paso_omitido_usuario
+        FOREIGN KEY (id_usuario) REFERENCES tbl_usuario (id) ON DELETE CASCADE
+);
+
+-- ---------------------------------------------------------------------
+-- 3. Perfil profesional
+-- ---------------------------------------------------------------------
+-- 3.1 Catálogo de funciones por área (se llena con
+--     scripts/cargar_funciones_area.py -> 420 funciones, 32 áreas)
+CREATE TABLE IF NOT EXISTS tbl_funcion_area (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    area_aplicacion VARCHAR(100) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    activa BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE KEY uq_area_nombre (area_aplicacion, nombre)
+);
+
+-- 3.2 Perfil profesional del candidato (una fila por usuario)
+CREATE TABLE IF NOT EXISTS tbl_perfil_profesional (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL UNIQUE,
+    area_aplicacion VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 3.3 Funciones elegidas por el candidato
+CREATE TABLE IF NOT EXISTS tbl_perfil_funcion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_funcion INT NOT NULL,
+    UNIQUE KEY uq_usuario_funcion (id_usuario, id_funcion),
+    FOREIGN KEY (id_funcion) REFERENCES tbl_funcion_area (id)
+);
+
+-- ---------------------------------------------------------------------
+-- 4. Datos: grupo étnico "Otro" ya no es una opción válida
+-- ---------------------------------------------------------------------
+UPDATE tbl_info_personal SET grupo_etnico = NULL WHERE grupo_etnico = 'Otro' AND id > 0;
+
+-- ---------------------------------------------------------------------
+-- 5. REVISAR: cambios de etapas anteriores de la conversación.
+--    Si ya los ejecutaste en tu base, no pasa nada: el procedimiento
+--    ignora las columnas que ya existen. Confirma los nombres reales
+--    de tus tablas con DESCRIBE antes de correrlos.
+-- ---------------------------------------------------------------------
+CALL sp_agregar_columna('tbl_vacante', 'requiere_video', 'BOOLEAN NOT NULL DEFAULT FALSE');
+CALL sp_agregar_columna('tbl_vacante', 'cupos', 'INT NULL');
+-- link_video: confirma en qué tabla vive (postulación o vacante)
+-- CALL sp_agregar_columna('tbl_postulacion', 'link_video', 'VARCHAR(255) NULL');
+-- notas de las áreas internas: confirma la tabla (postulación)
+-- CALL sp_agregar_columna('tbl_postulacion', 'notas_psicologia', 'TEXT NULL');
+-- CALL sp_agregar_columna('tbl_postulacion', 'notas_talento_humano', 'TEXT NULL');
+
+ALTER TABLE tbl_usuario ADD COLUMN paso_maximo VARCHAR(50) NULL;
+-- ---------------------------------------------------------------------
+-- 6. PENDIENTE (todavía no se ha aplicado): experiencia mínima por vacante
+-- ---------------------------------------------------------------------
+-- CALL sp_agregar_columna('tbl_vacante', 'experiencia_minima_meses', 'INT NOT NULL DEFAULT 12');
+
+DROP PROCEDURE IF EXISTS sp_agregar_columna;
+
+
+---
+
+
+
+-- =====================================================================
+-- cambios_bd_ayer_hoy.sql  -  proyecto_empleo (MySQL)
+-- Solo los cambios de base de datos del 18 y 19 de octubre.
+-- Antes de correrlo: USE nombre_de_tu_base;
+-- =====================================================================
+
+-- 1. Perfil profesional: catálogo de funciones por área
+--    (se llena con scripts/cargar_funciones_area.py -> 420 funciones)
+CREATE TABLE IF NOT EXISTS tbl_funcion_area (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    area_aplicacion VARCHAR(100) NOT NULL,
+    nombre VARCHAR(200) NOT NULL,
+    activa BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE KEY uq_area_nombre (area_aplicacion, nombre)
+);
+
+-- 2. Perfil profesional del candidato (una fila por usuario)
+CREATE TABLE IF NOT EXISTS tbl_perfil_profesional (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL UNIQUE,
+    area_aplicacion VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 3. Funciones elegidas por el candidato
+CREATE TABLE IF NOT EXISTS tbl_perfil_funcion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_funcion INT NOT NULL,
+    UNIQUE KEY uq_usuario_funcion (id_usuario, id_funcion),
+    FOREIGN KEY (id_funcion) REFERENCES tbl_funcion_area (id)
+);
+
+-- 4. Pasos obligatorios: declaraciones "No tengo ..."
+CREATE TABLE IF NOT EXISTS tbl_paso_omitido (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    paso VARCHAR(50) NOT NULL,
+    fecha_declaracion DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_usuario_paso (id_usuario, paso),
+    CONSTRAINT fk_paso_omitido_usuario
+        FOREIGN KEY (id_usuario) REFERENCES tbl_usuario (id) ON DELETE CASCADE
+);
+
+-- 5. Datos: grupo étnico "Otro" ya no es opción válida
+UPDATE tbl_info_personal SET grupo_etnico = NULL WHERE grupo_etnico = 'Otro' AND id > 0;

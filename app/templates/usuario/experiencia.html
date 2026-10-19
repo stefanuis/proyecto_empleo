@@ -2,106 +2,116 @@
 
 {% block contenido %}
 <div class="contenedor-padre">
-    <div class="contenedor-formulario">
+    <div class="contenedor-formulario form-card">
 
         {% include "usuario/barra_progreso.html" with context %}
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %} 
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
+        {% if errores %}
+            <div role="alert">
+                {% for error in errores %}
+                    <span class="form-error">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if mensaje_regla %}
+            <div class="form-error" role="alert">{{ mensaje_regla }}</div>
+        {% endif %}
 
-        <form method="POST" id="form-wizard" novalidate>
+        <form method="POST" id="form-wizard" class="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
-            {# Máximo de funciones por experiencia. Cámbialo aquí o pasa max_funciones desde la ruta. #}
-            <div id="experiencia-container" data-max-filas="{{ LIMITES.experiencia }}" data-fila-selector=".experiencia-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#experiencia-contador" data-max-funciones="{{ max_funciones|default(4) }}">
+            <label class="campo-checkbox">
+                <input type="checkbox" id="no-tengo-experiencia"
+                       name="no_tengo_experiencia" value="1"
+                       {% if no_tengo %}checked{% endif %}>
+                No tengo experiencia laboral
+            </label>
+
+            <div id="experiencia-registros">
+            <div id="experiencia-container"
+                 data-max-filas="{{ LIMITES.experiencia }}"
+                 data-fila-selector=".experiencia-fila"
+                 data-boton-agregar="#btn-agregar-curso"
+                 data-contador="#experiencia-contador">
                 {% for entry in form.Info_experiencia %}
                 <div class="experiencia-fila" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
                     {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    <div class="form-grid">
-                        <div class="campo">
-                            {{ entry.entidad.label }}
-                            {{ entry.entidad(class="form-control") }}
+                    <h2 class="experiencia-fila-titulo">Experiencia {{ loop.index }}</h2>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            {{ entry.entidad.label(class="form-label") }}
+                            {{ entry.entidad(class="form-control" + (" is-invalid" if entry.entidad.errors else "")) }}
+                            {% for error in entry.entidad.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.area.label }}
-                            {{ entry.area(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.area.label(class="form-label") }}
+                            {{ entry.area(class="form-control" + (" is-invalid" if entry.area.errors else "")) }}
+                            {% for error in entry.area.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.cargo.label }}
-                            {{ entry.cargo(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.cargo.label(class="form-label") }}
+                            {{ entry.cargo(class="form-control" + (" is-invalid" if entry.cargo.errors else "")) }}
+                            {% for error in entry.cargo.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
 
-
-                        <div class="campo campo-checkbox">
+                        <div class="form-group campo-checkbox">
                             {{ entry.actual(class="campo-actual") }}
                             {{ entry.actual.label }}
                         </div>
 
-
-                        <div class="campo campo-motivo-salida">
-                            {{ entry.motivo.label }}
-                            {{ entry.motivo(class="form-control") }}
+                        <div class="form-group campo-motivo-salida">
+                            {{ entry.motivo.label(class="form-label") }}
+                            {{ entry.motivo(class="form-control" + (" is-invalid" if entry.motivo.errors else "")) }}
+                            {% for error in entry.motivo.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.fecha_ingreso.label }}
-                            {{ entry.fecha_ingreso(class="form-control") }}
+                        <div class="form-group">
+                            {{ entry.fecha_ingreso.label(class="form-label") }}
+                            {{ entry.fecha_ingreso(class="form-control campo-fecha" + (" is-invalid" if entry.fecha_ingreso.errors else "")) }}
+                            {% for error in entry.fecha_ingreso.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo campo-motivo-salida">
-                            {{ entry.fecha_salida.label }}
-                            {{ entry.fecha_salida(class="form-control") }}
+                        <div class="form-group campo-motivo-salida">
+                            {{ entry.fecha_salida.label(class="form-label") }}
+                            {{ entry.fecha_salida(class="form-control campo-fecha" + (" is-invalid" if entry.fecha_salida.errors else "")) }}
+                            {% for error in entry.fecha_salida.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.pais.label }}
-                            {{ entry.pais(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.departamento.label }}
-                            {{ entry.departamento(class="form-control") }}
-                        </div>
-                        <div class="campo">
-                            {{ entry.municipio.label }}
-                            {{ entry.municipio(class="form-control") }}
-                        </div>
-
-                        <div class="campo campo-completo">
-                            <label>Funciones más importantes realizadas <span class="funciones-contador"></span></label>
-
-                            <div class="funciones-chips-container"></div>
-
-                            <div class="funciones-input-row">
-                                <input type="text" class="funcion-input" maxlength="150" placeholder="Escribe una función y presiona agregar">
-                                <button type="button" class="btn-agregar-funcion">+ Agregar</button>
-                            </div>
-
-                            {{ entry.funciones_lista(class="funciones-lista-hidden") }}
-                        </div>
-
-
                     </div>
 
-
-                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    <div class="experiencia-fila-acciones">
+                        <button type="button" class="btn-eliminar-fila" title="Eliminar experiencia">
+                            Eliminar experiencia
+                        </button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
 
-            <button type="button" class="btn-secondary" id="btn-agregar-curso">+ Agregar</button>
-            <span id="experiencia-contador" class="funciones-contador"></span>
+            <div class="experiencia-agregar">
+                <button type="button" class="btn-secondary" id="btn-agregar-curso">
+                    Agregar experiencia
+                </button>
+                <span id="experiencia-contador" class="experiencia-contador"></span>
+            </div>
+            </div>
 
             <div class="form-botones">
-                <button type="submit"
-                        form="form-wizard"
-                        name="ir_a_paso"
-                        value="{{ paso_anterior }}"
-                        class="btn-secondary"
-                        {% if not paso_anterior %}disabled{% endif %}>
+                <a href="{{ url_for('usuario.' + paso_anterior) }}"
+                   class="btn-secondary">
                     Anterior
-                </button>
+                </a>
 
                 {{ form.submit(class="btn-primary") }}
             </div>
@@ -109,32 +119,37 @@
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/flatpickr/l10n/es.js') }}"></script>
+<script src="{{ url_for('static', filename='js/fechas.js') }}"></script>
+
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-experiencia-vacia">
     <div class="experiencia-fila" data-index="__INDEX__">
         <input type="hidden" name="Info_experiencia-__INDEX__-registro_id" value="">
         <input type="hidden" class="campo-eliminar" name="Info_experiencia-__INDEX__-eliminar" value="0">
-        <div class="form-grid">
-            <div class="campo">
-                <label>Entidad</label>
+        <h2 class="experiencia-fila-titulo">Nueva experiencia</h2>
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label class="form-label">Nombre de la entidad/empresa</label>
                 <input class="form-control" name="Info_experiencia-__INDEX__-entidad">
             </div>
-            <div class="campo">
-                <label>Área</label>
+            <div class="form-group">
+                <label class="form-label">Área de trabajo</label>
                 <input class="form-control" name="Info_experiencia-__INDEX__-area">
             </div>
-            <div class="campo">
-                <label>Cargo</label>
+            <div class="form-group">
+                <label class="form-label">Cargo desempeñado</label>
                 <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
             </div>
 
-            <div class="campo campo-checkbox">
+            <div class="form-group campo-checkbox">
                 <input type="checkbox" class="campo-actual" name="Info_experiencia-__INDEX__-actual">
-                <label>Trabajo actualmente </label>
+                <label>Trabajando actualmente</label>
             </div>
 
-            <div class="campo campo-motivo-salida">
-                <label>Motivo de salida</label>
+            <div class="form-group campo-motivo-salida">
+                <label class="form-label">Nivel</label>
                 <select class="form-control" name="Info_experiencia-__INDEX__-motivo">
                     <option value="" disabled selected>Motivo de salida</option>
                     <option value="renuncia">Renuncia</option>
@@ -145,44 +160,21 @@
                     <option value="otra">Otra</option>
                 </select>
             </div>
-            <div class="campo">
-                <label>Fecha ingreso</label>
-                <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_ingreso">
+            <div class="form-group">
+                <label class="form-label">Fecha de ingreso</label>
+                <input type="date" class="form-control campo-fecha" name="Info_experiencia-__INDEX__-fecha_ingreso">
             </div>
-            <div class="campo campo-motivo-salida">
-                <label>Fecha salida</label>
-                <input type="date" class="form-control" name="Info_experiencia-__INDEX__-fecha_salida">
+            <div class="form-group campo-motivo-salida">
+                <label class="form-label">Fecha de salida</label>
+                <input type="date" class="form-control campo-fecha" name="Info_experiencia-__INDEX__-fecha_salida">
             </div>
-            <div class="campo">
-                <label>País</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-pais">
-            </div>
-            <div class="campo">
-                <label>Departamento</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-departamento">
-            </div>
-            <div class="campo">
-                <label>Municipio</label>
-                <input class="form-control" name="Info_experiencia-__INDEX__-municipio">
-            </div>
-
-
-            <div class="campo campo-completo">
-                <label>Funciones más importantes realizadas <span class="funciones-contador"></span></label>
-
-                <div class="funciones-chips-container"></div>
-
-                <div class="funciones-input-row">
-                    <input type="text" class="funcion-input" maxlength="150" placeholder="Escribe una función y presiona Enter">
-                    <button type="button" class="btn-agregar-funcion">+ Agregar</button>
-                </div>
-
-                <input type="hidden" class="funciones-lista-hidden" name="Info_experiencia-__INDEX__-funciones_lista" value="">
-            </div>
-           
 
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <div class="experiencia-fila-acciones">
+            <button type="button" class="btn-eliminar-fila" title="Eliminar experiencia">
+                Eliminar experiencia
+            </button>
+        </div>
     </div>
 </template>
 
@@ -198,110 +190,27 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnAgregar = document.getElementById(
         "btn-agregar-curso"
     );
+    const casillaNoTengo = document.getElementById("no-tengo-experiencia");
+    const registros = document.getElementById("experiencia-registros");
 
-    // Máximo de funciones por experiencia (viene de data-max-funciones)
-    const MAX_FUNCIONES = parseInt(container.dataset.maxFunciones, 10) || 4;
+    function actualizarDeclaracion() {
+        registros.hidden = casillaNoTengo.checked;
+        registros.querySelectorAll("input, select, textarea, button").forEach(function (campo) {
+            campo.disabled = casillaNoTengo.checked;
+        });
+        if (!casillaNoTengo.checked) {
+            registros.querySelectorAll(".experiencia-fila").forEach(
+                actualizarVisibilidadSalida
+            );
+        }
+    }
+
+    casillaNoTengo.addEventListener("change", actualizarDeclaracion);
+    actualizarDeclaracion();
 
     let contador = container.querySelectorAll(
         ".experiencia-fila"
     ).length;
-
-
-
-    function inicializarChipsFunciones(fila) {
-        const contenedorChips = fila.querySelector(".funciones-chips-container");
-        const input = fila.querySelector(".funcion-input");
-        const btnAgregarFuncion = fila.querySelector(".btn-agregar-funcion");
-        const campoOculto = fila.querySelector(".funciones-lista-hidden");
-        const contadorTexto = fila.querySelector(".funciones-contador");
-
-        if (!contenedorChips || !input || !btnAgregarFuncion || !campoOculto) {
-            return;
-        }
-
-        function obtenerFunciones() {
-            return campoOculto.value
-                ? campoOculto.value.split("|")
-                : [];
-        }
-
-        function guardarFunciones(funciones) {
-            campoOculto.value = funciones.join("|");
-        }
-
-        // Muestra "2/4" y bloquea el campo cuando se llega al máximo
-        function actualizarEstado() {
-            const total = obtenerFunciones().length;
-            const lleno = total >= MAX_FUNCIONES;
-
-            if (contadorTexto) {
-                contadorTexto.textContent = "(" + total + "/" + MAX_FUNCIONES + ")";
-            }
-
-            input.disabled = lleno;
-            btnAgregarFuncion.disabled = lleno;
-            input.placeholder = lleno
-                ? "Máximo de " + MAX_FUNCIONES + " funciones alcanzado"
-                : "Escribe una función y presiona agregar";
-        }
-
-        function renderizarChips() {
-            contenedorChips.innerHTML = "";
-            obtenerFunciones().forEach(function (funcion, index) {
-                const chip = document.createElement("span");
-                chip.className = "chip-funcion";
-                chip.textContent = funcion;
-
-                const btnQuitar = document.createElement("button");
-                btnQuitar.type = "button";
-                btnQuitar.className = "chip-funcion-quitar";
-                btnQuitar.textContent = "×";
-                btnQuitar.addEventListener("click", function () {
-                    const funciones = obtenerFunciones();
-                    funciones.splice(index, 1);
-                    guardarFunciones(funciones);
-                    renderizarChips();
-                });
-
-                chip.appendChild(btnQuitar);
-                contenedorChips.appendChild(chip);
-            });
-            actualizarEstado();
-        }
-
-        function agregarFuncion() {
-            // "|" es el separador de la lista, así que no puede ir dentro del texto
-            const texto = input.value.replace(/\|/g, " ").trim();
-            if (!texto) return;
-
-            const funciones = obtenerFunciones();
-
-            if (funciones.length >= MAX_FUNCIONES) {
-                return;
-            }
-
-            funciones.push(texto);
-            guardarFunciones(funciones);
-            renderizarChips();
-
-            input.value = "";
-            if (!input.disabled) input.focus();
-        }
-
-        btnAgregarFuncion.addEventListener("click", agregarFuncion);
-        input.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                agregarFuncion();
-            }
-        });
-
-        renderizarChips();
-    }
-
-    container.querySelectorAll(".experiencia-fila").forEach(inicializarChipsFunciones);
-
-
 
     function actualizarVisibilidadSalida(fila) {
         const checkboxActual = fila.querySelector(".campo-actual");
@@ -351,7 +260,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         container.appendChild(nuevaFila);
 
-        inicializarChipsFunciones(nuevaFila);
         inicializarToggleActual(nuevaFila);  
 
         contador++;
