@@ -22,16 +22,16 @@
 
             <div id="discapacidades-container" data-max-filas="{{ LIMITES.discapacidades }}" data-fila-selector=".discapacidad-fila" data-boton-agregar="#btn-agregar-discapacidad" data-contador="#discapacidades-contador">
                 {% for entry in form.Info_discapacidades %}
-                <div class="discapacidad-fila" data-index="{{ loop.index0 }}">
+                <div class="discapacidad-fila registro-item" data-index="{{ loop.index0 }}">
 
                     {{ entry.registro_id }}
                     {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    <div class="form-grid">
+                    <div class="form-grid-2">
 
                         <!-- Categoría -->
-                        <div class="campo">
-                            {{ entry.categoria.label }}
+                        <div class="form-group">
+                            {{ entry.categoria.label(class="form-label") }}
                             {{ entry.categoria(class="form-control" + (" is-invalid" if entry.categoria.errors else "")) }}
                             {% for error in entry.categoria.errors %}
                                 <span class="form-error">{{ error }}</span>
@@ -39,8 +39,8 @@
                         </div>
 
                         <!-- Descripción -->
-                        <div class="campo">
-                            {{ entry.descripcion.label }}
+                        <div class="form-group">
+                            {{ entry.descripcion.label(class="form-label") }}
                             {{ entry.descripcion(class="form-control") }}
                             {% for error in entry.descripcion.errors %}
                                 <span class="form-error">{{ error }}</span>
@@ -48,14 +48,14 @@
                         </div>
 
                         <!-- Checkbox: tiene certificado -->
-                        <div class="campo campo-checkbox">
+                        <div class="form-group campo-checkbox">
                             {{ entry.tiene_certificado(class="campo-tiene-certificado") }}
                             {{ entry.tiene_certificado.label }}
                         </div>
 
                         <!-- Certificado -->
-                        <div class="campo campo-certificado">
-                            {{ entry.ruta_certificado.label }}
+                        <div class="form-group campo-certificado">
+                            {{ entry.ruta_certificado.label(class="form-label") }}
                             {{ entry.ruta_certificado(class="form-control" + (" is-invalid" if entry.ruta_certificado.errors else "")) }}
                             {% if entry.registro_id.data and entry.registro_id.data|string in certificados_guardados %}
                                 <small class="form-hint">Ya tienes un certificado cargado. Sube otro solo si quieres reemplazarlo.</small>
@@ -69,7 +69,7 @@
 
                     </div>
 
-                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
 
                 </div>
                 {% endfor %}
@@ -96,12 +96,12 @@
 
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-discapacidad-vacia">
-    <div class="discapacidad-fila" data-index="__INDEX__">
+    <div class="discapacidad-fila registro-item" data-index="__INDEX__">
         <input type="hidden" name="Info_discapacidades-__INDEX__-registro_id" value="">
         <input type="hidden" class="campo-eliminar" name="Info_discapacidades-__INDEX__-eliminar" value="0">
-        <div class="form-grid">
-            <div class="campo">
-                <label>Categoría de discapacidad</label>
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label class="form-label">Categoría de discapacidad</label>
                 <select class="form-control" name="Info_discapacidades-__INDEX__-categoria">
                     {% for valor, etiqueta in DISCAPACIDAD_CATEGORIAS %}
                         <option value="{{ valor }}"{% if not valor %} disabled selected{% endif %}>
@@ -110,21 +110,21 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="campo">
-                <label>Descripción de la discapacidad</label>
+            <div class="form-group">
+                <label class="form-label">Descripción de la discapacidad</label>
                 <textarea class="form-control" name="Info_discapacidades-__INDEX__-descripcion"></textarea>
             </div>
-            <label class="campo campo-checkbox">
+            <label class="form-group campo-checkbox">
                 <input type="checkbox" class="campo-tiene-certificado" name="Info_discapacidades-__INDEX__-tiene_certificado">
                 <span>Tengo certificado de discapacidad</span>
             </label>
-            <div class="campo campo-certificado">
-                <label>Certificado de discapacidad</label>
+            <div class="form-group campo-certificado">
+                <label class="form-label">Certificado de discapacidad</label>
                 <input type="file" class="form-control" name="Info_discapacidades-__INDEX__-ruta_certificado" disabled>
                 <small class="form-hint">Obligatorio si marcaste que tienes certificado.</small>
             </div>
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
     </div>
 </template>
 

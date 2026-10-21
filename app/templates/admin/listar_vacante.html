@@ -188,7 +188,8 @@
               <form method="POST"
                     action="{{ url_for('admin.eliminar_vacante', id=vacante.id) }}"
                     style="display:inline;"
-                    data-confirmar="¿Eliminar esta vacante definitivamente? Esta acción no se puede deshacer.">
+                    data-confirmar="¿Eliminar esta vacante definitivamente? Esta acción no se puede deshacer."
+                    data-confirmar-tipo="peligro" data-confirmar-aceptar="Sí, eliminar">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-secondary btn-sm" style="color:var(--badge-red-text);">
                   Eliminar
@@ -229,16 +230,5 @@
 
 </div>
 {% endif %}
-
-<script>
-// Pide confirmación en cualquier formulario con data-confirmar
-document.querySelectorAll('form[data-confirmar]').forEach(function (form) {
-    form.addEventListener('submit', function (e) {
-        if (!confirm(form.dataset.confirmar)) {
-            e.preventDefault();
-        }
-    });
-});
-</script>
 
 {% endblock %}

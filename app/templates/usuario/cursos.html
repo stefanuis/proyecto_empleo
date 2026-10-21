@@ -31,34 +31,34 @@
             <div id="cursos-registros">
             <div id="cursos-container" data-max-filas="{{ LIMITES.cursos }}" data-fila-selector=".curso-fila" data-boton-agregar="#btn-agregar-curso" data-contador="#cursos-contador">
                 {% for entry in form.Info_curso %}
-                <div class="curso-fila" data-index="{{ loop.index0 }}">
+                <div class="curso-fila registro-item" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
                     {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    <div class="form-grid">
-                        <div class="campo">
-                            {{ entry.nombre.label }}
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            {{ entry.nombre.label(class="form-label") }}
                             {{ entry.nombre(class="form-control" + (" is-invalid" if entry.nombre.errors else "")) }}
                             {% for error in entry.nombre.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.institucion.label }}
+                        <div class="form-group">
+                            {{ entry.institucion.label(class="form-label") }}
                             {{ entry.institucion(class="form-control" + (" is-invalid" if entry.institucion.errors else "")) }}
                             {% for error in entry.institucion.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.horas.label }}
+                        <div class="form-group">
+                            {{ entry.horas.label(class="form-label") }}
                             {{ entry.horas(class="form-control" + (" is-invalid" if entry.horas.errors else ""), min="1") }}
                             {% for error in entry.horas.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.fecha_realizacion.label }}
+                        <div class="form-group">
+                            {{ entry.fecha_realizacion.label(class="form-label") }}
                             {{ entry.fecha_realizacion(class="form-control" + (" is-invalid" if entry.fecha_realizacion.errors else ""), min="1950-01-01", max=hoy) }}
                             {% for error in entry.fecha_realizacion.errors %}
                                 <span class="form-error">{{ error }}</span>
@@ -66,7 +66,7 @@
                         </div>
                     </div>
 
-                 <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                 <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
                 </div>
                 {% endfor %}
             </div>
@@ -89,28 +89,28 @@
 
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-curso-vacio">
-    <div class="curso-fila" data-index="__INDEX__">
+    <div class="curso-fila registro-item" data-index="__INDEX__">
         <input type="hidden" name="Info_curso-__INDEX__-registro_id" value="">
         <input type="hidden" class="campo-eliminar" name="Info_curso-__INDEX__-eliminar" value="0">
-        <div class="form-grid">
-            <div class="campo">
-                <label>Nombre del curso</label>
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label class="form-label">Nombre del curso</label>
                 <input class="form-control" name="Info_curso-__INDEX__-nombre">
             </div>
-            <div class="campo">
-                <label>Institución</label>
+            <div class="form-group">
+                <label class="form-label">Institución</label>
                 <input class="form-control" name="Info_curso-__INDEX__-institucion">
             </div>
-            <div class="campo">
-                <label>Horas</label>
+            <div class="form-group">
+                <label class="form-label">Horas</label>
                 <input  type="number" class="form-control" name="Info_curso-__INDEX__-horas" min="1">
             </div>
-            <div class="campo">
-                <label>Fecha de realización</label>
+            <div class="form-group">
+                <label class="form-label">Fecha de realización</label>
                 <input type="date"  class="form-control" name="Info_curso-__INDEX__-fecha_realizacion" min="1950-01-01" max="{{ hoy }}">
             </div>
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
     </div>
 </template>
 

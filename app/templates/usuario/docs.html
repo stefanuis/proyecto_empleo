@@ -46,9 +46,10 @@ Documentos
                     <span>{{ d.nombre }} ({{ d.tipo }})</span>
                     <a href="{{ url_for('web.ver_archivo', tipo='documento', id=d.id) }}" target="_blank" rel="noopener">Ver</a>
                     <form method="POST" action="{{ url_for('usuario.eliminar_documento', id=d.id) }}"
-                          onsubmit="return confirm('¿Eliminar este documento?');" style="display:inline;">
+                          data-confirmar="Se eliminará este documento de tu hoja de vida." data-confirmar-tipo="peligro"
+                          data-confirmar-titulo="¿Eliminar documento?" data-confirmar-aceptar="Sí, eliminar" style="display:inline;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                        <button type="submit" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
                     </form>
                 </li>
                 {% endfor %}
@@ -63,25 +64,25 @@ Documentos
  
             <div id="docs-container">
                 {% for entry in form.Info_docs %}
-                <div class="curso-fila" data-index="{{ loop.index0 }}">
+                <div class="curso-fila registro-item" data-index="{{ loop.index0 }}">
  
-                    <div class="form-grid">
-                        <div class="campo">
-                            {{ entry.nombre.label }}
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            {{ entry.nombre.label(class="form-label") }}
                             {{ entry.nombre(class="form-control" + (" is-invalid" if entry.nombre.errors else "")) }}
                             {% for error in entry.nombre.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.tipo.label }}
+                        <div class="form-group">
+                            {{ entry.tipo.label(class="form-label") }}
                             {{ entry.tipo(class="form-control" + (" is-invalid" if entry.tipo.errors else "")) }}
                             {% for error in entry.tipo.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.ruta_soporte.label }}
+                        <div class="form-group">
+                            {{ entry.ruta_soporte.label(class="form-label") }}
                             {{ entry.ruta_soporte(class="form-control" + (" is-invalid" if entry.ruta_soporte.errors else "")) }}
                             {% for error in entry.ruta_soporte.errors %}
                                 <span class="form-error">{{ error }}</span>
@@ -90,7 +91,7 @@ Documentos
                     </div>
  
                     {% if not loop.first %}
-                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -119,14 +120,14 @@ Documentos
     </div>
 </div>
 <template id="plantilla-doc-vacio">
-    <div class="curso-fila" data-index="__INDEX__">
-        <div class="form-grid">
-            <div class="campo">
-                <label>Nombre del documento</label>
+    <div class="curso-fila registro-item" data-index="__INDEX__">
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label class="form-label">Nombre del documento</label>
                 <input class="form-control" name="Info_docs-__INDEX__-nombre">
             </div>
-            <div class="campo">
-                <label>Tipo de documento</label>
+            <div class="form-group">
+                <label class="form-label">Tipo de documento</label>
                 <select class="form-control" name="Info_docs-__INDEX__-tipo">
                     <option value="">Selecciona un tipo</option>
                     <option value="Cédula">Cédula</option>
@@ -138,12 +139,12 @@ Documentos
                     <option value="Otro">Otro</option>
                 </select>
             </div>
-            <div class="campo">
-                <label>Archivo</label>
+            <div class="form-group">
+                <label class="form-label">Archivo</label>
                 <input type="file" class="form-control" name="Info_docs-__INDEX__-ruta_soporte">
             </div>
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
     </div>
 </template>
 

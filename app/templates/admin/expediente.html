@@ -435,7 +435,9 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         {% endif %}
 
         <form method="POST" action="{{ url_for('admin.enviar_rechazo', id=post.id) }}"
-              onsubmit="return confirm('¿Enviar el correo de rechazo a este candidato?');">
+              data-confirmar="¿Enviar el correo de rechazo a este candidato?"
+              data-confirmar-titulo="Enviar respuesta"
+              data-confirmar-aceptar="Sí, enviar">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn-secondary">
                 {{ 'Reenviar correo de rechazo' if post.fecha_correo_rechazo else 'Enviar respuesta al candidato' }}

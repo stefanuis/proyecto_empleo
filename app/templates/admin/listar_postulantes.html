@@ -319,7 +319,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnCitar.addEventListener("click", function () {
         const n = idsSeleccionados().length;
         if (n === 0) {
-            alert("Selecciona al menos un postulante.");
+            Alertas.mostrar("Selecciona al menos un postulante.", "warning");
             return;
         }
         resumen.textContent = "Se enviará un correo a " + n + " postulante(s).";
@@ -343,11 +343,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const ids = idsSeleccionados();
  
         if (ids.length === 0) {
-            alert("Selecciona al menos un postulante.");
+            Alertas.mostrar("Selecciona al menos un postulante.", "warning");
             return;
         }
         if (!campoFecha.value || !campoHora.value) {
-            alert("Indica la fecha y la hora de la entrevista.");
+            Alertas.mostrar("Indica la fecha y la hora de la entrevista.", "warning");
             return;
         }
  
@@ -368,15 +368,20 @@ document.addEventListener("DOMContentLoaded", function () {
         boton.addEventListener("click", function () {
             const ids = idsSeleccionados();
             if (ids.length === 0) {
-                alert("Selecciona al menos un postulante.");
+                Alertas.mostrar("Selecciona al menos un postulante.", "warning");
                 return;
             }
-            if (!confirm(boton.dataset.confirmar + " (" + ids.length + ")")) {
-                return;
-            }
-            document.getElementById("input-accion-masiva").value = boton.dataset.accionMasiva;
-            document.getElementById("input-ids-masivos").value = ids.join(",");
-            formMasivo.submit();
+            Alertas.confirmar(boton.dataset.confirmar, {
+                titulo: ids.length + " postulante(s) seleccionado(s)",
+                tipo: boton.dataset.accionMasiva === "rechazar" ? "peligro" : undefined
+            }).then(function (ok) {
+                if (!ok) {
+                    return;
+                }
+                document.getElementById("input-accion-masiva").value = boton.dataset.accionMasiva;
+                document.getElementById("input-ids-masivos").value = ids.join(",");
+                formMasivo.submit();
+            });
         });
     });
 
@@ -385,7 +390,7 @@ document.addEventListener("DOMContentLoaded", function () {
     btnDescargar.addEventListener("click", function () {
         const ids = idsSeleccionados();
         if (ids.length === 0) {
-            alert("Selecciona al menos un postulante.");
+            Alertas.mostrar("Selecciona al menos un postulante.", "warning");
             return;
         }
         const params = new URLSearchParams();

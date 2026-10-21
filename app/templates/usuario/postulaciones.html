@@ -67,7 +67,10 @@
                             <form
                                 action="{{ url_for('usuario.retirar_postulacion', id=p.post.id) }}"
                                 method="POST"
-                                onsubmit="return confirm('¿Seguro que quieres retirar esta postulación? No podrás volver a postularte a esta vacante.');"
+                                data-confirmar="No podrás volver a postularte a esta vacante."
+                                data-confirmar-tipo="peligro"
+                                data-confirmar-titulo="¿Retirar esta postulación?"
+                                data-confirmar-aceptar="Sí, retirar"
                             >
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn-secondary btn-sm">

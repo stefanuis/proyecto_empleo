@@ -58,14 +58,14 @@
                         </div>
                         <div class="form-group campo-finalizacion">
                             {{ entry.mes_finalizacion.label(class="form-label") }}
-                            {{ entry.mes_finalizacion(class="form-control" + (" is-invalid" if entry.mes_finalizacion.errors else ""), min="1", max="12", placeholder="Mes (1 a 12)") }}
+                            {{ entry.mes_finalizacion(class="form-control" + (" is-invalid" if entry.mes_finalizacion.errors else ""), type="text", inputmode="numeric", maxlength="2", autocomplete="off", data_rango_min="1", data_rango_max="12", data_rango_nombre="El mes", placeholder="Mes (1 a 12)") }}
                             {% for error in entry.mes_finalizacion.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                         <div class="form-group campo-finalizacion">
                             {{ entry.anno_finalizacion.label(class="form-label") }}
-                            {{ entry.anno_finalizacion(class="form-control" + (" is-invalid" if entry.anno_finalizacion.errors else ""), min="1950", max=anio_actual, maxlength="4", placeholder="Año (por ejemplo, 2022)") }}
+                            {{ entry.anno_finalizacion(class="form-control" + (" is-invalid" if entry.anno_finalizacion.errors else ""), type="text", inputmode="numeric", maxlength="4", autocomplete="off", data_rango_min="1950", data_rango_max=anio_actual, data_rango_nombre="El año", placeholder="Año (por ejemplo, 2022)") }}
                             {% for error in entry.anno_finalizacion.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
@@ -132,11 +132,11 @@
             </div>
              <div class="form-group campo-finalizacion">
                 <label class="form-label">Mes finalización</label>
-                <input type="number" class="form-control" name="Info_academica-__INDEX__-mes_finalizacion" min="1" max="12" placeholder="Mes (1 a 12)">
+                <input type="text" inputmode="numeric" maxlength="2" autocomplete="off" class="form-control" name="Info_academica-__INDEX__-mes_finalizacion" data-rango-min="1" data-rango-max="12" data-rango-nombre="El mes" placeholder="Mes (1 a 12)">
             </div>
             <div class="form-group campo-finalizacion">
                 <label class="form-label">Año finalización</label>
-                <input type="number" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion" min="1950" max="{{ anio_actual }}" maxlength="4" placeholder="Año (por ejemplo, 2022)">
+                <input type="text" inputmode="numeric" maxlength="4" autocomplete="off" class="form-control" name="Info_academica-__INDEX__-anno_finalizacion" data-rango-min="1950" data-rango-max="{{ anio_actual }}" data-rango-nombre="El año" placeholder="Año (por ejemplo, 2022)">
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
@@ -195,6 +195,87 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     container.querySelectorAll(".academica-fila").forEach(inicializarToggleEstado);
+
+    // ==========================================================
+    // MES Y AÑO DE FINALIZACIÓN: SOLO DÍGITOS Y DENTRO DEL RANGO
+    // ==========================================================
+
+    function mostrarErrorRango(input, mensaje) {
+        const grupo = input.closest(".form-group");
+        let error = grupo.querySelector(".form-error-rango");
+        // Quita los errores que vinieron del servidor para no repetirlos
+        grupo.querySelectorAll(".form-error:not(.form-error-rango)").forEach(function (e) {
+            e.remove();
+        });
+        if (!mensaje) {
+            input.classList.remove("is-invalid");
+            if (error) error.remove();
+            return;
+        }
+        if (!error) {
+            error = document.createElement("span");
+            error.className = "form-error form-error-rango";
+            grupo.appendChild(error);
+        }
+        error.textContent = mensaje;
+        input.classList.add("is-invalid");
+    }
+
+    function validarRango(input) {
+        const valor = input.value;
+        const min = Number(input.dataset.rangoMin);
+        const max = Number(input.dataset.rangoMax);
+        const largo = Number(input.getAttribute("maxlength"));
+        const numero = Number(valor);
+        const filaEliminada = input.closest(".academica-fila").style.display === "none";
+        if (input.disabled || filaEliminada || valor === "") {
+            mostrarErrorRango(input, "");
+            return true;
+        }
+        if ((largo === 4 && valor.length !== 4) || numero < min || numero > max) {
+            mostrarErrorRango(input, input.dataset.rangoNombre + " debe estar entre " + min + " y " + max + ".");
+            return false;
+        }
+        mostrarErrorRango(input, "");
+        return true;
+    }
+
+    container.addEventListener("input", function (e) {
+        const input = e.target;
+        if (!input.matches("[data-rango-max]")) return;
+
+        const largo = Number(input.getAttribute("maxlength"));
+        const limpio = input.value.replace(/\D/g, "").slice(0, largo);
+        if (limpio !== input.value) {
+            input.value = limpio;
+        }
+        // El mes se valida al instante; el año cuando ya tiene sus 4 dígitos
+        if (limpio.length === largo || Number(limpio) > Number(input.dataset.rangoMax)) {
+            validarRango(input);
+        } else {
+            mostrarErrorRango(input, "");
+        }
+    });
+
+    container.addEventListener("focusout", function (e) {
+        if (e.target.matches("[data-rango-max]")) {
+            validarRango(e.target);
+        }
+    });
+
+    document.getElementById("form-wizard").addEventListener("submit", function (e) {
+        let primero = null;
+        container.querySelectorAll("[data-rango-max]").forEach(function (input) {
+            if (!validarRango(input) && !primero) {
+                primero = input;
+            }
+        });
+        if (primero) {
+            e.preventDefault();
+            primero.focus();
+            Alertas.mostrar("Revisa el mes y el año de finalización.", "warning");
+        }
+    });
 
     // ==========================================================
     // AGREGAR NUEVO REGISTRO

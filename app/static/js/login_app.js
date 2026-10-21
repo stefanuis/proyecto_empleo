@@ -18,41 +18,6 @@ function togglePw() {
 }
 
 
-function mostrarToast(mensaje, color) {
-  const toast = document.createElement("div");
-  toast.textContent = mensaje;
-
-  Object.assign(toast.style, {
-    position:       "fixed",
-    bottom:         "30px",
-    left:           "50%",
-    transform:      "translateX(-50%)",
-    backgroundColor: color,
-    color:          "#fff",
-    padding:        "12px 24px",
-    borderRadius:   "8px",
-    fontSize:       "14px",
-    fontFamily:     "sans-serif",
-    boxShadow:      "0 4px 12px rgba(0,0,0,0.2)",
-    opacity:        "0",
-    transition:     "opacity 0.3s ease",
-    zIndex:         "9999",
-    whiteSpace:     "nowrap",
-  });
-
-  document.body.appendChild(toast);
-
-  // Fade in
-  requestAnimationFrame(() => toast.style.opacity = "1");
-
-  // Fade out y eliminar después de 3 segundos
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.addEventListener("transitionend", () => toast.remove());
-  }, 3000);
-}
-
-
 async function handleSubmit(e) {
 
   e.preventDefault();
@@ -94,10 +59,9 @@ async function handleSubmit(e) {
 
     } else {
       //label.textContent = "Credenciales incorrectas";
-      //alert(data.error);
       btn.disabled = false;
       chevron.style.display = '';
-      mostrarToast(data.error || "Credenciales invalidas !!!", COLORS.error); 
+      Alertas.mostrar(data.error || "Credenciales inválidas.", "error");
 
       label.textContent = "Iniciar Sesión";
     }

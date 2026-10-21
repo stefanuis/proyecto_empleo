@@ -23,34 +23,34 @@
 
             <div id="referencias-personales-container" data-max-filas="{{ LIMITES.referencias_personales }}" data-fila-selector=".referencias-personales-fila" data-boton-agregar="#btn-agregar-referencia-personal" data-contador="#referencias-personales-contador">
                 {% for entry in form.Info_referencias_personales %}
-                <div class="referencias-personales-fila" data-index="{{ loop.index0 }}">
+                <div class="referencias-personales-fila registro-item" data-index="{{ loop.index0 }}">
                     {{ entry.registro_id }}
                     {{ entry.eliminar(class="campo-eliminar", value="0") }}
 
-                    <div class="form-grid">
-                        <div class="campo">
-                            {{ entry.nombres.label }}
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            {{ entry.nombres.label(class="form-label") }}
                             {{ entry.nombres(class="form-control" + (" is-invalid" if entry.nombres.errors else "")) }}
                             {% for error in entry.nombres.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.apellidos.label }}
+                        <div class="form-group">
+                            {{ entry.apellidos.label(class="form-label") }}
                             {{ entry.apellidos(class="form-control" + (" is-invalid" if entry.apellidos.errors else "")) }}
                             {% for error in entry.apellidos.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.parentesco.label }}
+                        <div class="form-group">
+                            {{ entry.parentesco.label(class="form-label") }}
                             {{ entry.parentesco(class="form-control" + (" is-invalid" if entry.parentesco.errors else "")) }}
                             {% for error in entry.parentesco.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
-                        <div class="campo">
-                            {{ entry.telefono.label }}
+                        <div class="form-group">
+                            {{ entry.telefono.label(class="form-label") }}
                             {{ entry.telefono(class="form-control" + (" is-invalid" if entry.telefono.errors else "")) }}
                             {% for error in entry.telefono.errors %}
                                 <span class="form-error">{{ error }}</span>
@@ -58,7 +58,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+                    <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
                 </div>
                 {% endfor %}
             </div>
@@ -80,28 +80,28 @@
 
 <!-- plantilla oculta para clonar filas nuevas -->
 <template id="plantilla-referencias-personales-vacia">
-    <div class="referencias-personales-fila" data-index="__INDEX__">
+    <div class="referencias-personales-fila registro-item" data-index="__INDEX__">
         <input type="hidden" name="Info_referencias_personales-__INDEX__-registro_id" value="">
         <input type="hidden" class="campo-eliminar" name="Info_referencias_personales-__INDEX__-eliminar" value="0">
-        <div class="form-grid">
-            <div class="campo">
-                <label>Nombres</label>
+        <div class="form-grid-2">
+            <div class="form-group">
+                <label class="form-label">Nombres</label>
                 <input class="form-control" name="Info_referencias_personales-__INDEX__-nombres">
             </div>
-            <div class="campo">
-                <label>Apellidos</label>
+            <div class="form-group">
+                <label class="form-label">Apellidos</label>
                 <input class="form-control" name="Info_referencias_personales-__INDEX__-apellidos">
             </div>
-            <div class="campo">
-                <label>Parentesco/Relación</label>
+            <div class="form-group">
+                <label class="form-label">Parentesco/Relación</label>
                 <input class="form-control" name="Info_referencias_personales-__INDEX__-parentesco">
             </div>
-            <div class="campo">
-                <label>Teléfono</label>
+            <div class="form-group">
+                <label class="form-label">Teléfono</label>
                 <input class="form-control" name="Info_referencias_personales-__INDEX__-telefono">
             </div>
         </div>
-        <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
+        <button type="button" class="btn-eliminar-fila" title="Eliminar">Eliminar</button>
     </div>
 </template>
 

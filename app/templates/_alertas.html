@@ -1,21 +1,26 @@
+{# Mensajes del servidor: se muestran como toasts (ver static/js/alertas.js) #}
+{% set iconos_alerta = {"success": "✓", "error": "✕", "warning": "!", "info": "i"} %}
+{% set titulos_alerta = {"success": "Listo", "error": "Error", "warning": "Atención", "info": "Información"} %}
 {% with mensajes_alerta = get_flashed_messages(with_categories=true) %}
-    {% if mensajes_alerta %}
-        <div class="alertas-globales">
-            {% for categoria, mensaje in mensajes_alerta %}
-                {% set categoria_alerta = "error" if categoria == "danger" else categoria %}
-                {% if categoria_alerta not in ["success", "error", "warning", "info"] %}
-                    {% set categoria_alerta = "info" %}
-                {% endif %}
-                <div class="alerta alerta-{{ categoria_alerta }}"
-                     role="alert"
-                     aria-live="assertive"
-                     {% if categoria_alerta in ["success", "info"] %}data-alerta-autocierre="6000"{% endif %}>
+    <div class="alertas-globales" aria-live="polite">
+        {% for categoria, mensaje in mensajes_alerta %}
+            {% set categoria_alerta = "error" if categoria == "danger" else categoria %}
+            {% if categoria_alerta not in iconos_alerta %}
+                {% set categoria_alerta = "info" %}
+            {% endif %}
+            <div class="alerta alerta-{{ categoria_alerta }}"
+                 role="{{ 'alert' if categoria_alerta in ['error', 'warning'] else 'status' }}"
+                 {% if categoria_alerta in ["success", "info"] %}data-alerta-autocierre="6000"{% elif categoria_alerta == "warning" %}data-alerta-autocierre="9000"{% endif %}>
+                <span class="alerta-icono" aria-hidden="true">{{ iconos_alerta[categoria_alerta] }}</span>
+                <div class="alerta-cuerpo">
+                    <strong class="alerta-titulo">{{ titulos_alerta[categoria_alerta] }}</strong>
                     <span class="alerta-mensaje">{{ mensaje }}</span>
-                    <button type="button" class="alerta-cerrar"
-                            aria-label="Cerrar alerta"
-                            data-alerta-cerrar>×</button>
                 </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+                <button type="button" class="alerta-cerrar"
+                        aria-label="Cerrar alerta"
+                        data-alerta-cerrar>×</button>
+                {% if categoria_alerta != "error" %}<span class="alerta-progreso"></span>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
 {% endwith %}

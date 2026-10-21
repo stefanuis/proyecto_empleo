@@ -82,9 +82,15 @@
 
 <script>
 function confirmarEliminar() {
-    if (confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) {
-        alert('Aquí iría la eliminación de cuenta (pendiente de implementar)');
-    }
+    Alertas.confirmar('Esta acción no se puede deshacer.', {
+        tipo: 'peligro',
+        titulo: '¿Eliminar tu cuenta?',
+        textoAceptar: 'Sí, eliminar'
+    }).then(function (ok) {
+        if (ok) {
+            Alertas.mostrar('La eliminación de cuenta aún no está disponible.', 'info');
+        }
+    });
 }
 </script>
 
