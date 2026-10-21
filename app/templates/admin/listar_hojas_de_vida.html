@@ -168,7 +168,7 @@
 
                     <td>
                         {% if post.nivel_mas_alto %}
-                            {{ post.nivel_mas_alto|capitalize }}
+                            {{ post.nivel_mas_alto|nivel_academico }}
                         {% else %}
                             <span style="color:var(--text-secondary);">Sin registrar</span>
                         {% endif %}

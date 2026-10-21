@@ -8,8 +8,8 @@ from flask import (
     flash,
     send_file,
     abort,
-    current_app
-    
+    current_app,
+    jsonify,
 )
 import secrets
 import io
@@ -17,10 +17,8 @@ import zipfile
 import os
 import json
 from sqlalchemy import exists
-from sqlalchemy import case
 from sqlalchemy import func
 import plotly.graph_objects as go
-import plotly.graph_objects as gopip 
 from datetime import date,timedelta
 from flask_login import current_user, login_required
 from datetime import datetime
@@ -28,6 +26,7 @@ from app.extensions import db
 from app.models.user import User
 from sqlalchemy import or_
 from app.models.vacante import Vacante
+from app.models.vacante_funcion import VacanteFuncion
 from app.forms.vacante import VacanteForm
 from app.models.postulacion import Postulacion
 from app.models.personal import Personal
@@ -41,27 +40,112 @@ from app.models.discapacidades import Discapacidades
 from app.models.referencias import Referencias
 from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
-from app.forms.experiencia import experienciaForm
-from app.models.funcion_experiencia import FuncionExperiencia
 from app.models.citacion import Citaciones
 from app.forms.citaciones import CitacionForm
 from app.models.docs import OtrosDocumentos
 from app.utils.generar_pdf import generar_pdf_expediente
-from app.utils.perfil import calcular_completitud_perfil, obtener_nivel_mas_alto,obtener_experiencia_total,formatear_experiencia
-from flask_mail import Message
-from app.extensions import db, mail
+from app.utils.funciones import (
+    funciones_activas_por_area,
+    funciones_de_candidatos,
+    funciones_de_vacante,
+    funciones_validas_para_area,
+    guardar_funciones_vacante,
+    resumen_coincidencia,
+)
+from app.utils.perfil import (
+    DIAS_POR_ANIO,
+    calcular_completitud_perfil,
+    dias_experiencia_por_usuario,
+    formatear_experiencia,
+    obtener_experiencia_total,
+    obtener_nivel_mas_alto,
+)
+from app.extensions import db
+from app.utils.correo import enviar_correo
+from app.utils.archivos import ruta_absoluta
+from app.utils.historial import historial_de, registrar_evento
+from app.constantes import ESTADOS_POSTULACION, MENSAJES_CAMBIO_ESTADO
+from app.utils.permisos import exigir_rol
 
 
 from . import admin_bp
 
+
+@admin_bp.before_request
+def verificar_admin():
+    # Protege TODAS las rutas del blueprint, incluidas las que se agreguen después
+    return exigir_rol("admin")
+
+
+
+DIAS_SIN_REVISAR = 3
+
+
+def _pendientes_dashboard():
+    """Lo que el reclutador debe atender hoy, con el enlace a la lista filtrada."""
+    hoy = date.today()
+    inicio_hoy = datetime.combine(hoy, datetime.min.time())
+    fin_semana = hoy + timedelta(days=6 - hoy.weekday())
+    citaciones_vigentes = Citaciones.query.filter(
+        or_(Citaciones.respuesta.is_(None), Citaciones.respuesta != 'rechazada')
+    )
+
+    return [
+        {
+            "titulo": "Postulaciones sin revisar",
+            "detalle": f"En estado Postulado hace más de {DIAS_SIN_REVISAR} días",
+            "cantidad": Postulacion.query.filter(
+                Postulacion.estado == 'postulado',
+                Postulacion.fecha_postulacion < hoy - timedelta(days=DIAS_SIN_REVISAR),
+            ).count(),
+            "url": url_for('admin.listar_hoja_vida', estado='postulado'),
+        },
+        {
+            "titulo": "Entrevistas hoy",
+            "detalle": "Citaciones programadas para hoy",
+            "cantidad": citaciones_vigentes.filter(Citaciones.fecha == hoy).count(),
+            "url": url_for('admin.listar_citaciones', fecha_desde=hoy.isoformat(), fecha_hasta=hoy.isoformat()),
+        },
+        {
+            "titulo": "Entrevistas esta semana",
+            "detalle": f"Hasta el {fin_semana.strftime('%d/%m')}",
+            "cantidad": citaciones_vigentes.filter(
+                Citaciones.fecha >= hoy, Citaciones.fecha <= fin_semana
+            ).count(),
+            "url": url_for('admin.listar_citaciones', fecha_desde=hoy.isoformat(), fecha_hasta=fin_semana.isoformat()),
+        },
+        {
+            "titulo": "Citaciones sin respuesta",
+            "detalle": "Entrevistas próximas que el candidato no ha confirmado",
+            "cantidad": Citaciones.query.filter(
+                Citaciones.respuesta.is_(None), Citaciones.fecha >= hoy
+            ).count(),
+            "url": url_for('admin.listar_citaciones', estado='sin_responder', fecha_desde=hoy.isoformat()),
+        },
+        {
+            "titulo": "Vacantes con cierre vencido",
+            "detalle": "Siguen activas pero ya pasó su fecha de cierre",
+            "cantidad": Vacante.query.filter(
+                Vacante.estado == 'Activa', Vacante.fecha_cierre < inicio_hoy
+            ).count(),
+            "url": url_for('admin.listar_vacantes', vencidas='1'),
+        },
+        {
+            "titulo": "Vacantes sin funciones",
+            "detalle": "Activas sin funciones del cargo: no se ordenan por coincidencia",
+            "cantidad": Vacante.query.filter(
+                Vacante.estado == 'Activa',
+                ~exists().where(VacanteFuncion.id_vacante == Vacante.id),
+            ).count(),
+            "url": url_for('admin.listar_vacantes', sin_funciones='1'),
+        },
+    ]
 
 
 @admin_bp.route("/principal", methods=["GET"])
 @login_required
 def inicial():
     if(session["rol"] == "admin"):
-        vacantes_labels = ['Analista de Datos', 'Coord. Logística', 'Contador Junior', 'Ejecutivo Comercial']
-        vacantes_data = [22, 18, 15, 9]
         hoy = datetime.now()
 
         dias = [
@@ -107,12 +191,12 @@ def inicial():
 
 
         total_entrevistas = Postulacion.query.filter_by(
-            estado='Entrevista'
+            estado='entrevista'
         ).count()
 
 
         entrevistas_semana_pasada = Postulacion.query.filter(
-            Postulacion.estado == 'Entrevista',
+            Postulacion.estado == 'entrevista',
             Postulacion.fecha_postulacion >= inicio_semana_pasada,
             Postulacion.fecha_postulacion < fin_semana_pasada
         ).count()
@@ -174,8 +258,7 @@ def inicial():
         return render_template(
             'admin/principal.html',
             grafico_html=grafico_html,
-            vacantes_labels=vacantes_labels,
-            vacantes_data=vacantes_data,
+            pendientes=_pendientes_dashboard(),
             total_vacantes_activas=total_vacantes_activas,
             vacantes_esta_semana=vacantes_esta_semana,
             total_hojas=total_hojas,
@@ -199,7 +282,6 @@ def listar_vacantes():
     if session.get("rol") != "admin":
         return "No tienes permiso para acceder a esta página", 403
 
-    accion = request.args.get("accion", "")
     q = request.args.get("q", "").strip()
     area = request.args.get("area", "").strip()
     area_aplicacion = request.args.get("area_aplicacion", "").strip()
@@ -211,48 +293,61 @@ def listar_vacantes():
 
     page = request.args.get("page", 1, type=int)
     per_page = 15
+    # Accesos directos desde los pendientes del dashboard
+    solo_vencidas = request.args.get("vencidas") == "1"
+    solo_sin_funciones = request.args.get("sin_funciones") == "1"
 
     todas_las_vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
 
     query = Vacante.query
 
-    if accion == "buscar":
-        if q:
-            query = query.filter(Vacante.titulo.ilike(f"%{q}%"))
+    if solo_vencidas:
+        query = query.filter(
+            Vacante.estado == 'Activa',
+            Vacante.fecha_cierre < datetime.combine(date.today(), datetime.min.time()),
+        )
+    if solo_sin_funciones:
+        query = query.filter(
+            Vacante.estado == 'Activa',
+            ~exists().where(VacanteFuncion.id_vacante == Vacante.id),
+        )
 
-    elif accion == "filtrar":
-        if area:
-            query = query.filter(Vacante.area == area)
+    # El texto buscado y los filtros se aplican juntos
+    if q:
+        query = query.filter(Vacante.titulo.ilike(f"%{q}%"))
 
-        if area_aplicacion:
-            query = query.filter(Vacante.area_aplicacion == area_aplicacion)
+    if area:
+        query = query.filter(Vacante.area == area)
 
-        if vacante_id:
-            try:
-                query = query.filter(Vacante.id == int(vacante_id))
-            except ValueError:
-                pass
+    if area_aplicacion:
+        query = query.filter(Vacante.area_aplicacion == area_aplicacion)
 
-        if nivel:
-            query = query.filter(Vacante.nivel_academico == nivel)
+    if vacante_id:
+        try:
+            query = query.filter(Vacante.id == int(vacante_id))
+        except ValueError:
+            pass
 
-        if estado:
-            query = query.filter(Vacante.estado == estado)
+    if nivel:
+        query = query.filter(Vacante.nivel_academico == nivel)
 
-        if fecha_desde:
-            try:
-                fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
-                query = query.filter(Vacante.fecha_publicacion >= fecha_desde_dt)
-            except ValueError:
-                pass
+    if estado:
+        query = query.filter(Vacante.estado == estado)
 
-        if fecha_hasta:
-            try:
-                fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d")
-                fecha_hasta_dt += timedelta(days=1)
-                query = query.filter(Vacante.fecha_publicacion < fecha_hasta_dt)
-            except ValueError:
-                pass
+    if fecha_desde:
+        try:
+            fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
+            query = query.filter(Vacante.fecha_publicacion >= fecha_desde_dt)
+        except ValueError:
+            pass
+
+    if fecha_hasta:
+        try:
+            fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d")
+            fecha_hasta_dt += timedelta(days=1)
+            query = query.filter(Vacante.fecha_publicacion < fecha_hasta_dt)
+        except ValueError:
+            pass
 
     # ---- Paginación en SQL (el id desempata para que el orden sea estable) ----
     query = query.order_by(Vacante.fecha_publicacion.desc(), Vacante.id.desc())
@@ -281,9 +376,12 @@ def listar_vacantes():
         )
 
     areas_aplicacion = VacanteForm.area_aplicacion.kwargs["choices"]
+    # Mismos valores que guarda el formulario de vacantes
+    niveles = [v for v, _ in VacanteForm.nivel_academico.kwargs["choices"] if v]
 
     return render_template(
         "admin/listar_vacante.html",
+        niveles=niveles,
         vacantes=vacantes,
         pagination=pagination,
         conteos=conteos,
@@ -297,57 +395,109 @@ def listar_vacantes():
         estado_seleccionado=estado,
         fecha_publicacion_desde_valor=fecha_desde,
         fecha_publicacion_hasta_valor=fecha_hasta,
+        solo_vencidas=solo_vencidas,
+        solo_sin_funciones=solo_sin_funciones,
     )
 
+
+
+@admin_bp.route("/funciones-area", methods=["GET"])
+@login_required
+def funciones_area():
+    """Catálogo de funciones de un área, para el selector de la vacante."""
+    area_aplicacion = request.args.get("area_aplicacion", "").strip()
+    return jsonify({
+        "funciones": [
+            {"id": funcion.id, "nombre": funcion.nombre}
+            for funcion in funciones_activas_por_area(area_aplicacion)
+        ]
+    })
+
+
+def _render_formulario_vacante(form, funciones_seleccionadas, error_funciones=None):
+    return render_template(
+        "admin/crear_vacantes.html",
+        form=form,
+        funciones_seleccionadas=sorted(funciones_seleccionadas),
+        error_funciones=error_funciones,
+    )
+
+
+def _ids_funciones_enviadas():
+    return {int(v) for v in request.form.getlist("funciones") if v.isdigit()}
 
 
 @admin_bp.route("/vacantes/crear", methods=["GET", "POST"])
 @login_required
 def crear_vacante():
-    if(session["rol"] == "admin"):
-        form = VacanteForm()
+    form = VacanteForm()
+    error_funciones = None
 
-        if form.validate_on_submit():
+    if form.validate_on_submit():
+        funciones, error_funciones = funciones_validas_para_area(
+            form.area_aplicacion.data,
+            request.form.getlist("funciones"),
+        )
+        if not error_funciones:
             nueva_vacante = Vacante(
                 titulo=form.titulo.data,
                 area=form.area.data,
+                area_aplicacion=form.area_aplicacion.data,
+                nivel_academico=form.nivel_academico.data,
                 descripcion=form.descripcion.data,
                 requisito=form.requisito.data,
                 salario=form.salario.data,
                 estado=form.estado.data,
-                fecha_publicacion=form.fecha_publicacion.data,
-                fecha_cierre=form.fecha_cierre.data,  
-                 numero_plazas=form.numero_plazas.data,
+                fecha_publicacion=form.fecha_publicacion.data or date.today(),
+                fecha_cierre=form.fecha_cierre.data,
+                numero_plazas=form.numero_plazas.data,
                 requiere_video=form.requiere_video.data,
                 id_usuario_creador=current_user.id
             )
             db.session.add(nueva_vacante)
+            db.session.flush()
+            guardar_funciones_vacante(nueva_vacante.id, funciones)
             db.session.commit()
 
             flash("Vacante creada correctamente.", "success")
             return redirect(url_for("admin.listar_vacantes"))
 
-        return render_template("admin/crear_vacantes.html", form=form)
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
-    
+    return _render_formulario_vacante(
+        form,
+        _ids_funciones_enviadas() if request.method == "POST" else set(),
+        error_funciones,
+    )
+
 
 @admin_bp.route("/vacantes/<int:id>/editar", methods=["GET", "POST"])
 @login_required
 def editar_vacante(id):
-    if(session["rol"] == "admin"):
-        vacante = Vacante.query.get_or_404(id)
-        form = VacanteForm(obj=vacante)
+    vacante = Vacante.query.get_or_404(id)
+    form = VacanteForm(obj=vacante)
+    error_funciones = None
 
-        if form.validate_on_submit():
+    if form.validate_on_submit():
+        funciones, error_funciones = funciones_validas_para_area(
+            form.area_aplicacion.data,
+            request.form.getlist("funciones"),
+        )
+        if not error_funciones:
             form.populate_obj(vacante)   # copia los datos del form al objeto
+            if not vacante.fecha_publicacion:
+                vacante.fecha_publicacion = date.today()
+            guardar_funciones_vacante(vacante.id, funciones)
             db.session.commit()
             flash("Vacante actualizada correctamente.", "success")
             return redirect(url_for("admin.listar_vacantes"))
 
-        return render_template("admin/crear_vacantes.html", form=form)  # reutiliza el mismo template
+    if request.method == "POST":
+        seleccionadas = _ids_funciones_enviadas()
     else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+        seleccionadas = {funcion.id for funcion in funciones_de_vacante(vacante.id)}
+
+    return _render_formulario_vacante(form, seleccionadas, error_funciones)  # reutiliza el mismo template
+
+
 @admin_bp.route("/vacantes/<int:id>/cambiar-estado", methods=["POST"])
 @login_required
 def cambiar_estado_vacante(id):
@@ -360,6 +510,14 @@ def cambiar_estado_vacante(id):
         vacante.estado = 'Cerrada'
         flash(f'La vacante "{vacante.titulo}" fue cerrada.', 'success')
     else:
+        cierre = vacante.fecha_cierre
+        if cierre and (cierre.date() if isinstance(cierre, datetime) else cierre) < date.today():
+            flash(
+                f'La vacante "{vacante.titulo}" tiene la fecha de cierre vencida. '
+                'Edítala y pon una nueva fecha de cierre para reabrirla.',
+                'warning',
+            )
+            return redirect(request.referrer or url_for('admin.listar_vacantes'))
         vacante.estado = 'Activa'
         flash(f'La vacante "{vacante.titulo}" fue reabierta.', 'success')
 
@@ -381,6 +539,7 @@ def eliminar_vacante(id):
         return redirect(url_for('admin.listar_vacantes'))
 
     titulo = vacante.titulo
+    VacanteFuncion.query.filter_by(id_vacante=id).delete(synchronize_session=False)
     db.session.delete(vacante)
     db.session.commit()
     flash(f'La vacante "{titulo}" fue eliminada.', 'success')
@@ -400,16 +559,41 @@ def listar_postulantes(id):
     nivel_estudios = request.args.get('nivel_estudios', '').strip()
     titulo_estudios = request.args.get('titulo_estudios', '').strip()
     funcion_buscar = request.args.get('funcion', '').strip()
- 
+
+    # ---- Funciones del cargo y coincidencia con cada candidato ----
+    funciones_vacante = funciones_de_vacante(id)
+    ids_funciones_vacante = [funcion.id for funcion in funciones_vacante]
+    funciones_filtro = {
+        int(valor) for valor in request.args.getlist('funciones') if valor.isdigit()
+    } & set(ids_funciones_vacante)
+    modo_funciones = request.args.get('modo_funciones', 'alguna')
+    if modo_funciones not in ('alguna', 'todas'):
+        modo_funciones = 'alguna'
+
     page = request.args.get('page', 1, type=int)
     per_page = 15
- 
+
+    # Cuántas funciones del cargo tiene cada candidato en su perfil
+    subq_coincidencia = db.session.query(
+        PerfilFuncion.id_usuario.label('id_usuario'),
+        func.count(PerfilFuncion.id).label('cantidad'),
+    ).filter(
+        PerfilFuncion.id_funcion.in_(ids_funciones_vacante)
+    ).group_by(
+        PerfilFuncion.id_usuario
+    ).subquery()
+    coincidencia = func.coalesce(subq_coincidencia.c.cantidad, 0)
+
     query = db.session.query(
         Postulacion,
-        Personal
+        Personal,
+        coincidencia,
     ).join(
         Personal,
         Personal.id_usuario == Postulacion.id_usuario
+    ).outerjoin(
+        subq_coincidencia,
+        subq_coincidencia.c.id_usuario == Postulacion.id_usuario
     ).filter(
         Postulacion.id_vacante == id
     )
@@ -419,31 +603,25 @@ def listar_postulantes(id):
  
     if experiencia_minima:
         try:
-            experiencia_minima_float = float(experiencia_minima)
- 
-            fecha_fin_efectiva = case(
-                (Experiencia.actual == True, date.today()),
-                else_=Experiencia.fecha_salida
-            )
- 
-            duracion_anios = (
-                func.datediff(fecha_fin_efectiva, Experiencia.fecha_ingreso) / 365.25
-            )
- 
-            subq_experiencia = db.session.query(
-                Experiencia.id_usuario
-            ).group_by(
-                Experiencia.id_usuario
-            ).having(
-                func.sum(duracion_anios) >= experiencia_minima_float
-            ).subquery()
- 
-            query = query.filter(
-                Postulacion.id_usuario.in_(db.session.query(subq_experiencia.c.id_usuario))
-            )
- 
+            minimo_dias = float(experiencia_minima) * DIAS_POR_ANIO
         except ValueError:
-            pass
+            minimo_dias = None
+
+        if minimo_dias is not None:
+            # Mismo cálculo que la columna "Experiencia" de la tabla
+            ids_postulantes = [
+                id_usuario
+                for (id_usuario,) in db.session.query(Postulacion.id_usuario)
+                .filter(Postulacion.id_vacante == id)
+                .distinct()
+            ]
+            dias_por_usuario = dias_experiencia_por_usuario(ids_postulantes)
+            ids_cumplen = [
+                id_usuario
+                for id_usuario, dias in dias_por_usuario.items()
+                if dias >= minimo_dias
+            ]
+            query = query.filter(Postulacion.id_usuario.in_(ids_cumplen))
  
     if nivel_estudios:
         subq_nivel = db.session.query(
@@ -467,14 +645,30 @@ def listar_postulantes(id):
             Postulacion.id_usuario.in_(db.session.query(subq_titulo.c.id_usuario))
         )
  
-    if funcion_buscar:
-        subq_funcion = db.session.query(
-            Experiencia.id_usuario
-        ).join(
-            FuncionExperiencia,
-            FuncionExperiencia.id_experiencia == Experiencia.id
+    if funciones_filtro:
+        subq_funciones = db.session.query(
+            PerfilFuncion.id_usuario
         ).filter(
-            FuncionExperiencia.funcion.ilike(f"%{funcion_buscar}%")
+            PerfilFuncion.id_funcion.in_(funciones_filtro)
+        ).group_by(
+            PerfilFuncion.id_usuario
+        )
+        if modo_funciones == 'todas':
+            subq_funciones = subq_funciones.having(
+                func.count(func.distinct(PerfilFuncion.id_funcion)) == len(funciones_filtro)
+            )
+        query = query.filter(Postulacion.id_usuario.in_(subq_funciones))
+
+    # Búsqueda por texto: solo para vacantes antiguas sin funciones definidas
+    if funcion_buscar and not funciones_vacante:
+        # Las funciones del candidato se registran en su Perfil profesional
+        subq_funcion = db.session.query(
+            PerfilFuncion.id_usuario
+        ).join(
+            FuncionArea,
+            FuncionArea.id == PerfilFuncion.id_funcion
+        ).filter(
+            FuncionArea.nombre.ilike(f"%{funcion_buscar}%")
         ).subquery()
  
         query = query.filter(
@@ -482,9 +676,14 @@ def listar_postulantes(id):
         )
  
     # ---- Paginación en SQL ----
-    # El id desempata fechas iguales para que el orden entre páginas sea estable.
-    query = query.order_by(Postulacion.fecha_postulacion.desc(), Postulacion.id.desc())
- 
+    # Primero los que más funciones del cargo cumplen; el id desempata
+    # fechas iguales para que el orden entre páginas sea estable.
+    query = query.order_by(
+        coincidencia.desc(),
+        Postulacion.fecha_postulacion.desc(),
+        Postulacion.id.desc(),
+    )
+
     total = query.count()
     total_paginas = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_paginas))   # evita páginas fuera de rango
@@ -501,14 +700,22 @@ def listar_postulantes(id):
         'next_num': page + 1,
     }
  
-    # Nivel académico y experiencia solo para las filas de la página actual
+    # Nivel, experiencia y funciones cumplidas solo para las filas de la página actual
+    funciones_por_candidato = funciones_de_candidatos(
+        [postulacion.id_usuario for postulacion, _personal, _cantidad in resultados],
+        ids_funciones_vacante,
+    )
     postulaciones = []
-    for postulacion, personal in resultados:
+    for postulacion, personal, _cantidad in resultados:
         nivel = obtener_nivel_mas_alto(postulacion.id_usuario)
         experiencia_anos = obtener_experiencia_total(postulacion.id_usuario)
         experiencia_texto = formatear_experiencia(experiencia_anos)
-        postulaciones.append((postulacion, personal, nivel, experiencia_texto))
- 
+        resumen = resumen_coincidencia(
+            funciones_vacante,
+            funciones_por_candidato[postulacion.id_usuario],
+        )
+        postulaciones.append((postulacion, personal, nivel, experiencia_texto, resumen))
+
     return render_template(
         "admin/listar_postulantes.html",
         vacante=vacante,
@@ -518,7 +725,10 @@ def listar_postulantes(id):
         experiencia_seleccionada=experiencia_minima,
         nivel_estudios_seleccionado=nivel_estudios,
         titulo_estudios_seleccionado=titulo_estudios,
-        funcion_seleccionada=funcion_buscar
+        funcion_seleccionada=funcion_buscar,
+        funciones_vacante=funciones_vacante,
+        funciones_filtro=funciones_filtro,
+        modo_funciones=modo_funciones,
     )
  
 
@@ -542,14 +752,12 @@ def descargar_documentos_candidato(id):
             if not documento.ruta_soporte:
                 continue
 
-            ruta_absoluta = os.path.join(
-                current_app.root_path, 'static', documento.ruta_soporte
-            )
+            ruta = ruta_absoluta(documento.ruta_soporte)
 
-            if os.path.exists(ruta_absoluta):
+            if ruta:
                 extension = os.path.splitext(documento.ruta_soporte)[1]
                 nombre_en_zip = f"{documento.tipo or 'documento'}_{documento.nombre}{extension}"
-                zf.write(ruta_absoluta, nombre_en_zip)
+                zf.write(ruta, nombre_en_zip)
 
     zip_buffer.seek(0)
 
@@ -563,6 +771,7 @@ def descargar_documentos_candidato(id):
     )
 
 @admin_bp.route('/postulante/<int:id>/expediente')
+@login_required
 def ver_expediente(id):
     if(session["rol"] == "admin"):
         post = Postulacion.query.get_or_404(id)
@@ -587,10 +796,18 @@ def ver_expediente(id):
         discapacidades=Discapacidades.query.filter_by(id_usuario=post.id_usuario).all()
         documentos = OtrosDocumentos.query.filter_by(id_usuario=post.id_usuario).all()
 
+        funciones_vacante = funciones_de_vacante(vacante.id)
+        coincidencia = resumen_coincidencia(
+            funciones_vacante,
+            {funcion.id for funcion in funciones_perfil},
+        )
+
         return render_template('admin/expediente.html',
                                 post=post,
                                 usuario=usuario,
                                 vacante=vacante,
+                                coincidencia=coincidencia,
+                                historial=historial_de(post.id),
                                 personal=personal,
                                 perfil_profesional=perfil_profesional,
                                 funciones_perfil=funciones_perfil,
@@ -604,37 +821,175 @@ def ver_expediente(id):
     else:
         return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
 
-@admin_bp.route("/postulacion/<int:id>/actualizar", methods=["POST"])
-@login_required
-def actualizar_postulacion(id):
-    if session.get("rol") != "admin":
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.", 403)
+NOTAS_POR_AREA = (
+    ("notas_reclutador", "reclutador"),
+    ("notas_psicologia", "psicología"),
+    ("notas_talento_humano", "gestión humana"),
+)
 
-    postulacion = Postulacion.query.get_or_404(id)
 
-    nuevo_estado = request.form.get("estado", postulacion.estado)
+def _cambiar_estado(postulacion, nuevo_estado):
+    """Cambia el estado y deja el registro en el historial (no hace commit).
+
+    Si queda contratado, retira sus otras postulaciones abiertas y devuelve
+    la lista de las que retiró.
+    """
+    anterior = postulacion.estado
     postulacion.estado = nuevo_estado
-    postulacion.notas_reclutador = request.form.get("notas_reclutador", "")
-    postulacion.notas_psicologia = request.form.get("notas_psicologia", "")
-    postulacion.notas_talento_humano = request.form.get("notas_talento_humano", "")
     postulacion.fecha_actualizacion = datetime.now()
+    registrar_evento(
+        postulacion.id,
+        f"Cambió el estado: {ESTADOS_POSTULACION.get(anterior, anterior)} "
+        f"→ {ESTADOS_POSTULACION[nuevo_estado]}",
+    )
 
+    retiradas = []
     if nuevo_estado == 'contratado':
-        otras_postulaciones = Postulacion.query.filter(
+        vacante = db.session.get(Vacante, postulacion.id_vacante)
+        retiradas = Postulacion.query.filter(
             Postulacion.id_usuario == postulacion.id_usuario,
             Postulacion.id != postulacion.id,
             Postulacion.estado.notin_(['contratado', 'rechazado', 'retirada'])
         ).all()
-
-        for otra in otras_postulaciones:
+        for otra in retiradas:
             otra.estado = 'retirada'
             otra.fecha_actualizacion = datetime.now()
+            registrar_evento(
+                otra.id,
+                "Retirada automáticamente",
+                f"El candidato fue contratado en la vacante \"{vacante.titulo if vacante else ''}\".",
+                autor=None,
+            )
+    return retiradas
 
+
+def _notificar_cambio_estado(postulacion, retiradas=()):
+    """Correo al candidato con el nuevo estado. Devuelve True si se envió."""
+    textos = MENSAJES_CAMBIO_ESTADO.get(postulacion.estado)
+    candidato = db.session.get(User, postulacion.id_usuario)
+    vacante = db.session.get(Vacante, postulacion.id_vacante)
+    if not textos or not candidato or not candidato.correo:
+        return False
+
+    enviado = enviar_correo(
+        candidato.correo,
+        textos["asunto"],
+        "correos/estado_postulacion.html",
+        nombres=candidato.nombres,
+        vacante=vacante.titulo if vacante else "",
+        titulo=textos["titulo"],
+        mensaje=textos["mensaje"],
+        otras_retiradas=len(retiradas),
+    )
+    if enviado:
+        registrar_evento(
+            postulacion.id,
+            "Se notificó al candidato por correo",
+            textos["asunto"],
+        )
+    return enviado
+
+
+@admin_bp.route("/postulacion/<int:id>/actualizar", methods=["POST"])
+@login_required
+def actualizar_postulacion(id):
+    postulacion = Postulacion.query.get_or_404(id)
+
+    nuevo_estado = request.form.get("estado", postulacion.estado)
+    if nuevo_estado not in ESTADOS_POSTULACION:
+        flash("El estado seleccionado no es válido.", "error")
+        return redirect(url_for('admin.ver_expediente', id=postulacion.id))
+
+    for campo, area in NOTAS_POR_AREA:
+        nuevas = (request.form.get(campo) or "").strip()
+        if nuevas != (getattr(postulacion, campo) or "").strip():
+            setattr(postulacion, campo, nuevas)
+            registrar_evento(postulacion.id, f"Actualizó las notas de {area}")
+
+    retiradas = []
+    cambio_estado = nuevo_estado != postulacion.estado
+    if cambio_estado:
+        retiradas = _cambiar_estado(postulacion, nuevo_estado)
+    postulacion.fecha_actualizacion = datetime.now()
     db.session.commit()
+
+    mensaje = "Cambios guardados."
+    if retiradas:
+        mensaje += f" Se retiraron {len(retiradas)} postulación(es) abiertas del candidato."
+    flash(mensaje, "success")
+
+    if cambio_estado and request.form.get("notificar") == "1" and nuevo_estado in MENSAJES_CAMBIO_ESTADO:
+        if _notificar_cambio_estado(postulacion, retiradas):
+            flash("Se avisó al candidato por correo.", "success")
+        else:
+            flash("No se pudo enviar el correo al candidato.", "warning")
+        db.session.commit()
 
     return redirect(url_for('admin.listar_postulantes', id=postulacion.id_vacante))
 
-@admin_bp.route('/admin/postulantes/<int:id>/descargar-expediente')
+@admin_bp.route("/vacantes/<int:id>/acciones-masivas", methods=["POST"])
+@login_required
+def acciones_masivas(id):
+    """Cambios de estado sobre varios postulantes de una vacante a la vez."""
+    vacante = Vacante.query.get_or_404(id)
+    accion = request.form.get("accion")
+    ids = {
+        int(valor)
+        for valor in request.form.get("ids", "").split(",")
+        if valor.strip().isdigit()
+    }
+    volver = redirect(request.referrer or url_for('admin.listar_postulantes', id=id))
+
+    if accion not in ("revision", "rechazar") or not ids:
+        flash("Selecciona al menos un postulante y una acción válida.", "error")
+        return volver
+
+    # Solo postulaciones de esta vacante, aunque el formulario envíe otros ids
+    postulaciones = Postulacion.query.filter(
+        Postulacion.id.in_(ids),
+        Postulacion.id_vacante == id,
+    ).all()
+
+    if accion == "revision":
+        cambiadas = [p for p in postulaciones if p.estado == "postulado"]
+        for postulacion in cambiadas:
+            _cambiar_estado(postulacion, "revision")
+        db.session.commit()
+        mensaje = f"{len(cambiadas)} postulante(s) pasaron a En revisión."
+        omitidas = len(postulaciones) - len(cambiadas)
+        if omitidas:
+            mensaje += f" {omitidas} no estaban en estado Postulado y no se cambiaron."
+        flash(mensaje, "success")
+        return volver
+
+    # Rechazar y enviar correo
+    cambiadas = [
+        p for p in postulaciones
+        if p.estado not in ("contratado", "retirada", "rechazado")
+    ]
+    enviados = 0
+    for postulacion in cambiadas:
+        _cambiar_estado(postulacion, "rechazado")
+        candidato = db.session.get(User, postulacion.id_usuario)
+        if candidato and candidato.correo and enviar_correo_rechazo(
+            email=candidato.correo,
+            nombres=candidato.nombres,
+            vacante=vacante.titulo,
+        ):
+            postulacion.fecha_correo_rechazo = datetime.now()
+            registrar_evento(postulacion.id, "Se envió el correo de rechazo al candidato")
+            enviados += 1
+    db.session.commit()
+
+    mensaje = f"{len(cambiadas)} postulante(s) rechazados; {enviados} correo(s) enviados."
+    omitidas = len(postulaciones) - len(cambiadas)
+    if omitidas:
+        mensaje += f" {omitidas} ya estaban contratados, retirados o rechazados."
+    flash(mensaje, "success" if enviados == len(cambiadas) else "warning")
+    return volver
+
+
+@admin_bp.route('/postulantes/<int:id>/descargar-expediente')
 @login_required
 def descargar_expediente(id):
     if session.get("rol") != "admin":
@@ -679,7 +1034,7 @@ def descargar_expediente(id):
     )
 
 
-@admin_bp.route('/admin/hoja-de-vida')
+@admin_bp.route('/hoja-de-vida')
 @login_required
 def listar_hoja_vida():
 
@@ -833,7 +1188,7 @@ def listar_hoja_vida():
         pagination=pagination
     )
 
-@admin_bp.route('/admin/expedientes/descargar-zip')
+@admin_bp.route('/expedientes/descargar-zip')
 @login_required
 def descargar_expedientes_zip():
 
@@ -859,6 +1214,10 @@ def descargar_expedientes_zip():
             usuario = User.query.get_or_404(post.id_usuario)
             personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
             vacante = Vacante.query.get(post.id_vacante)
+
+            # Sin información personal no se puede armar la hoja de vida
+            if personal is None or vacante is None:
+                continue
             academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
             referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
 
@@ -886,37 +1245,28 @@ def descargar_expedientes_zip():
 #### Gestion de envio de citaciones ########
 
 def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje, link_confirmar, link_rechazar):
-    try:
-        msg = Message(
-            subject='Has sido citado a una entrevista',
-            sender='noresponder@clinpanamericana.com',
-            recipients=[email]
-        )
-        msg.attach(
-            filename="logo_color.png",
-            content_type="image/png",
-            data=open("app/static/img/logo_color.png", "rb").read(),
-            disposition="inline",
-            headers={"Content-ID": "<logo_color>"}
-        )
-        msg.html = render_template(
-            "c_citacion.html",
-            nombres=nombres,
-            fecha=fecha,
-            hora=hora,
-            lugar=lugar,
-            mensaje=mensaje,
-            link_confirmar=link_confirmar,
-            link_rechazar=link_rechazar,
-        )
-        mail.send(msg)
-        return True
-    except Exception as e:
-        print("ERROR SMTP al enviar citación:")
-        print(type(e))
-        print(str(e))
+    return enviar_correo(
+        email,
+        'Has sido citado a una entrevista',
+        "c_citacion.html",
+        nombres=nombres,
+        fecha=fecha,
+        hora=hora,
+        lugar=lugar,
+        mensaje=mensaje,
+        link_confirmar=link_confirmar,
+        link_rechazar=link_rechazar,
+    )
 
-@admin_bp.route("admin/citaciones")
+
+def _fecha_o_none(texto):
+    try:
+        return datetime.strptime(texto, '%Y-%m-%d').date()
+    except (TypeError, ValueError):
+        return None
+
+
+@admin_bp.route("/citaciones")
 @login_required
 def listar_citaciones():
 
@@ -943,14 +1293,16 @@ def listar_citaciones():
             (User.nombres.ilike(busqueda)) | (User.apellidos.ilike(busqueda))
         )
 
-    if vacante_id:
+    if vacante_id and vacante_id.isdigit():
         query = query.filter(Postulacion.id_vacante == int(vacante_id))
 
-    if fecha_desde:
-        query = query.filter(Citaciones.fecha >= datetime.strptime(fecha_desde, '%Y-%m-%d').date())
+    fecha_desde_dt = _fecha_o_none(fecha_desde)
+    if fecha_desde_dt:
+        query = query.filter(Citaciones.fecha >= fecha_desde_dt)
 
-    if fecha_hasta:
-        query = query.filter(Citaciones.fecha <= datetime.strptime(fecha_hasta, '%Y-%m-%d').date())
+    fecha_hasta_dt = _fecha_o_none(fecha_hasta)
+    if fecha_hasta_dt:
+        query = query.filter(Citaciones.fecha <= fecha_hasta_dt)
 
     if estados_seleccionados:
         condiciones = []
@@ -964,7 +1316,20 @@ def listar_citaciones():
         if condiciones:
             query = query.filter(or_(*condiciones))
 
-    citaciones = query.order_by(Citaciones.fecha.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    paginado = query.order_by(
+        Citaciones.fecha.desc(), Citaciones.hora.desc(), Citaciones.id.desc()
+    ).paginate(page=page, per_page=15, error_out=False)
+    citaciones = paginado.items
+    pagination = {
+        'page': paginado.page,
+        'pages': paginado.pages,
+        'total': paginado.total,
+        'has_prev': paginado.has_prev,
+        'has_next': paginado.has_next,
+        'prev_num': paginado.prev_num,
+        'next_num': paginado.next_num,
+    }
 
     return render_template(
         'admin/citaciones.html',
@@ -975,18 +1340,26 @@ def listar_citaciones():
         estados_seleccionados=estados_seleccionados,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
+        pagination=pagination,
     )
 
-@admin_bp.route('/admin/vacantes/<int:id>/citar-seleccionados', methods=['POST'])
+@admin_bp.route('/vacantes/<int:id>/citar-seleccionados', methods=['POST'])
 @login_required
 def citar_seleccionados(id):
     datos_raw = request.form.get('postulaciones_seleccionadas')
- 
+
     if not datos_raw:
         flash('No seleccionaste ningún postulante.', 'error')
         return redirect(url_for('admin.listar_postulantes', id=id))
- 
-    datos = json.loads(datos_raw)
+
+    try:
+        datos = json.loads(datos_raw)
+    except ValueError:
+        datos = None
+    if not isinstance(datos, dict):
+        flash('Los datos de la citación no son válidos.', 'error')
+        return redirect(url_for('admin.listar_postulantes', id=id))
+
     ids = datos.get('ids', [])
     fecha_str = datos.get('fecha')
     hora_str = datos.get('hora')
@@ -1003,9 +1376,17 @@ def citar_seleccionados(id):
     except ValueError:
         flash('La fecha o la hora tienen un formato inválido.', 'error')
         return redirect(url_for('admin.listar_postulantes', id=id))
- 
-    postulaciones = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
- 
+
+    if datetime.combine(fecha, hora) <= datetime.now():
+        flash('La citación debe ser en una fecha y hora futuras.', 'error')
+        return redirect(url_for('admin.listar_postulantes', id=id))
+
+    # Solo postulaciones de esta vacante, aunque el formulario envíe otros ids
+    postulaciones = Postulacion.query.filter(
+        Postulacion.id.in_(ids),
+        Postulacion.id_vacante == id,
+    ).all()
+
     enviados = 0
     fallidos = 0
  
@@ -1028,7 +1409,6 @@ def citar_seleccionados(id):
             token=token,
             fecha_envio=datetime.now()
         )
-        db.session.add(nueva_citacion)
  
         link_confirmacion = url_for(
             'usuario.responder_citacion',
@@ -1055,7 +1435,15 @@ def citar_seleccionados(id):
         )
  
         if exito:
-            post.estado = 'entrevista'
+            # Solo se guarda la citación si el candidato recibió el correo
+            db.session.add(nueva_citacion)
+            if post.estado != 'entrevista':
+                _cambiar_estado(post, 'entrevista')
+            registrar_evento(
+                post.id,
+                "Citado a entrevista",
+                f"{fecha.strftime('%d/%m/%Y')} a las {hora_str} · {lugar}",
+            )
             enviados += 1
         else:
             fallidos += 1
@@ -1102,15 +1490,19 @@ def reprogramar_citacion(id):
         flash("No se encontró la información de contacto de la cuenta del candidato.", "error")
         return redirect(url_for("admin.listar_citaciones"))
 
-    citacion.fecha = datetime.strptime(
-        fecha,
-        "%Y-%m-%d"
-    ).date()
+    try:
+        nueva_fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
+        nueva_hora = datetime.strptime(hora, "%H:%M").time()
+    except ValueError:
+        flash("La fecha o la hora tienen un formato inválido.", "error")
+        return redirect(url_for("admin.listar_citaciones"))
 
-    citacion.hora = datetime.strptime(
-        hora,
-        "%H:%M"
-    ).time()
+    if datetime.combine(nueva_fecha, nueva_hora) <= datetime.now():
+        flash("La nueva citación debe ser en una fecha y hora futuras.", "error")
+        return redirect(url_for("admin.listar_citaciones"))
+
+    citacion.fecha = nueva_fecha
+    citacion.hora = nueva_hora
 
     citacion.lugar = lugar
     citacion.mensaje = mensaje
@@ -1120,6 +1512,11 @@ def reprogramar_citacion(id):
     citacion.estado = "pendiente"
     citacion.fecha_respuesta = None
 
+    registrar_evento(
+        postulacion.id,
+        "Entrevista reprogramada",
+        f"{nueva_fecha.strftime('%d/%m/%Y')} a las {hora} · {lugar}",
+    )
     db.session.commit()
 
     # Enlaces para responder a la nueva citación
@@ -1158,32 +1555,14 @@ def reprogramar_citacion(id):
     )
 
 def enviar_correo_rechazo(email, nombres, vacante):
-    try:
-        msg = Message(
-            subject='Resultado de tu postulación',
-            sender='noresponder@clinpanamericana.com',
-            recipients=[email]
-        )
-        with open("app/static/img/logo_color.png", "rb") as f:
-            msg.attach(
-                filename="logo_color.png",
-                content_type="image/png",
-                data=f.read(),
-                disposition="inline",
-                headers={"Content-ID": "<logo_color>"}
-            )
-        msg.html = render_template(
-            "c_rechazo.html",
-            nombres=nombres,
-            vacante=vacante,
-        )
-        mail.send(msg)
-        return True
-    except Exception as e:
-        print("ERROR SMTP al enviar rechazo:")
-        print(type(e))
-        print(str(e))
-        return False
+    return enviar_correo(
+        email,
+        'Resultado de tu postulación',
+        "c_rechazo.html",
+        nombres=nombres,
+        vacante=vacante,
+    )
+
 
 @admin_bp.route("/postulacion/<int:id>/enviar-rechazo", methods=["POST"])
 @login_required
@@ -1212,6 +1591,7 @@ def enviar_rechazo(id):
 
     if enviado:
         postulacion.fecha_correo_rechazo = datetime.now()
+        registrar_evento(postulacion.id, "Se envió el correo de rechazo al candidato")
         db.session.commit()
         flash('Correo de rechazo enviado al candidato.', 'success')
     else:

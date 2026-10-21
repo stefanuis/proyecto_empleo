@@ -28,7 +28,7 @@
 
                 <p class="vacante-fecha-pub">
                     <i class="ti ti-clock"></i>
-                    Publicada el {{ vacante.fecha_publicacion.strftime('%d de %B de %Y') if vacante.fecha_publicacion else 'Sin fecha' }}
+                    Publicada el {{ vacante.fecha_publicacion|fecha_larga if vacante.fecha_publicacion else 'Sin fecha' }}
                 </p>
 
                 <div class="divider"></div>
@@ -67,13 +67,42 @@
                     <p class="vacante-funciones">{{ vacante.requisito or 'Sin requisito disponible.' }}</p>
                 </div>
 
+                {% if coincidencia.total %}
+                <h3 class="vacante-detalle-subtitulo">Funciones del cargo</h3>
+                <div class="vacante-detalle-texto">
+                    <p>
+                        <strong>Cumples {{ coincidencia.cantidad }} de {{ coincidencia.total }} funciones</strong>
+                        según tu Perfil profesional.
+                    </p>
+                    <div class="coincidencia-barra" role="img"
+                         aria-label="{{ coincidencia.cantidad }} de {{ coincidencia.total }} funciones">
+                        <span style="width: {{ coincidencia.porcentaje }}%"></span>
+                    </div>
+                    <ul class="funciones-match-lista">
+                        {% for funcion in coincidencia.cumplidas %}
+                            <li class="funcion-cumple"><span aria-hidden="true">✓</span> {{ funcion.nombre }}</li>
+                        {% endfor %}
+                        {% for funcion in coincidencia.faltantes %}
+                            <li class="funcion-falta"><span aria-hidden="true">○</span> {{ funcion.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% if coincidencia.faltantes %}
+                        <p class="form-hint">
+                            ¿Dominas alguna de las que faltan?
+                            <a href="{{ url_for('usuario.perfil_profesional') }}">Actualiza tu Perfil profesional</a>.
+                        </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
             </div>
 
             <!-- ===== Columna derecha: acción + tips ===== -->
             <aside class="vacante-col-lateral">
 
                 <form method="POST" action="{{ url_for('usuario.postular', id=vacante.id) }}" class="vacante-form-postular">
-                    {% if vacante.estado == 'Activa' %}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if vacante.estado == 'Activa' and not convocatoria_cerrada %}
                         {% if requisitos_no_cumplidos %}
                             <div class="aviso-compatibilidad" role="status">
                                 {% if perfil_profesional_faltante %}
@@ -85,6 +114,21 @@
                                 {% endif %}
                             </div>
                         {% else %}
+                            {% if vacante.requiere_video %}
+                                <div class="campo-video-presentacion">
+                                    <label for="video_url" class="form-label">
+                                        Enlace a tu video de presentación <span aria-hidden="true">*</span>
+                                    </label>
+                                    <input type="url" id="video_url" name="video_url"
+                                           class="form-control" maxlength="500" required
+                                           placeholder="https://youtu.be/...">
+                                    <small class="form-hint">
+                                        Esta vacante pide un video corto (1 a 2 minutos) presentándote.
+                                        Súbelo a YouTube como "no listado" o a Google Drive con acceso
+                                        "cualquier persona con el enlace" y pega aquí la dirección.
+                                    </small>
+                                </div>
+                            {% endif %}
                             <button type="submit" class="btn-postular btn-full-lateral">
                                 Postularme
                             </button>

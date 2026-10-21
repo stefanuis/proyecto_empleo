@@ -1,0 +1,28 @@
+# Secretos y configuración local
+.env
+
+# Entorno virtual
+env/
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Base de datos local
+*.db
+
+# Archivos que suben los usuarios (datos personales)
+app/static/uploads/
+
+# Editores / sistema
+.vscode/
+.idea/
+*~
+Thumbs.db
+
+#archivos adjuntos de los tickets
+app/uploads/
+# Documentos de los candidatos (carpeta privada, ver UPLOAD_FOLDER)
+archivos_privados/

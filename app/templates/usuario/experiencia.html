@@ -20,7 +20,7 @@
         <form method="POST" id="form-wizard" class="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
-            <label class="campo-checkbox">
+            <label class="campo-checkbox opcion-no-tengo">
                 <input type="checkbox" id="no-tengo-experiencia"
                        name="no_tengo_experiencia" value="1"
                        {% if no_tengo %}checked{% endif %}>
@@ -71,6 +71,13 @@
                             {{ entry.motivo.label(class="form-label") }}
                             {{ entry.motivo(class="form-control" + (" is-invalid" if entry.motivo.errors else "")) }}
                             {% for error in entry.motivo.errors %}
+                                <span class="form-error">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="form-group campo-motivo-otro">
+                            {{ entry.otro.label(class="form-label") }}
+                            {{ entry.otro(class="form-control" + (" is-invalid" if entry.otro.errors else ""), maxlength="250") }}
+                            {% for error in entry.otro.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
@@ -143,13 +150,13 @@
                 <input class="form-control" name="Info_experiencia-__INDEX__-cargo">
             </div>
 
-            <div class="form-group campo-checkbox">
+            <label class="form-group campo-checkbox">
                 <input type="checkbox" class="campo-actual" name="Info_experiencia-__INDEX__-actual">
-                <label>Trabajando actualmente</label>
-            </div>
+                <span>Trabajando actualmente</span>
+            </label>
 
             <div class="form-group campo-motivo-salida">
-                <label class="form-label">Nivel</label>
+                <label class="form-label">Motivo de salida</label>
                 <select class="form-control" name="Info_experiencia-__INDEX__-motivo">
                     <option value="" disabled selected>Motivo de salida</option>
                     <option value="renuncia">Renuncia</option>
@@ -159,6 +166,10 @@
                     <option value="motivos_personales">Motivos personales</option>
                     <option value="otra">Otra</option>
                 </select>
+            </div>
+            <div class="form-group campo-motivo-otro">
+                <label class="form-label">¿Cuál fue el motivo?</label>
+                <input class="form-control" name="Info_experiencia-__INDEX__-otro" maxlength="250">
             </div>
             <div class="form-group">
                 <label class="form-label">Fecha de ingreso</label>
@@ -228,6 +239,26 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (ocultar) input.value = "";
             }
         });
+
+        actualizarVisibilidadOtro(fila);
+    }
+
+    // El detalle del motivo solo aplica si dejó el empleo y eligió "Otra"
+    function actualizarVisibilidadOtro(fila) {
+        const checkboxActual = fila.querySelector(".campo-actual");
+        const selectMotivo = fila.querySelector("select[name$='-motivo']");
+        const campoOtro = fila.querySelector(".campo-motivo-otro");
+        if (!campoOtro || !selectMotivo) return;
+
+        const mostrar = !(checkboxActual && checkboxActual.checked)
+            && selectMotivo.value === "otra";
+        const input = campoOtro.querySelector("input");
+
+        campoOtro.style.display = mostrar ? "" : "none";
+        if (input) {
+            input.disabled = !mostrar;
+            if (!mostrar) input.value = "";
+        }
     }
 
     function inicializarToggleActual(fila) {
@@ -239,6 +270,13 @@ document.addEventListener("DOMContentLoaded", function () {
         checkboxActual.addEventListener("change", function () {
             actualizarVisibilidadSalida(fila);
         });
+
+        const selectMotivo = fila.querySelector("select[name$='-motivo']");
+        if (selectMotivo) {
+            selectMotivo.addEventListener("change", function () {
+                actualizarVisibilidadOtro(fila);
+            });
+        }
     }
 
     container.querySelectorAll(".experiencia-fila").forEach(inicializarToggleActual);

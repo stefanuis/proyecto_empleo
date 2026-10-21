@@ -42,14 +42,6 @@ class cursoItemForm(Form):
         ]
     )
 
-    area = StringField(
-        "area del cursos",
-        validators=[
-            DataRequired(),
-            Length(max= 100)
-        ]
-    )
-
     horas = IntegerField(
         "horas de los cursos",
         validators=[

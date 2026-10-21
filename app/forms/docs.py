@@ -9,18 +9,21 @@ from wtforms import (
     FormField
 )
 from wtforms.validators import (
-    DataRequired,
+    Optional,
     Length
 )
 
 
+# Nombre y tipo solo se exigen en las filas que traen archivo (lo valida la
+# ruta), así el candidato puede continuar sin subir nada nuevo si ya tiene
+# los documentos obligatorios.
 class documentoItemForm(Form):
     """Formulario para un documento individual"""
 
     nombre = StringField(
         "Nombre del documento",
         validators=[
-            DataRequired(),
+            Optional(),
             Length(max=50)
         ]
     )
@@ -45,7 +48,7 @@ class documentoItemForm(Form):
             ("Constancia", "Constancia"),
             ("Otro", "Otro")
         ],
-        validators=[DataRequired()]
+        validators=[Optional()]
     )
 
 

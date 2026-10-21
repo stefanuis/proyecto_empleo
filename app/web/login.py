@@ -1,22 +1,29 @@
 from flask import (
-    session,
-    render_template,
     request,
     redirect,
     url_for,
     flash
 )
-from flask_login import login_required, logout_user
+from flask_login import login_required
 from . import web_bp
-
-@web_bp.route("/")
-def login():
-    return render_template("login.html")
+from app.utils.sesion import cerrar_sesion
 
 
-@web_bp.route("/")
+@web_bp.route("/cerrar-sesion")
 def cerrar():
 
-    logout_user()
+    cerrar_sesion()
 
-    return redirect(url_for("inicio"))
+    # El script de inactividad llega aquí con ?motivo=inactividad
+    if request.args.get("motivo") == "inactividad":
+        flash("Tu sesión se cerró por inactividad. Vuelve a iniciar sesión.", "warning")
+    else:
+        flash("Sesión cerrada correctamente.", "success")
+    return redirect(url_for("web.login"))
+
+
+@web_bp.route("/sesion/mantener")
+@login_required
+def mantener_sesion():
+    # El before_request ya renovó la actividad; aquí no hay nada más que hacer
+    return "", 204

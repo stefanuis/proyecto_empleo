@@ -1,27 +1,78 @@
-{% extends 'usuario/base.html' %}
-{% block contenido %}
-<div style="max-width:500px;margin:60px auto;text-align:center;font-family:'DM Sans',Arial,sans-serif;">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Citación a entrevista</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
+    {# Página independiente: el candidato llega desde el correo sin sesión iniciada #}
+    <style>
+        body { margin: 0; background: #f6f6f8; font-family: 'DM Sans', Arial, sans-serif; }
+        .caja { max-width: 500px; margin: 60px auto; padding: 32px 24px; background: #fff;
+                border-radius: 12px; text-align: center; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+        .caja img { max-width: 160px; margin-bottom: 16px; }
+        h2 { margin-top: 0; }
+        p { color: #54545A; line-height: 1.5; }
+        .titulo-principal { color: #D81B60; }
+        .titulo-neutro { color: #54545A; }
+        .acciones { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        button, .btn { border: 0; border-radius: 8px; padding: 12px 20px; font-size: 15px;
+                       cursor: pointer; text-decoration: none; font-family: inherit; }
+        .btn-primario { background: #D81B60; color: #fff; }
+        .btn-neutro { background: #eee; color: #54545A; }
+    </style>
+</head>
+<body>
+<div class="caja">
+    <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Logo">
+
     {% if not citacion %}
-        <h2 style="color:#D81B60;">Enlace inválido</h2>
-        <p style="color:#54545A;">Este enlace no es válido o ha expirado.</p>
+        <h2 class="titulo-principal">Enlace inválido</h2>
+        <p>Este enlace no es válido o ha expirado.</p>
 
     {% elif ya_respondida %}
-        <h2 style="color:#54545A;">Ya respondiste a esta citación</h2>
-        <p style="color:#54545A;">
+        <h2 class="titulo-neutro">Ya respondiste a esta citación</h2>
+        <p>
             Tu respuesta anterior fue:
             <strong>{{ 'Confirmada' if citacion.respuesta == 'confirmada' else 'Rechazada' }}</strong>
         </p>
 
+    {% elif pendiente %}
+        <h2 class="titulo-principal">Citación a entrevista</h2>
+        <p>
+            Fecha: <strong>{{ citacion.fecha.strftime('%d/%m/%Y') }}</strong>
+            a las <strong>{{ citacion.hora.strftime('%I:%M %p') }}</strong>
+            {% if citacion.lugar %}<br>Lugar: <strong>{{ citacion.lugar }}</strong>{% endif %}
+        </p>
+        <p>
+            {% if respuesta == 'confirmar' %}
+                ¿Confirmas tu asistencia a la entrevista?
+            {% else %}
+                ¿Seguro que no podrás asistir a la entrevista?
+            {% endif %}
+        </p>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="acciones">
+                {% if respuesta == 'confirmar' %}
+                    <button type="submit" class="btn-primario">Sí, confirmo mi asistencia</button>
+                {% else %}
+                    <button type="submit" class="btn-primario">Sí, rechazar la citación</button>
+                {% endif %}
+            </div>
+        </form>
+
     {% elif respuesta == 'confirmar' %}
-        <h2 style="color:#D81B60;">✓ Has confirmado tu asistencia</h2>
-        <p style="color:#54545A;">
+        <h2 class="titulo-principal">✓ Has confirmado tu asistencia</h2>
+        <p>
             Te esperamos el {{ citacion.fecha.strftime('%d/%m/%Y') }} a las {{ citacion.hora.strftime('%I:%M %p') }}
             {% if citacion.lugar %} en {{ citacion.lugar }}{% endif %}.
         </p>
 
     {% else %}
-        <h2 style="color:#54545A;">Has rechazado la citación</h2>
-        <p style="color:#54545A;">Gracias por avisarnos. Esperamos verte en futuras oportunidades.</p>
+        <h2 class="titulo-neutro">Has rechazado la citación</h2>
+        <p>Gracias por avisarnos. Esperamos verte en futuras oportunidades.</p>
     {% endif %}
 </div>
-{% endblock %}
+</body>
+</html>

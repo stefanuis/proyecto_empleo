@@ -6,40 +6,21 @@
    <main class="page-content">
 
     <p class="dashboard-fecha">{{ fecha_hoy }}</p>
-    <h1 class="dashboard-saludo">Hola, {{ current_user.nombre or 'admin' }}</h1>
+    <h1 class="dashboard-saludo">Hola, {{ current_user.nombres or 'admin' }}</h1>
 
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <p class="kpi-label">Vacantes activas</p>
-                <p class="kpi-value">{{ total_vacantes_activas }}</p>
-                <p class="kpi-delta">↑ {{ vacantes_esta_semana }}</p>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-label">Hojas recibidas</p>
-                <p class="kpi-value">{{ total_hojas }}</p>
-                <p class="kpi-delta">↑ {{ hojas_esta_semana }}</p>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-label">Entrevistas</p>
-                <p class="kpi-value">{{ total_entrevistas }}</p>
-                <p class="kpi-delta down">↓ {{ entrevistas_semana_pasada }} vs. semana pasada</p>
-            </div>
-           <div class="kpi-card">
-                <p class="kpi-label">Por cerrar</p>
-                <p class="kpi-value">{{ total_por_cerrar }}</p>
-
-                {% if dias_para_cierre is not none %}
-                    {% if dias_para_cierre == 0 %}
-                        <p class="kpi-delta down">Cierra hoy</p>
-                    {% elif dias_para_cierre == 1 %}
-                        <p class="kpi-delta down">Cierre en 1 día</p>
-                    {% else %}
-                        <p class="kpi-delta down">Cierre en {{ dias_para_cierre }} días</p>
-                    {% endif %}
-                {% else %}
-                    <p class="kpi-delta">Sin cierres próximos</p>
-                {% endif %}
-            </div>
+        <!-- Pendientes: lo que hay que atender hoy -->
+        <h2 class="pendientes-titulo">Pendientes</h2>
+        <div class="pendientes-grid">
+            {% for pendiente in pendientes %}
+                <a href="{{ pendiente.url }}"
+                   class="pendiente-card {{ 'pendiente-activo' if pendiente.cantidad else 'pendiente-ok' }}">
+                    <span class="pendiente-cantidad">{{ pendiente.cantidad }}</span>
+                    <span class="pendiente-texto">
+                        <strong>{{ pendiente.titulo }}</strong>
+                        <small>{{ pendiente.detalle }}</small>
+                    </span>
+                </a>
+            {% endfor %}
         </div>
 
         <div class="card-config">

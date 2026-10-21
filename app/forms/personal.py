@@ -6,13 +6,17 @@ from wtforms import (
     IntegerField,
     SubmitField
 )
+from datetime import date
+
 from wtforms.validators import (
     DataRequired,
     Optional,
     Length,
-    NumberRange
+    NumberRange,
+    ValidationError,
 )
 from app.constantes import GRUPO_ETNICO_OPCIONES
+from app.forms.validaciones import EDAD_MAXIMA, EDAD_MINIMA, sumar_anios
 
 
 class InfoPersonalForm(FlaskForm):
@@ -59,13 +63,13 @@ class InfoPersonalForm(FlaskForm):
     fecha_exp_doc = DateField(
         "Fecha de expedición",
         format="%Y-%m-%d",
-        validators=[Optional()]
+        validators=[DataRequired(message="La fecha de expedición es obligatoria y debe ser una fecha válida.")]
     )
 
     fecha_nacimiento = DateField(
         "Fecha de nacimiento",
         format="%Y-%m-%d",
-        validators=[Optional()]
+        validators=[DataRequired(message="La fecha de nacimiento es obligatoria y debe ser una fecha válida.")]
     )
 
     genero = SelectField(
@@ -172,6 +176,35 @@ class InfoPersonalForm(FlaskForm):
     )
 
     submit = SubmitField("Guardar")
+
+    # WTForms ejecuta automáticamente los métodos validate_<campo>
+
+    def validate_fecha_nacimiento(self, field):
+        hoy = date.today()
+        if field.data > hoy:
+            raise ValidationError("La fecha de nacimiento no puede ser futura.")
+        if sumar_anios(field.data, EDAD_MINIMA) > hoy:
+            raise ValidationError(f"Debes tener al menos {EDAD_MINIMA} años.")
+        if sumar_anios(field.data, EDAD_MAXIMA) < hoy:
+            raise ValidationError("Revisa la fecha de nacimiento: la edad no es válida.")
+
+    def validate_fecha_exp_doc(self, field):
+        if field.data > date.today():
+            raise ValidationError("La fecha de expedición no puede ser futura.")
+
+        nacimiento = self.fecha_nacimiento.data
+        if not nacimiento:
+            return
+        if field.data < nacimiento:
+            raise ValidationError(
+                "La fecha de expedición no puede ser anterior a la de nacimiento."
+            )
+        # La cédula de ciudadanía solo se expide desde los 18 años
+        if self.tipo_doc.data == "CC" and field.data < sumar_anios(nacimiento, 18):
+            raise ValidationError(
+                "La cédula de ciudadanía se expide a partir de los 18 años; "
+                "revisa la fecha de expedición o la de nacimiento."
+            )
 
 
 

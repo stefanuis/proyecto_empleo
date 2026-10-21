@@ -9,19 +9,14 @@ Principal Usuario
 <div class="contenedor-padre">
     <div class="contenedor-formulario">
 
-        <!-- Mostrar mensajes flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show m-3">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        {# Los mensajes flash ya los muestra admin/base.html #}
+        <h1 class="formulario-titulo">
+            {{ 'Editar vacante' if request.endpoint == 'admin.editar_vacante' else 'Crear vacante' }}
+        </h1>
 
-        <form method="POST" novalidate>
+        <form method="POST" novalidate
+              data-funciones-url="{{ url_for('admin.funciones_area') }}"
+              data-funciones-iniciales="{{ funciones_seleccionadas|tojson }}">
 
             {{ form.hidden_tag() }}
 
@@ -132,10 +127,9 @@ Principal Usuario
                     {% endfor %}
                 </div>
                 
-                 <div class="campo">
+                <div class="campo">
                     {{ form.numero_plazas.label }}
                     {{ form.numero_plazas(class="form-control") }}
-                <div class="campo">
                     {% for error in form.numero_plazas.errors %}
                         <span class="error">{{ error }}</span>
                     {% endfor %}
@@ -143,17 +137,61 @@ Principal Usuario
 
                 <div class="campo campo-completo">
                     <label class="form-label">
-                        <input type="checkbox" name="requiere_video" value="1" id="requiere_video">
+                        {{ form.requiere_video() }}
                         ¿Requiere enlace al video de presentación?
                     </label>
                 </div>
 
             </div>
 
+            <!-- Funciones del cargo: se comparan con las del perfil de cada candidato -->
+            <section class="perfil-profesional-funciones" aria-labelledby="funciones-titulo">
+                <h2 id="funciones-titulo" class="perfil-profesional-subtitulo">
+                    Funciones del cargo
+                </h2>
+                <p class="form-hint">
+                    Marca las funciones que debe dominar el candidato. Los postulantes se
+                    ordenarán según cuántas de estas funciones tienen en su perfil.
+                </p>
+                {% if error_funciones %}
+                    <span class="error" role="alert">{{ error_funciones }}</span>
+                {% endif %}
+                <p id="funciones-aviso" class="form-hint" role="status" hidden>
+                    Al cambiar de área, las funciones marcadas se reemplazarán.
+                </p>
+                <label for="buscar-funciones" class="form-label">Buscar funciones</label>
+                <input id="buscar-funciones" class="form-control" type="search"
+                       placeholder="Escribe para filtrar funciones" disabled>
+
+                <div id="funciones-mensaje" class="perfil-profesional-mensaje" role="status">
+                    Elige primero un área de aplicación para ver sus funciones.
+                </div>
+                <div id="funciones-lista" class="perfil-profesional-lista"
+                     aria-live="polite"></div>
+            </section>
+
+            <section class="perfil-profesional-vista-previa"
+                     aria-labelledby="funciones-seleccionadas-titulo">
+                <div class="perfil-profesional-vista-previa-cabecera">
+                    <h2 id="funciones-seleccionadas-titulo"
+                        class="perfil-profesional-subtitulo">Funciones seleccionadas</h2>
+                    <span id="funciones-contador" class="perfil-profesional-contador"
+                          aria-live="polite">0 seleccionadas</span>
+                </div>
+                <p id="funciones-vacias" class="form-hint">
+                    Aún no has marcado funciones.
+                </p>
+                <ul id="funciones-seleccionadas" class="perfil-profesional-seleccionadas"></ul>
+            </section>
+
             <div class="form-botones">
 
+                <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary">
+                    Cancelar
+                </a>
+
                 <button type="submit" class="btn-primary">
-                    Guardar
+                    Guardar vacante
                 </button>
 
             </div>
@@ -163,20 +201,26 @@ Principal Usuario
     </div>
 </div>
 
+<script src="{{ url_for('static', filename='js/perfil_profesional.js') }}" defer></script>
 <script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
 <script>
    document.addEventListener("DOMContentLoaded", function () {
 
+    const cierre = flatpickr("#fecha_cierre", {
+        dateFormat: "Y-m-d",
+        altInput: true,
+        altFormat: "d/m/Y",
+        minDate: document.getElementById("fecha_publicacion").value || "today"
+    });
+
+    // El cierre no puede ser anterior a la publicación
     flatpickr("#fecha_publicacion", {
         dateFormat: "Y-m-d",
         altInput: true,
-        altFormat: "d/m/Y"
-    });
-
-    flatpickr("#fecha_cierre", {
-        dateFormat: "Y-m-d",
-        altInput: true,
-        altFormat: "d/m/Y"
+        altFormat: "d/m/Y",
+        onChange: function (fechas) {
+            cierre.set("minDate", fechas[0] || "today");
+        }
     });
 
 });

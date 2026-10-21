@@ -34,3 +34,4 @@ class Experiencia(db.Model):
         texto += f"entidad: {self.entidad}"
         texto += f"area: {self.area}"
         texto += f"cargo: {self.cargo}"
+        return texto

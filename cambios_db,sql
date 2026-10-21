@@ -95,8 +95,8 @@ UPDATE tbl_info_personal SET grupo_etnico = NULL WHERE grupo_etnico = 'Otro' AND
 -- ---------------------------------------------------------------------
 CALL sp_agregar_columna('tbl_vacante', 'requiere_video', 'BOOLEAN NOT NULL DEFAULT FALSE');
 CALL sp_agregar_columna('tbl_vacante', 'cupos', 'INT NULL');
--- link_video: confirma en qué tabla vive (postulación o vacante)
--- CALL sp_agregar_columna('tbl_postulacion', 'link_video', 'VARCHAR(255) NULL');
+-- video de presentación: va en la postulación (la vacante solo dice si lo requiere)
+CALL sp_agregar_columna('tbl_postulacion', 'video_url', 'VARCHAR(500) NULL');
 -- notas de las áreas internas: confirma la tabla (postulación)
 -- CALL sp_agregar_columna('tbl_postulacion', 'notas_psicologia', 'TEXT NULL');
 -- CALL sp_agregar_columna('tbl_postulacion', 'notas_talento_humano', 'TEXT NULL');
@@ -161,3 +161,36 @@ CREATE TABLE IF NOT EXISTS tbl_paso_omitido (
 
 -- 5. Datos: grupo étnico "Otro" ya no es opción válida
 UPDATE tbl_info_personal SET grupo_etnico = NULL WHERE grupo_etnico = 'Otro' AND id > 0;
+-- ---------------------------------------------------------------------
+-- 7. Funciones que exige cada vacante (coincidencia con el candidato)
+--    Se comparan con tbl_perfil_funcion para ordenar a los postulantes.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tbl_vacante_funcion (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_vacante INT NOT NULL,
+    id_funcion INT NOT NULL,
+    UNIQUE KEY uq_vacante_funcion (id_vacante, id_funcion),
+    KEY ix_tbl_vacante_funcion_id_vacante (id_vacante),
+    CONSTRAINT fk_vacante_funcion_vacante
+        FOREIGN KEY (id_vacante) REFERENCES tbl_vacante (id) ON DELETE CASCADE,
+    CONSTRAINT fk_vacante_funcion_funcion
+        FOREIGN KEY (id_funcion) REFERENCES tbl_funcion_area (id)
+);
+
+-- ---------------------------------------------------------------------
+-- 8. Historial de cada postulación (quién hizo qué y cuándo)
+--    id_autor NULL = evento del sistema (p. ej. respuesta a una citación).
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS tbl_postulacion_historial (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_postulacion INT NOT NULL,
+    id_autor INT NULL,
+    accion VARCHAR(255) NOT NULL,
+    detalle TEXT NULL,
+    fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY ix_tbl_postulacion_historial_id_postulacion (id_postulacion),
+    CONSTRAINT fk_historial_postulacion
+        FOREIGN KEY (id_postulacion) REFERENCES tbl_postulacion (id) ON DELETE CASCADE,
+    CONSTRAINT fk_historial_autor
+        FOREIGN KEY (id_autor) REFERENCES tbl_usuario (id)
+);

@@ -37,12 +37,15 @@ class referenciasItemForm(Form):
         ]
     )
 
+    # Se guarda en la columna "parentesco" del modelo, pero en una referencia
+    # laboral lo que interesa es el cargo o la relación (jefe, compañero...)
     parentesco = StringField(
-        "Parentesco/Relación laboral",
+        "Cargo / relación laboral",
         validators=[
             DataRequired(),
             Length(max=30)
-        ]
+        ],
+        render_kw={"placeholder": "Ej: Jefe inmediato"}
     )
 
     empresa = StringField(

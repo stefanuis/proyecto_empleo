@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear contraseña - Clínica Panamericana</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/login.css') }}">
+    <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
+</head>
+
+<body>
+
+<div class="page">
+    <div class="card">
+        <div class="strip"></div>
+        <div class="inner">
+            <header class="card-header">
+                <div>
+                    <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Clinica Panamericana">
+                    <br><br><br>
+                    <h1><em>Crea tu contraseña</em></h1>
+                    <p>Hola, {{ usuario.nombres }}. Define la contraseña de tu cuenta ({{ usuario.correo }}).</p>
+                </div>
+            </header>
+
+            {% include "_alertas.html" %}
+
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="field-stack">
+                    <div class="floating-field">
+                        {{ form.password(placeholder=" ", autocomplete="new-password", autofocus=true) }}
+                        {{ form.password.label }}
+                        <span class="field-focus-bar"></span>
+                    </div>
+                    {% for error in form.password.errors %}
+                        <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+
+                    <div class="floating-field">
+                        {{ form.confirm_password(placeholder=" ", autocomplete="new-password") }}
+                        {{ form.confirm_password.label }}
+                        <span class="field-focus-bar"></span>
+                    </div>
+                    {% for error in form.confirm_password.errors %}
+                        <span class="form-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+
+                <p class="form-hint">
+                    Mínimo 8 caracteres, con al menos una mayúscula, una minúscula y un número.
+                </p>
+
+                <button class="btn-submit" type="submit">
+                    <span class="btn-text">Guardar contraseña</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

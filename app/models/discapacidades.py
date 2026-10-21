@@ -24,3 +24,4 @@ class Discapacidades(db.Model):
         texto += f"categoria: {self.categoria}"
         texto += f"descripcion: {self.descripcion}"
         texto += f"ruta_certificado: {self.ruta_certificado}"
+        return texto

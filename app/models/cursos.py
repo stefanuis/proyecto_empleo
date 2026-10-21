@@ -26,6 +26,7 @@ class Cursos(db.Model):
         texto += f"nombre: {self.nombre}"
         texto += f"institucion: {self.institucion}"
         texto += f"area: {self.area}"
+        return texto
 
 
 

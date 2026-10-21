@@ -73,7 +73,7 @@
             {% for v in vacantes %}
                 <div class="card-vacante">
                     <div class="card-header">
-                        <div class="{{ 'icono-azul' if v.area == 'Administrativo' else 'icono-teal' }}"></div>
+                        <div class="icono icono-teal" aria-hidden="true"><i class="ti ti-briefcase"></i></div>
                         <div class="card-titulos">
                             <p class="card-cargo">{{ v.titulo }}</p>
                             <p class="card-categoria">{{ v.area_aplicacion or 'Área no especificada' }}</p>
@@ -91,11 +91,15 @@
                         {% if v.salario %}<span class="tag">{{ v.salario }}</span>{% endif %}
                         {% if v.nivel_academico %}<span class="tag">{{ v.nivel_academico }}</span>{% endif %}
                         {% if v.requiere_video %}<span class="tag tag-video">Requiere video</span>{% endif %}
+                        {% set coincidencia = coincidencias.get(v.id) %}
+                        {% if coincidencia %}
+                            <span class="tag">Cumples {{ coincidencia[0] }} de {{ coincidencia[1] }} funciones</span>
+                        {% endif %}
                     </div>
 
                     <div class="card-footer">
                         <p class="card-fecha">
-                            Publicada el {{ v.fecha_publicacion.strftime('%d %b %Y') if v.fecha_publicacion else '' }}
+                            Publicada el {{ v.fecha_publicacion|fecha_corta }}
                         </p>
                         <a href="{{ url_for('usuario.detalle_vacante', id=v.id) }}" class="btn-postular">
                             Ver detalle

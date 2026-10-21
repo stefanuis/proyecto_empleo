@@ -27,3 +27,4 @@ class Referencias(db.Model):
         texto += f"nombres: {self.nombres}"
         texto += f"apellidos: {self.apellidos}"
         texto += f"parentesco: {self.parentesco}"
+        return texto

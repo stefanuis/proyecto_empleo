@@ -246,7 +246,9 @@
 
 .vacante-card {
     display: flex;
-    align-items: center;
+    /* La tarjeta es una columna (regla de arriba): el texto va alineado a la
+       izquierda, no centrado */
+    align-items: stretch;
     justify-content: space-between;
     gap: 12px;
     background: var(--bg-main);

@@ -36,6 +36,7 @@
             <!-- ===================== -->
 
             <form method="POST" action="{{ url_for('web.login_post') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="field-stack">
                     <div class="floating-field">
                         <input

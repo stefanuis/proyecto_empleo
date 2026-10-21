@@ -1,5 +1,33 @@
 
 from datetime import date, datetime
+from urllib.parse import urlparse
+
+LARGO_MAXIMO_URL_VIDEO = 500
+
+
+def validar_url_video(texto):
+    """Valida el enlace al video de presentación.
+
+    Devuelve (url_limpia, error). Se acepta cualquier enlace http(s) para no
+    dejar por fuera plataformas (YouTube, Drive, Vimeo, OneDrive...).
+    """
+    url = (texto or "").strip()
+    if not url:
+        return None, "Esta vacante requiere el enlace a tu video de presentación."
+    if len(url) > LARGO_MAXIMO_URL_VIDEO:
+        return None, "El enlace del video es demasiado largo."
+
+    partes = urlparse(url)
+    if (
+        partes.scheme not in ("http", "https")
+        or "." not in partes.netloc
+        or " " in url
+    ):
+        return None, (
+            "El enlace del video no es válido. Copia la dirección completa, "
+            "por ejemplo https://youtu.be/..."
+        )
+    return url, None
 
 
 def fila_vacia(entry, campos):
@@ -152,14 +180,30 @@ def rangos_se_cruzan(inicio_a, fin_a, inicio_b, fin_b):
     )
 
 
-def _fecha_minima_por_edad(fecha_nacimiento, edad):
+FECHA_MINIMA = date(1950, 1, 1)
+EDAD_MINIMA = 14
+EDAD_MAXIMA = 100
+
+
+def sumar_anios(fecha, anios):
+    """Misma fecha `anios` años después (el 29 de febrero pasa al 28)."""
     try:
-        return fecha_nacimiento.replace(year=fecha_nacimiento.year + edad)
+        return fecha.replace(year=fecha.year + anios)
     except ValueError:
-        return fecha_nacimiento.replace(
-            year=fecha_nacimiento.year + edad,
+        return fecha.replace(
+            year=fecha.year + anios,
             day=28,
         )
+
+
+def fecha_con_formato_invalido(campo):
+    """True si el usuario escribió algo en un DateField que no es una fecha."""
+    texto = " ".join(campo.raw_data or []).strip()
+    return bool(texto) and campo.data is None
+
+
+def _fecha_minima_por_edad(fecha_nacimiento, edad):
+    return sumar_anios(fecha_nacimiento, edad)
 
 
 def validar_experiencia(
@@ -210,6 +254,8 @@ def validar_experiencia(
     if not entry.actual.data:
         if not entry.motivo.data:
             errores.append("El motivo de salida es obligatorio.")
+        elif entry.motivo.data == "otra" and not (entry.otro.data or "").strip():
+            errores.append("Describe cuál fue el motivo de salida.")
 
         if not fecha_salida:
             errores.append("La fecha de salida es obligatoria.")
@@ -217,10 +263,11 @@ def validar_experiencia(
     return errores
      
 
-def validar_cursos(entry):
+def validar_cursos(entry, fecha_nacimiento=None, hoy=None):
 
 
         errores= []
+        hoy = hoy or date.today()
 
         if not entry.nombre.data:
             errores.append(
@@ -232,7 +279,28 @@ def validar_cursos(entry):
                 "La institución es obligatoria."
             )
 
-        return errores     
+        if entry.horas.data is not None and entry.horas.data <= 0:
+            errores.append(
+                "Las horas deben ser un número mayor a 0."
+            )
+
+        fecha = a_fecha(entry.fecha_realizacion.data)
+        nacimiento = a_fecha(fecha_nacimiento)
+
+        if fecha_con_formato_invalido(entry.fecha_realizacion):
+            errores.append("La fecha de realización no es una fecha válida.")
+        elif not fecha:
+            errores.append("La fecha de realización es obligatoria.")
+        elif fecha > hoy:
+            errores.append("La fecha de realización no puede ser futura.")
+        elif fecha < FECHA_MINIMA:
+            errores.append("La fecha de realización debe ser desde 1950.")
+        elif nacimiento and fecha < nacimiento:
+            errores.append(
+                "La fecha de realización no puede ser anterior a tu nacimiento."
+            )
+
+        return errores
 def validar_referencias(entry):
     
         
@@ -251,6 +319,11 @@ def validar_referencias(entry):
         if not entry.empresa.data:
             errores.append(
                 "La empresa es obligatoria."
+            )
+
+        if not (entry.parentesco.data or "").strip():
+            errores.append(
+                "El cargo o relación laboral es obligatorio."
             )
 
         if not entry.autoriza.data:

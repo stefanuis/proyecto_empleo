@@ -56,7 +56,7 @@ class experienciaItemForm(Form):
     )
 
     motivo = SelectField(
-    "Nivel",
+    "Motivo de salida",
     choices=[
         ("renuncia", "Renuncia"),
         ("terminacion_contrato", "Terminación de contrato"),
@@ -71,7 +71,7 @@ class experienciaItemForm(Form):
     )
 
     otro = StringField(
-        "Otro detalle",
+        "¿Cuál fue el motivo?",
         validators=[
             Optional(),
             Length(max=250)

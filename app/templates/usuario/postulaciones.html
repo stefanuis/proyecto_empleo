@@ -36,11 +36,10 @@
             {% for p in postulaciones %}
                 <div class="card-vacante">
                     <div class="card-header">
-                        <div class="icono {{ 'icono' if p.vacante.area == 'Administrativa' else 'icono' }}">
-                        </div>
+                        <div class="icono icono-teal" aria-hidden="true"><i class="ti ti-briefcase"></i></div>
                         <div class="card-titulos">
                             <p class="card-cargo">{{ p.vacante.titulo }}</p>
-                            <p class="card-categoria">Postulado el {{ p.post.fecha_postulacion.strftime('%d %b %Y') if p.post.fecha_postulacion else '—' }}</p>
+                            <p class="card-categoria">Postulado el {{ p.post.fecha_postulacion|fecha_corta }}</p>
                         </div>
                         <span class="tag tag-estado estado-{{ p.post.estado }}">{{ p.post.estado|capitalize }}</span>
                     </div>
@@ -70,6 +69,7 @@
                                 method="POST"
                                 onsubmit="return confirm('¿Seguro que quieres retirar esta postulación? No podrás volver a postularte a esta vacante.');"
                             >
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn-secondary btn-sm">
                                     Retirar postulación
                                 </button>

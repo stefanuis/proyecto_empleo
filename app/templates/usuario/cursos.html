@@ -21,7 +21,7 @@
         <form method="POST" id="form-wizard" novalidate>
             {{ form.hidden_tag() }}
 
-            <label class="campo-checkbox">
+            <label class="campo-checkbox opcion-no-tengo">
                 <input type="checkbox" id="no-tengo-cursos"
                        name="no_tengo_cursos" value="1"
                        {% if no_tengo %}checked{% endif %}>
@@ -52,14 +52,14 @@
                         </div>
                         <div class="campo">
                             {{ entry.horas.label }}
-                            {{ entry.horas(class="form-control") }}
+                            {{ entry.horas(class="form-control" + (" is-invalid" if entry.horas.errors else ""), min="1") }}
                             {% for error in entry.horas.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
                         </div>
                         <div class="campo">
                             {{ entry.fecha_realizacion.label }}
-                            {{ entry.fecha_realizacion(class="form-control") }}
+                            {{ entry.fecha_realizacion(class="form-control" + (" is-invalid" if entry.fecha_realizacion.errors else ""), min="1950-01-01", max=hoy) }}
                             {% for error in entry.fecha_realizacion.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
@@ -102,16 +102,12 @@
                 <input class="form-control" name="Info_curso-__INDEX__-institucion">
             </div>
             <div class="campo">
-                <label>Área</label>
-                <input class="form-control" name="Info_curso-__INDEX__-area">
-            </div>
-            <div class="campo">
                 <label>Horas</label>
-                <input  type="number" class="form-control" name="Info_curso-__INDEX__-horas">
+                <input  type="number" class="form-control" name="Info_curso-__INDEX__-horas" min="1">
             </div>
             <div class="campo">
                 <label>Fecha de realización</label>
-                <input type="date"  class="form-control" name="Info_curso-__INDEX__-fecha_realizacion">
+                <input type="date"  class="form-control" name="Info_curso-__INDEX__-fecha_realizacion" min="1950-01-01" max="{{ hoy }}">
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>

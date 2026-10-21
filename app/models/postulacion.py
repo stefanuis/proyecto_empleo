@@ -12,6 +12,8 @@ class Postulacion(db.Model):
     notas_psicologia = db.Column(db.Text)
     notas_talento_humano = db.Column(db.Text)
     fecha_correo_rechazo = db.Column(db.DateTime)
+    # Enlace al video de presentación; solo cuando la vacante lo requiere
+    video_url = db.Column(db.String(500))
     fecha_postulacion = db.Column(db.DateTime, default=datetime.now)
     fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
  
@@ -27,6 +29,7 @@ class Postulacion(db.Model):
         texto += f"notas_reclutador: {self.notas_reclutador}"
         texto += f"fecha_postulacion: {self.fecha_postulacion}"
         texto += f"fecha_actualizacion: {self.fecha_actualizacion}"
+        return texto
 
 
 

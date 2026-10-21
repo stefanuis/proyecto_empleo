@@ -80,3 +80,29 @@ class RegistroForm(FlaskForm):
     
     # Botón de envío
     submit = SubmitField("Registrarse")
+
+
+class EstablecerClaveForm(FlaskForm):
+    """Contraseña inicial de una cuenta creada por otra persona (administradores)."""
+
+    password = PasswordField(
+        "Nueva contraseña",
+        validators=[
+            DataRequired(message="Debe ingresar una contraseña."),
+            Length(min=8, message="La contraseña debe tener al menos 8 caracteres."),
+            Regexp(
+                r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)',
+                message="La contraseña debe contener al menos una mayúscula, una minúscula y un número."
+            ),
+        ]
+    )
+
+    confirm_password = PasswordField(
+        "Confirmar contraseña",
+        validators=[
+            DataRequired(message="Debe confirmar la contraseña."),
+            EqualTo('password', message="Las contraseñas no coinciden."),
+        ]
+    )
+
+    submit = SubmitField("Guardar contraseña")

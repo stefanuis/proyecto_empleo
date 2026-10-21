@@ -29,6 +29,6 @@ class Info_academica(db.Model):
     def __repr__(self):
         texto = f"id: {self.id}"
         texto += f"id_usuario: {self.id_usuario}"
-        texto += f"tipo: {self.tipo}"
         texto += f"nivel: {self.nivel}"
         texto += f"estado: {self.estado}"
+        return texto

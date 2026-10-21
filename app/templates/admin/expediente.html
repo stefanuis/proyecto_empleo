@@ -42,6 +42,12 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 <p style="color:var(--text-secondary); margin-top:4px;">
                     Postuló a: {{ vacante.titulo }}
                 </p>
+                {% if post.video_url %}
+                    <a href="{{ post.video_url }}" target="_blank" rel="noopener noreferrer"
+                       class="btn-outline btn-sm enlace-video">▶ Ver video de presentación</a>
+                {% elif vacante.requiere_video %}
+                    <p class="form-hint">Esta vacante pedía video, pero la postulación no tiene uno.</p>
+                {% endif %}
             </div>
         </div>
 
@@ -69,11 +75,11 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         </div>
         <div class="campo">
             <label class="form-label">Fecha de expedición</label>
-            <p>{{ personal.fecha_exp_doc.strftime('%d %b %Y') if personal.fecha_exp_doc else '—' }}</p>
+            <p>{{ personal.fecha_exp_doc|fecha_corta }}</p>
         </div>
         <div class="campo">
             <label class="form-label">Fecha de nacimiento</label>
-            <p>{{ personal.fecha_nacimiento.strftime('%d %b %Y') if personal.fecha_nacimiento else '—' }}</p>
+            <p>{{ personal.fecha_nacimiento|fecha_corta }}</p>
         </div>
         <div class="campo">
             <label class="form-label">Género</label>
@@ -130,6 +136,24 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 <p>—</p>
             {% endif %}
         </div>
+        {% if coincidencia.total %}
+        <div class="campo campo-completo">
+            <label class="form-label">
+                Coincidencia con la vacante: {{ coincidencia.cantidad }} de {{ coincidencia.total }} funciones
+            </label>
+            <div class="coincidencia-barra">
+                <span style="width: {{ coincidencia.porcentaje }}%"></span>
+            </div>
+            <ul class="funciones-match-lista">
+                {% for funcion in coincidencia.cumplidas %}
+                    <li class="funcion-cumple"><span aria-hidden="true">✓</span> {{ funcion.nombre }}</li>
+                {% endfor %}
+                {% for funcion in coincidencia.faltantes %}
+                    <li class="funcion-falta"><span aria-hidden="true">○</span> {{ funcion.nombre }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -156,21 +180,14 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
             {% for est in academica %}
             <div class="job-card" style="flex-direction:column; align-items:stretch; margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between;">
-                    <p class="job-title" style="margin:0;">{{ est.titulo or est.nivel }}</p>
+                    <p class="job-title" style="margin:0;">{{ est.titulo or (est.nivel|nivel_academico) }}</p>
                     <span class="badge badge-gray">{{ est.estado or '—' }}</span>
                 </div>
-                <p class="job-company" style="margin:4px 0;">{{ est.institucion or '—' }} — {{ est.pais_institucion or '—' }}</p>
+                <p class="job-company" style="margin:4px 0;">{{ est.institucion or '—' }}</p>
                 <p style="font-size:12.5px; color:var(--text-secondary);">
-                    Nivel: {{ est.nivel or '—' }} · Área: {{ est.area or '—' }} ·
-                    Finalización: {{ est.mes_finalizacion or '—' }}/{{ est.anno_finalizacion or '—' }} ·
-                    Intensidad: {{ est.intensidad_horaria or '—' }}h
-                    {% if est.convalidacion %} · Convalidado{% endif %}
+                    Nivel: {{ est.nivel|nivel_academico }} ·
+                    Finalización: {{ est.mes_finalizacion or '—' }}/{{ est.anno_finalizacion or '—' }}
                 </p>
-                {% if est.ruta_soporte %}
-                    <a href="{{ est.ruta_soporte }}" target="_blank" class="btn-outline btn-sm" style="align-self:flex-start; margin-top:8px;">
-                        Ver soporte
-                    </a>
-                {% endif %}
             </div>
             {% endfor %}
         {% else %}
@@ -189,8 +206,8 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                     {{ exp.entidad or '—' }}{% if exp.area %} — {{ exp.area }}{% endif %}
                 </p>
                 <p style="font-size:12.5px; color:var(--text-secondary);">
-                    {{ exp.fecha_ingreso.strftime('%b %Y') if exp.fecha_ingreso else '—' }} –
-                    {{ 'Actualidad' if exp.actual else (exp.fecha_salida.strftime('%b %Y') if exp.fecha_salida else '—') }}
+                    {{ exp.fecha_ingreso|mes_anio }} –
+                    {{ 'Actualidad' if exp.actual else (exp.fecha_salida|mes_anio) }}
                     {% if exp.municipio or exp.departamento or exp.pais %} · {{ [exp.municipio, exp.departamento, exp.pais] | select | join(', ') }}{% endif %}
                     {% if exp.motivo and not exp.actual %} · Motivo de retiro: {{ exp.motivo }}{% endif %}
                     {% if exp.otro %} · {{ exp.otro }}{% endif %}
@@ -215,7 +232,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 </div>
                 <p class="job-company" style="margin:4px 0;">{{ c.institucion }}</p>
                 <p style="font-size:12.5px; color:var(--text-secondary);">
-                    Área: {{ c.area or '—' }} · {{ c.horas or '—' }} h ·
+                    {{ c.horas or '—' }} h ·
                     {{ c.fecha_realizacion.strftime('%d/%m/%Y') if c.fecha_realizacion else '—' }}
                 </p>
             </div>
@@ -230,7 +247,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                 <thead>
                     <tr>
                         <th>Nombre</th>
-                        <th>Parentesco</th>
+                        <th>Cargo / relación</th>
                         <th>Empresa</th>
                         <th>Teléfono</th>
                         <th>Ciudad</th>
@@ -278,6 +295,10 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
         <h3 style="border-top:1px solid var(--border); padding-top:20px;">Discapacidades</h3>
         {% for d in discapacidades %}
             <span class="tag">{{ d.categoria or '—' }}</span>
+            {% if d.ruta_certificado %}
+                <a href="{{ url_for('web.ver_archivo', tipo='certificado', id=d.id) }}"
+                   target="_blank" rel="noopener" class="btn-outline btn-sm">Ver certificado</a>
+            {% endif %}
         {% endfor %}
         {% endif %}
             <!-- ── Documentos adicionales ── -->
@@ -306,10 +327,10 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
                         <tr>
                             <td>{{ documento.nombre }}</td>
                             <td>{{ documento.tipo or '—' }}</td>
-                            <td>{{ documento.fecha_registro.strftime('%d %b %Y') if documento.fecha_registro else '—' }}</td>
+                            <td>{{ documento.fecha_registro|fecha_corta }}</td>
                             <td>
                                 {% if documento.ruta_soporte %}
-                                    <a href="{{ url_for('static', filename=documento.ruta_soporte) }}" target="_blank" class="btn-outline btn-sm">Ver documento</a>
+                                    <a href="{{ url_for('web.ver_archivo', tipo='documento', id=documento.id) }}" target="_blank" rel="noopener" class="btn-outline btn-sm">Ver documento</a>
                                 {% else %}
                                     —
                                 {% endif %}
@@ -327,6 +348,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
     <!-- ── Estado y notas del reclutador ── -->
     <h3 style="border-top:1px solid var(--border); padding-top:20px;">Gestión del reclutador</h3>
     <form method="POST" action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid">
             <div class="campo">
                 <label class="form-label">Estado</label>
@@ -364,10 +386,38 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
             </div>
         </div>
         
+        <label class="campo-checkbox" style="margin-top:12px;">
+            <input type="checkbox" name="notificar" value="1" checked>
+            Avisar al candidato por correo si cambia a En revisión, Entrevista o Contratado
+        </label>
+
         <div class="form-botones">
             <button type="submit" class="btn-primary">Guardar cambios</button>
         </div>
     </form>
+
+    <!-- ── Historial de la postulación ── -->
+    <div style="border-top:1px solid var(--border); margin-top:24px; padding-top:20px;">
+        <h3 style="margin-bottom:12px;">Historial</h3>
+        {% if historial %}
+            <ol class="historial-lista">
+                {% for evento, autor in historial %}
+                    <li class="historial-evento">
+                        <span class="historial-fecha">{{ evento.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+                        <div>
+                            <strong>{{ evento.accion }}</strong>
+                            {% if evento.detalle %}<p class="historial-detalle">{{ evento.detalle }}</p>{% endif %}
+                            <span class="historial-autor">
+                                {% if autor %}{{ autor.nombres }} {{ autor.apellidos }}{% else %}Sistema{% endif %}
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="form-hint">Aún no hay movimientos registrados para esta postulación.</p>
+        {% endif %}
+    </div>
 
     <!-- ── Notificación al candidato (solo si está rechazado) ── -->
     {% if post.estado == 'rechazado' %}
@@ -386,6 +436,7 @@ Expediente — {{ personal.nombres }} {{ personal.apellidos }}
 
         <form method="POST" action="{{ url_for('admin.enviar_rechazo', id=post.id) }}"
               onsubmit="return confirm('¿Enviar el correo de rechazo a este candidato?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn-secondary">
                 {{ 'Reenviar correo de rechazo' if post.fecha_correo_rechazo else 'Enviar respuesta al candidato' }}
             </button>

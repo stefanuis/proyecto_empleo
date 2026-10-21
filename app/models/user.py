@@ -57,6 +57,7 @@ class User(UserMixin, db.Model):
         texto += f"fecha_actualizacion: {self.fecha_actualizacion}"
         texto += f"ultimo_login: {self.ultimo_login}"
         texto += f"rol: {self.rol}"
+        return texto
     
 
 

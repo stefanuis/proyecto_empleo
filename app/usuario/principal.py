@@ -53,10 +53,19 @@ from app.models.postulacion import Postulacion
 from app.models.citacion import Citaciones
 from app.utils.perfil import (
     calcular_completitud_perfil,
+    documentos_obligatorios_faltantes,
     formatear_experiencia,
     obtener_experiencia_total,
 )
 from app.utils.requisitos import cumple_requisitos
+from app.utils.permisos import exigir_rol
+from app.utils.historial import registrar_evento
+from app.utils.archivos import eliminar_archivo, guardar_archivo
+from app.utils.funciones import (
+    coincidencia_candidato,
+    coincidencias_por_vacante,
+    funciones_activas_por_area,
+)
 from app.forms.validaciones import (
     a_fecha,
     fila_vacia,
@@ -66,9 +75,12 @@ from app.forms.validaciones import (
     validar_experiencia,
     validar_referencias,
     validar_referencias_personales,
+    validar_url_video,
     rangos_se_cruzan,
 )
 from .constantes import (
+    AREAS_AFINES,
+    DOCUMENTOS_OBLIGATORIOS,
     PASOS_seguimiento,
     NOMBRES_PASO,
     DESCRIPCIONES_PASO,
@@ -79,6 +91,14 @@ from .constantes import (
 
 
 from . import usuario_bp
+
+
+EXTENSIONES_SOPORTE = {"pdf", "jpg", "jpeg", "png", "doc", "docx"}
+
+
+def _extension_permitida(nombre_archivo):
+    extension = os.path.splitext(nombre_archivo or "")[1].lstrip(".").lower()
+    return extension in EXTENSIONES_SOPORTE
 
 
 def _declaracion_marcada(paso):
@@ -169,11 +189,14 @@ def _asociar_errores_a_campos(entry, errores, paso):
         "cursos": (
             ("nombre", "nombre"),
             ("institución", "institucion"),
+            ("horas", "horas"),
+            ("fecha", "fecha_realizacion"),
         ),
         "referencias": (
             ("apellidos", "apellidos"),
             ("nombre", "nombres"),
             ("empresa", "empresa"),
+            ("relación laboral", "parentesco"),
             ("autorización", "autoriza"),
         ),
         "referencias_personales": (
@@ -277,6 +300,18 @@ def _avanzar_paso_maximo(paso):
         db.session.commit()
 
 
+# Rutas del candidato que se abren sin sesión (enlaces que llegan por correo)
+ENDPOINTS_PUBLICOS = {"usuario.responder_citacion"}
+
+
+@usuario_bp.before_request
+def verificar_candidato():
+    # Va antes que inicializar_paso_maximo: Flask los ejecuta en orden de registro
+    if request.endpoint in ENDPOINTS_PUBLICOS:
+        return None
+    return exigir_rol("usuario")
+
+
 @usuario_bp.before_request
 def inicializar_paso_maximo():
     endpoint = request.endpoint.split(".")[-1] if request.endpoint else ""
@@ -332,14 +367,27 @@ def redirigir_paso_wizard(paso_actual):
 @login_required
 def principal():
     # --- KPIs ---
-    total_postulaciones = Postulacion.query.filter_by(
-        estado="Activa",
-        id_usuario=current_user.id
+    total_postulaciones = Postulacion.query.filter(
+        Postulacion.id_usuario == current_user.id,
+        Postulacion.estado != "retirada",
     ).count()
 
     total_vacantes = Vacante.query.filter_by(
         estado="Activa"
     ).count()
+
+    en_entrevista = Postulacion.query.filter_by(
+        id_usuario=current_user.id,
+        estado="entrevista",
+    ).count()
+    # Próxima entrevista que el candidato no ha rechazado
+    proxima = Citaciones.query.join(
+        Postulacion, Postulacion.id == Citaciones.id_postulacion
+    ).filter(
+        Postulacion.id_usuario == current_user.id,
+        Citaciones.fecha >= date.today(),
+        db.or_(Citaciones.respuesta.is_(None), Citaciones.respuesta != "rechazada"),
+    ).order_by(Citaciones.fecha.asc(), Citaciones.hora.asc()).first()
 
     # --- Fecha de hoy en español ---
     hoy = datetime.now()
@@ -360,16 +408,21 @@ def principal():
     # --- Completitud del perfil ---
     completitud = calcular_completitud_perfil(current_user.id)
 
-        # --- Vacantes sugeridas (hero) ---
+    # --- Vacantes sugeridas (hero) ---
+    # Se usa la misma área que valida la postulación (Perfil profesional),
+    # así nunca se sugiere una vacante a la que no pueda postularse.
+    perfil = PerfilProfesional.query.filter_by(
+        id_usuario=current_user.id
+    ).first()
+    area_candidato = (perfil.area_aplicacion or "").strip() if perfil else ""
 
-    areas_candidato = db.session.query(
-        Info_academica.area
-    ).filter(
-        Info_academica.id_usuario == current_user.id,
-        Info_academica.area.isnot(None)
-    ).distinct().all()
-
-    areas_candidato = [a[0] for a in areas_candidato]
+    areas_candidato = []
+    if area_candidato:
+        areas_candidato = [area_candidato] + [
+            area_vacante
+            for area_vacante, afines in AREAS_AFINES.items()
+            if area_candidato in afines
+        ]
 
     if areas_candidato:
         vacantes = Vacante.query.filter(
@@ -391,6 +444,8 @@ def principal():
         "usuario/principal.html",
         total_postulaciones=total_postulaciones,
         total_vacantes=total_vacantes,
+        en_entrevista=en_entrevista,
+        proxima=proxima,
         fecha_hoy=fecha_hoy,
         completitud=completitud,
         vacantes=vacantes,
@@ -647,6 +702,10 @@ def personal():
         form.personas_cargo.data = registro.personas_cargo
 
     else:
+        # Primera vez: se precargan los datos que ya dio al crear la cuenta
+        form.nombres.data = current_user.nombres
+        form.apellidos.data = current_user.apellidos
+        form.num_cel.data = current_user.telefono
         form.municipio.choices = [("", "Seleccione")]
         ubicacion_guardada_no_valida = False
 
@@ -676,16 +735,10 @@ def academica():
                 "registro_id": registro.id,
                 "nivel": registro.nivel,
                 "estado": registro.estado,
-                "periodos_cursados": registro.periodos_cursados,
-                "area": registro.area,
                 "titulo": registro.titulo,
                 "institucion": registro.institucion,
-                "pais_institucion": registro.pais_institucion,
-                "convalidacion": registro.convalidacion,
                 "mes_finalizacion": registro.mes_finalizacion,
                 "anno_finalizacion": registro.anno_finalizacion,
-                "ruta_soporte": registro.ruta_soporte,
-                "intensidad_horaria": registro.intensidad_horaria,
                 "eliminar": "0",
             })
 
@@ -757,12 +810,8 @@ def academica():
                     if registro:
                         registro.nivel = entry.nivel.data
                         registro.estado = entry.estado.data
-                        registro.periodos_cursados = entry.periodos_cursados.data
-                        registro.area = entry.area.data
                         registro.titulo = entry.titulo.data
                         registro.institucion = entry.institucion.data
-                        registro.pais_institucion = entry.pais_institucion.data
-                        registro.convalidacion = entry.convalidacion.data
                         registro.mes_finalizacion = (
                             entry.mes_finalizacion.data
                             if entry.estado.data == "finalizado"
@@ -773,18 +822,13 @@ def academica():
                             if entry.estado.data == "finalizado"
                             else None
                         )
-                        registro.intensidad_horaria = entry.intensidad_horaria.data
                     else:
                         nuevo = Info_academica(
                             id_usuario=current_user.id,
                             nivel=entry.nivel.data,
                             estado=entry.estado.data,
-                            periodos_cursados=entry.periodos_cursados.data,
-                            area=entry.area.data,
                             titulo=entry.titulo.data,
                             institucion=entry.institucion.data,
-                            pais_institucion=entry.pais_institucion.data,
-                            convalidacion=entry.convalidacion.data,
                             mes_finalizacion=(
                                 entry.mes_finalizacion.data
                                 if entry.estado.data == "finalizado"
@@ -795,7 +839,6 @@ def academica():
                                 if entry.estado.data == "finalizado"
                                 else None
                             ),
-                            intensidad_horaria=entry.intensidad_horaria.data,
                         )
                         db.session.add(nuevo)
 
@@ -833,6 +876,7 @@ def experiencia():
                 "cargo": registro.cargo,
                 "actual": registro.actual,
                 "motivo": registro.motivo,
+                "otro": registro.otro,
                 "fecha_ingreso": registro.fecha_ingreso,
                 "fecha_salida": registro.fecha_salida,
                 "eliminar": "0",
@@ -954,6 +998,12 @@ def experiencia():
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
                 registro = None
+                # El detalle solo se guarda si dejó el empleo por un motivo "Otra"
+                otro_motivo = (
+                    (entry.otro.data or "").strip()
+                    if not entry.actual.data and entry.motivo.data == "otra"
+                    else None
+                ) or None
 
                 if registro_id:
                     registro = Experiencia.query.filter_by(
@@ -977,7 +1027,8 @@ def experiencia():
                     registro.area = entry.area.data
                     registro.cargo = entry.cargo.data
                     registro.actual = entry.actual.data     
-                    registro.motivo = entry.motivo.data if not entry.actual.data else None 
+                    registro.motivo = entry.motivo.data if not entry.actual.data else None
+                    registro.otro = otro_motivo
                     registro.fecha_ingreso = entry.fecha_ingreso.data
                     registro.fecha_salida = entry.fecha_salida.data if not entry.actual.data else None
 
@@ -989,7 +1040,8 @@ def experiencia():
                         area=entry.area.data,
                         cargo=entry.cargo.data,
                         actual=entry.actual.data, 
-                        motivo=entry.motivo.data if not entry.actual.data else None,   
+                        motivo=entry.motivo.data if not entry.actual.data else None,
+                        otro=otro_motivo,
                         fecha_ingreso=entry.fecha_ingreso.data,
                         fecha_salida=entry.fecha_salida.data if not entry.actual.data else None,
                     )
@@ -1135,15 +1187,10 @@ def perfil_profesional_funciones():
     if area_aplicacion not in _areas_aplicacion():
         return jsonify({"error": "El área de aplicación no es válida."}), 400
 
-    funciones = FuncionArea.query.filter_by(
-        area_aplicacion=area_aplicacion,
-        activa=True,
-    ).order_by(FuncionArea.nombre.asc()).all()
-
     return jsonify({
         "funciones": [
             {"id": funcion.id, "nombre": funcion.nombre}
-            for funcion in funciones
+            for funcion in funciones_activas_por_area(area_aplicacion)
         ]
     })
 
@@ -1167,7 +1214,6 @@ def cursos():
                 "registro_id": registro.id,
                 "nombre": registro.nombre,
                 "institucion": registro.institucion,
-                "area": registro.area,
                 "horas": registro.horas,
                 "fecha_realizacion": registro.fecha_realizacion,
                 "eliminar": "0",
@@ -1175,7 +1221,7 @@ def cursos():
 
     if request.method == "POST":
 
-        campos = ["nombre", "institucion", "area", "horas", "fecha_realizacion"]
+        campos = ["nombre", "institucion", "horas", "fecha_realizacion"]
         errores_negocio = []
         errores_formulario = []
         registros_guardados = Cursos.query.filter_by(
@@ -1187,6 +1233,9 @@ def cursos():
             db.session.commit()
             return redirigir_paso_wizard(PASO_ACTUAL)
 
+        personal = Personal.query.filter_by(id_usuario=current_user.id).first()
+        fecha_nacimiento = personal.fecha_nacimiento if personal else None
+
         for entry in form.Info_curso:
 
             marcado_para_eliminar = entry.eliminar.data == "1"
@@ -1196,7 +1245,7 @@ def cursos():
             if fila_vacia(entry, campos):
                 continue
 
-            errores_fila = validar_cursos(entry)
+            errores_fila = validar_cursos(entry, fecha_nacimiento=fecha_nacimiento)
             errores_negocio.extend(errores_fila)
             errores_formulario.extend(
                 _asociar_errores_a_campos(entry, errores_fila, PASO_ACTUAL)
@@ -1248,7 +1297,6 @@ def cursos():
                     # Editar existente
                     registro.nombre = entry.nombre.data
                     registro.institucion = entry.institucion.data
-                    registro.area = entry.area.data
                     registro.horas = entry.horas.data
                     registro.fecha_realizacion = entry.fecha_realizacion.data
 
@@ -1258,7 +1306,6 @@ def cursos():
                         id_usuario=current_user.id,
                         nombre=entry.nombre.data,
                         institucion=entry.institucion.data,
-                        area=entry.area.data,
                         horas=entry.horas.data,
                         fecha_realizacion=entry.fecha_realizacion.data,
                         certificado=False,
@@ -1276,6 +1323,7 @@ def cursos():
     return render_template(
         "usuario/cursos.html",
         form=form,
+        hoy=date.today().isoformat(),
         mensaje_regla=mensaje_regla,
         errores_formulario=errores_formulario,
         no_tengo=(
@@ -1304,6 +1352,7 @@ def referencias():
                 "registro_id": registro.id,
                 "nombres": registro.nombres,
                 "apellidos": registro.apellidos,
+                "parentesco": registro.parentesco,
                 "empresa": registro.empresa,
                 "telefono": registro.telefono,
                 "ciudad": registro.ciudad,
@@ -1316,6 +1365,7 @@ def referencias():
         campos = [
             "nombres",
             "apellidos",
+            "parentesco",
             "empresa",
             "telefono",
             "ciudad",
@@ -1394,6 +1444,7 @@ def referencias():
                 if registro:
                     registro.nombres = entry.nombres.data
                     registro.apellidos = entry.apellidos.data
+                    registro.parentesco = entry.parentesco.data
                     registro.empresa = entry.empresa.data
                     registro.telefono = entry.telefono.data
                     registro.ciudad = entry.ciudad.data
@@ -1404,6 +1455,7 @@ def referencias():
                         id_usuario=current_user.id,
                         nombres=entry.nombres.data,
                         apellidos=entry.apellidos.data,
+                        parentesco=entry.parentesco.data,
                         empresa=entry.empresa.data,
                         telefono=entry.telefono.data,
                         ciudad=entry.ciudad.data,
@@ -1598,11 +1650,14 @@ def discapacidades():
             incluir_categoria_legada(entry, registro.categoria)
 
     if request.method == "POST":
+        registros_guardados = {
+            str(registro.id): registro
+            for registro in Discapacidades.query.filter_by(
+                id_usuario=current_user.id
+            ).all()
+        }
         for entry in form.Info_discapacidades:
-            registro = Discapacidades.query.filter_by(
-                id=entry.registro_id.data,
-                id_usuario=current_user.id,
-            ).first() if entry.registro_id.data else None
+            registro = registros_guardados.get(entry.registro_id.data or "")
             if registro:
                 incluir_categoria_legada(entry, registro.categoria)
 
@@ -1631,12 +1686,40 @@ def discapacidades():
                 _asociar_errores_a_campos(entry, errores_fila, PASO_ACTUAL)
             )
 
+            # Si marcó que tiene certificado, el soporte es obligatorio
+            # (salvo que esta discapacidad ya tenga uno guardado)
+            archivo = entry.ruta_certificado.data
+            hay_archivo = isinstance(archivo, FileStorage) and bool(archivo.filename)
+            registro = registros_guardados.get(entry.registro_id.data or "")
+            error_certificado = None
+
+            if hay_archivo and not _extension_permitida(archivo.filename):
+                error_certificado = (
+                    "El certificado debe ser PDF, JPG, PNG, DOC o DOCX."
+                )
+            elif (
+                entry.tiene_certificado.data
+                and not hay_archivo
+                and not (registro and registro.ruta_certificado)
+            ):
+                error_certificado = (
+                    "Adjunta el certificado de discapacidad o desmarca "
+                    "la casilla \"¿Tiene certificado?\"."
+                )
+
+            if error_certificado:
+                entry.ruta_certificado.errors = [
+                    *entry.ruta_certificado.errors,
+                    error_certificado,
+                ]
+                errores_negocio.append(error_certificado)
+
         if errores_negocio:
             pass
 
         else:
 
-            for i, entry in enumerate(form.Info_discapacidades):
+            for entry in form.Info_discapacidades:
 
                 registro_id = entry.registro_id.data
                 marcado_para_eliminar = entry.eliminar.data == "1"
@@ -1679,37 +1762,24 @@ def discapacidades():
                     db.session.add(registro)
                     db.session.flush()
 
-                nombre_campo_archivo = (
-                    f"Info_discapacidades-{i}-ruta_certificado"
-                )
+                # El archivo se toma del propio campo de la fila; antes se
+                # buscaba por posición y podía quedar en otra discapacidad
+                archivo = entry.ruta_certificado.data
 
-                archivo = request.files.get(nombre_campo_archivo)
-
-                if archivo and archivo.filename:
+                if (
+                    entry.tiene_certificado.data
+                    and isinstance(archivo, FileStorage)
+                    and archivo.filename
+                ):
                     nombre_seguro = secure_filename(archivo.filename)
 
                     nombre_final = (
                         f"discapacidad_{registro.id}_{nombre_seguro}"
                     )
 
-                    ruta_carpeta = os.path.join(
-                        "app",
-                        "static",
-                        "uploads",
-                        "discapacidades"
-                    )
-
-                    os.makedirs(ruta_carpeta, exist_ok=True)
-
-                    ruta_archivo = os.path.join(
-                        ruta_carpeta,
-                        nombre_final
-                    )
-
-                    archivo.save(ruta_archivo)
-
-                    registro.ruta_certificado = (
-                        f"uploads/discapacidades/{nombre_final}"
+                    # Carpeta privada: se descarga solo por /archivos/certificado/<id>
+                    registro.ruta_certificado = guardar_archivo(
+                        archivo, "discapacidades", nombre_final
                     )
 
                 if not entry.tiene_certificado.data:
@@ -1719,11 +1789,20 @@ def discapacidades():
             flash("Guardado con éxito.", "success")
             return redirigir_paso_wizard(PASO_ACTUAL)
 
+    certificados_guardados = {
+        str(registro.id)
+        for registro in Discapacidades.query.filter_by(
+            id_usuario=current_user.id
+        ).all()
+        if registro.ruta_certificado
+    }
+
     return render_template(
         "usuario/discapacidades.html",
         form=form,
         DISCAPACIDAD_CATEGORIAS=DISCAPACIDAD_CATEGORIAS,
         errores_formulario=errores_formulario,
+        certificados_guardados=certificados_guardados,
     )
 
 
@@ -1733,9 +1812,33 @@ def discapacidades():
 @login_required
 def documentos() -> str | Response:
     form: documentoForm = documentoForm()
+    errores_archivo: list[str] = []
+    formulario_valido: bool = form.validate_on_submit()
 
-    if form.validate_on_submit():
-        errores_archivo = []
+    if formulario_valido:
+        # Primero se revisan todas las filas: si alguna está incompleta no se guarda nada
+        for entry_form in form.Info_docs:
+            archivo: Optional[FileStorage] = entry_form.ruta_soporte.data
+            if not archivo or archivo.filename == "":
+                continue
+            if not entry_form.nombre.data:
+                entry_form.nombre.errors = [
+                    *entry_form.nombre.errors,
+                    "Escribe el nombre del documento.",
+                ]
+                errores_archivo.append(
+                    f"Falta el nombre del documento {archivo.filename}."
+                )
+            if not entry_form.tipo.data:
+                entry_form.tipo.errors = [
+                    *entry_form.tipo.errors,
+                    "Selecciona el tipo de documento.",
+                ]
+                errores_archivo.append(
+                    f"Falta el tipo del documento {archivo.filename}."
+                )
+
+    if formulario_valido and not errores_archivo:
         for entry_form in form.Info_docs:
             archivo: Optional[FileStorage] = entry_form.ruta_soporte.data
 
@@ -1750,22 +1853,14 @@ def documentos() -> str | Response:
                 f"{nombre_original}"
             )
 
-            carpeta_destino: str = os.path.join(
-                current_app.root_path, "static", "uploads", "docs"
-            )
-            os.makedirs(carpeta_destino, exist_ok=True)
-
-            ruta_completa: str = os.path.join(carpeta_destino, nombre_unico)
-
+            # Carpeta privada: se descarga solo por /archivos/documento/<id>
             try:
-                archivo.save(ruta_completa)
+                ruta_relativa: str = guardar_archivo(archivo, "docs", nombre_unico)
             except OSError:
                 errores_archivo.append(
                     f"No se pudo guardar el archivo {nombre_original}."
                 )
                 continue
-
-            ruta_relativa: str = f"uploads/docs/{nombre_unico}"
 
             nuevo_doc = OtrosDocumentos(
                 id_usuario=current_user.id,
@@ -1777,27 +1872,37 @@ def documentos() -> str | Response:
             db.session.add(nuevo_doc)
 
         db.session.commit()
-        if errores_archivo:
-            docs: list[OtrosDocumentos] = OtrosDocumentos.query.filter_by(
-                id_usuario=current_user.id
-            ).order_by(OtrosDocumentos.fecha_registro.desc()).all()
-            return render_template(
-                "usuario/docs.html",
-                form=form,
-                docs=docs,
-                errores_archivo=errores_archivo,
-            )
 
-        _avanzar_paso_maximo("documentos")
-        db.session.commit()
-        flash("Documentos guardados exitosamente.", "success")
-        return redirect(url_for("usuario.registro_completo"))
+        if not errores_archivo:
+            faltantes: list[str] = documentos_obligatorios_faltantes(
+                current_user.id
+            )
+            if faltantes:
+                # Lo subido ya quedó guardado; solo se impide avanzar
+                flash(
+                    "Para continuar debes subir: "
+                    + " y ".join(faltantes) + ".",
+                    "warning",
+                )
+                return redirect(url_for("usuario.documentos"))
+
+            _avanzar_paso_maximo("documentos")
+            db.session.commit()
+            flash("Documentos guardados exitosamente.", "success")
+            return redirect(url_for("usuario.registro_completo"))
 
     docs: list[OtrosDocumentos] = OtrosDocumentos.query.filter_by(
         id_usuario=current_user.id
     ).order_by(OtrosDocumentos.fecha_registro.desc()).all()
 
-    return render_template("usuario/docs.html", form=form, docs=docs)
+    return render_template(
+        "usuario/docs.html",
+        form=form,
+        docs=docs,
+        errores_archivo=errores_archivo,
+        documentos_obligatorios=DOCUMENTOS_OBLIGATORIOS,
+        documentos_faltantes=documentos_obligatorios_faltantes(current_user.id),
+    )
 
 
 @usuario_bp.route("/documentos/eliminar/<int:id>", methods=["POST"])
@@ -1809,11 +1914,7 @@ def eliminar_documento(id: int) -> Response:
     ).first()
 
     if documento:
-        ruta_absoluta: str = os.path.join(
-            current_app.root_path, "static", documento.ruta_soporte
-        )
-        if os.path.exists(ruta_absoluta):
-            os.remove(ruta_absoluta)
+        eliminar_archivo(documento.ruta_soporte)
 
         db.session.delete(documento)
         db.session.commit()
@@ -1848,6 +1949,10 @@ def detalle_vacante(id):
     return render_template(
         "detalle_vacante.html",
         vacante=vac,
+        coincidencia=coincidencia_candidato(current_user.id, vac.id),
+        convocatoria_cerrada=bool(
+            vac.fecha_cierre and vac.fecha_cierre.date() < date.today()
+        ),
         requisitos_no_cumplidos=requisitos_no_cumplidos,
         perfil_profesional_faltante=(
             perfil_profesional is None
@@ -1912,6 +2017,10 @@ def vacantes():
         vacante.id: cumple_requisitos(current_user.id, vacante)
         for vacante in vacantes
     }
+    coincidencias = coincidencias_por_vacante(
+        current_user.id,
+        [vacante.id for vacante in vacantes],
+    )
     perfil_profesional = PerfilProfesional.query.filter_by(
         id_usuario=current_user.id
     ).first()
@@ -1925,6 +2034,7 @@ def vacantes():
         area_aplicacion_seleccionada=area_aplicacion,
         nivel_seleccionado=nivel,
         requisitos_por_vacante=requisitos_por_vacante,
+        coincidencias=coincidencias,
         perfil_profesional_faltante=(
             perfil_profesional is None
             or not (perfil_profesional.area_aplicacion or "").strip()
@@ -1937,6 +2047,10 @@ def postular(id):
 
     if vac.estado != "Activa":
         flash("Esta vacante ya no está disponible.", "error")
+        return redirect(url_for("usuario.vacantes"))
+
+    if vac.fecha_cierre and vac.fecha_cierre.date() < date.today():
+        flash("La convocatoria de esta vacante ya cerró.", "error")
         return redirect(url_for("usuario.vacantes"))
 
     requisitos_no_cumplidos = cumple_requisitos(current_user.id, vac)
@@ -1976,13 +2090,28 @@ def postular(id):
         flash("Ya te has postulado a esta vacante.", "warning")
         return redirect(url_for("usuario.vacantes"))
 
+    video_url = None
+    if vac.requiere_video:
+        video_url, error_video = validar_url_video(request.form.get("video_url"))
+        if error_video:
+            # El campo del video está en el detalle de la vacante
+            flash(error_video, "warning")
+            return redirect(url_for("usuario.detalle_vacante", id=id))
+
     nueva_postulacion = Postulacion(
         id_usuario=current_user.id,
         id_vacante=id,
-        estado="postulado"
+        estado="postulado",
+        video_url=video_url,
     )
 
     db.session.add(nueva_postulacion)
+    db.session.flush()
+    registrar_evento(
+        nueva_postulacion.id,
+        "Postulación recibida",
+        "Con video de presentación." if video_url else None,
+    )
     db.session.commit()
 
     flash("¡Te has postulado correctamente!", "success")
@@ -2047,6 +2176,7 @@ def retirar_postulacion(id):
         return redirect(url_for('usuario.mis_postulaciones'))
 
     postulacion.estado = 'retirada'
+    registrar_evento(postulacion.id, "El candidato retiró la postulación")
     db.session.commit()
 
     flash('Has retirado tu postulación. No podrás volver a postularte a esta vacante.', 'success')
@@ -2055,28 +2185,45 @@ def retirar_postulacion(id):
 
 ####### gestion de envios de correo 
 
-@usuario_bp.route('/citacion/responder/<token>/<respuesta>')
+@usuario_bp.route('/citacion/responder/<token>/<respuesta>', methods=['GET', 'POST'])
 def responder_citacion(token, respuesta):
-    citacion = Citaciones.query.filter_by(token=token).first_or_404()
+    # El candidato llega desde el correo, normalmente sin sesión iniciada
+    citacion = Citaciones.query.filter_by(token=token).first()
 
-    if respuesta not in ['confirmar', 'rechazar']:
-        return render_template('usuario/respuesta_citacion.html', citacion=None)
+    if citacion is None or respuesta not in ['confirmar', 'rechazar']:
+        return render_template('usuario/responder_citacion.html', citacion=None)
 
     # Si ya respondió antes, no permitir sobreescribir
     if citacion.respuesta:
         return render_template(
-            'usuario/respuesta_citacion.html',
+            'usuario/responder_citacion.html',
             citacion=citacion,
             ya_respondida=True
+        )
+
+    # Con GET solo se pide confirmar: los antivirus de correo abren los
+    # enlaces automáticamente y no deben registrar una respuesta por el candidato
+    if request.method == 'GET':
+        return render_template(
+            'usuario/responder_citacion.html',
+            citacion=citacion,
+            respuesta=respuesta,
+            pendiente=True
         )
 
     citacion.respuesta = 'confirmada' if respuesta == 'confirmar' else 'rechazada'
     citacion.estado = 'confirmada' if respuesta == 'confirmar' else 'rechazada'
     citacion.fecha_respuesta = datetime.now()
+    registrar_evento(
+        citacion.id_postulacion,
+        f"El candidato {'confirmó' if respuesta == 'confirmar' else 'rechazó'} la citación",
+        f"Entrevista del {citacion.fecha.strftime('%d/%m/%Y')} a las {citacion.hora.strftime('%H:%M')}",
+        autor=None,
+    )
     db.session.commit()
 
     return render_template(
-        'usuario/respuesta_citacion.html',
+        'usuario/responder_citacion.html',
         citacion=citacion,
         respuesta=respuesta
     )

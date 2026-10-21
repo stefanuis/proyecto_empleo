@@ -9,14 +9,19 @@ from flask import (
 )
 from flask_login import login_user, current_user
 from datetime import datetime
+import time
 from app.extensions import db
 from app.models.user import User
+from app.utils.permisos import url_panel
 
 from . import web_bp
 
 
 @web_bp.route("/", methods=["GET"])
-def login_get():
+def login():
+    # Con sesión abierta (p. ej. al usar "Atrás") no se muestra el login
+    if current_user.is_authenticated:
+        return redirect(url_panel(current_user.rol))
 
     return render_template("login.html")
 
@@ -51,20 +56,14 @@ def login_post():
     usuario.ultimo_login = datetime.now()
     db.session.commit()
 
+    # Sesión nueva: se descarta cualquier dato de una sesión anterior
+    session.clear()
     login_user(usuario)
 
     session["rol"] = usuario.rol
+    session["ultima_actividad"] = time.time()
 
-    #print(session["rol"])
-
-    if(usuario.rol == "admin_maestro"):
-        #print("Este es el admin maestro")
-        return redirect(url_for("admin_maestro.principal"))
-    elif(usuario.rol == "admin"):
-        return redirect(url_for("admin.inicial"))
-    else:
-        #print("Este no es admin")
-        return redirect(url_for("usuario.continuar_wizard"))
+    return redirect(url_panel(usuario.rol))
 
 
 

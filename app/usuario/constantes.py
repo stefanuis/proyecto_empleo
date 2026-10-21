@@ -66,10 +66,14 @@ REGLAS_PASO = {
         "tipo": "opcional",
     },
     "documentos": {
-        "tipo": "registros",
-        "minimo": 1,
+        "tipo": "documentos_obligatorios",
+        "mensaje": "Debes subir tu cédula y tu diploma para continuar.",
     },
 }
+
+# Tipos de documento (valores del campo "tipo" en Documentos) sin los cuales
+# el perfil no se considera completo.
+DOCUMENTOS_OBLIGATORIOS = ("Cédula", "Diploma")
 
 # Título corto de cada paso (se muestra en negrita y en el tooltip de la barra)
 NOMBRES_PASO = {

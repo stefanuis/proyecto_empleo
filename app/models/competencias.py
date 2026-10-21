@@ -24,3 +24,4 @@ class Competencias(db.Model):
         texto += f"competencia: {self.competencia}"
         texto += f"nivel: {self.nivel}"
         texto += f"experiencia: {self.experiencia}"
+        return texto

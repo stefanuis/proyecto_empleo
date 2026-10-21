@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso no permitido - Clínica Panamericana</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/login.css') }}">
+</head>
+<body>
+<div class="page">
+    <div class="card">
+        <div class="strip"></div>
+        <div class="inner">
+            <header class="card-header">
+                <div>
+                    <img src="{{ url_for('static', filename='img/logo_color.png') }}" alt="Clinica Panamericana">
+                    <br><br><br>
+                    <h1><em>Acceso no permitido</em></h1>
+                    <p>Tu cuenta no tiene permiso para ver esta sección.</p>
+                </div>
+            </header>
+            <a class="btn-submit" href="{{ destino }}" style="text-decoration:none; display:flex; justify-content:center; align-items:center;">
+                <span class="btn-text">Ir a mi panel</span>
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -25,3 +25,4 @@ class Contacto(db.Model):
         texto += f"nombre: {self.nombre}"
         texto += f"apellido: {self.apellido}"
         texto += f"parentesco: {self.parentesco}"
+        return texto

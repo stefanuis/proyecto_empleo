@@ -34,14 +34,14 @@ Principal Usuario
   <!-- Tarjetas de resumen -->
   <div class="kpis">
     <div class="kpi-card">
-      <div class="kpi-icono"></div>
+      <div class="kpi-icono" aria-hidden="true"><i class="ti ti-briefcase"></i></div>
       <div>
         <div class="kpi-valor">{{ total_vacantes }}</div>
         <div class="kpi-label">Vacantes disponibles</div>
       </div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icono"></div>
+      <div class="kpi-icono" aria-hidden="true"><i class="ti ti-file-text"></i></div>
       <div>
         <div class="kpi-valor">{{ total_postulaciones }}</div>
         <div class="kpi-label">Mis postulaciones</div>
@@ -95,11 +95,19 @@ Principal Usuario
                 <div class="vacante-titulo">{{ vacante.titulo }}</div>
                 <div class="vacante-detalle">{{ vacante.area or 'Sin área' }} · {{ vacante.nivel_academico or 'Sin nivel especificado' }}</div>
             </div>
+            {% if vacante.requiere_video %}
+                {# El enlace del video se pide en el detalle de la vacante #}
+                <a href="{{ url_for('usuario.detalle_vacante', id=vacante.id) }}" class="btn-postular">
+                    ✓ Postularme
+                </a>
+            {% else %}
             <form action="{{ url_for('usuario.postular', id=vacante.id) }}" method="POST" class="form-postular">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-postular">
                     ✓ Postularme
                 </button>
             </form>
+            {% endif %}
         </div>
     {% else %}
         {% if sugerencias_personalizadas %}

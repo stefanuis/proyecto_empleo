@@ -1,6 +1,11 @@
 # app/utils/perfil.py
 
-from app.usuario.constantes import NOMBRES_PASO, PASOS_seguimiento, REGLAS_PASO
+from app.usuario.constantes import (
+    DOCUMENTOS_OBLIGATORIOS,
+    NOMBRES_PASO,
+    PASOS_seguimiento,
+    REGLAS_PASO,
+)
 from app.models.personal import Personal
 from datetime import date, datetime
 from app.models.academica import Info_academica
@@ -38,6 +43,17 @@ def perfil_profesional_completo(id_usuario):
     return PerfilFuncion.query.filter_by(id_usuario=id_usuario).first() is not None
 
 
+def documentos_obligatorios_faltantes(id_usuario):
+    """Tipos de DOCUMENTOS_OBLIGATORIOS que el usuario aún no ha subido."""
+    tipos_cargados = {
+        tipo
+        for (tipo,) in OtrosDocumentos.query.with_entities(
+            OtrosDocumentos.tipo
+        ).filter_by(id_usuario=id_usuario).all()
+    }
+    return [tipo for tipo in DOCUMENTOS_OBLIGATORIOS if tipo not in tipos_cargados]
+
+
 def calcular_completitud_perfil(id_usuario):
     secciones = {}
     for paso, regla in REGLAS_PASO.items():
@@ -46,6 +62,8 @@ def calcular_completitud_perfil(id_usuario):
             secciones[paso] = True
         elif tipo == "perfil_profesional":
             secciones[paso] = perfil_profesional_completo(id_usuario)
+        elif tipo == "documentos_obligatorios":
+            secciones[paso] = not documentos_obligatorios_faltantes(id_usuario)
         else:
             modelo = MODELOS_POR_PASO[paso]
             cantidad_registros = modelo.query.filter_by(
@@ -111,36 +129,75 @@ def obtener_nivel_mas_alto(id_usuario):
     return registro_mas_alto.nivel
 
 
-def obtener_experiencia_total(id_usuario):
-    registros = Experiencia.query.filter_by(id_usuario=id_usuario).all()
-    if not registros:
-        return 0
- 
-    total_dias = 0
+DIAS_POR_ANIO = 365.25
+
+
+def _como_fecha(valor):
+    return valor.date() if isinstance(valor, datetime) else valor
+
+
+def _dias_sin_solapar(registros, hoy=None):
+    """Días de experiencia reales de una lista de registros de Experiencia.
+
+    - Un trabajo actual cuenta hasta hoy.
+    - Se ignoran registros sin fechas o con salida anterior al ingreso.
+    - Los periodos que se cruzan se unen, para no contar dos veces el
+      mismo tiempo (por ejemplo, dos trabajos simultáneos).
+    """
+    hoy = hoy or date.today()
+    periodos = []
     for exp in registros:
-        if not exp.fecha_ingreso:
+        inicio = _como_fecha(exp.fecha_ingreso)
+        fin = hoy if exp.actual else _como_fecha(exp.fecha_salida)
+        if not inicio or not fin:
             continue
-        fecha_inicio = (
-            exp.fecha_ingreso.date()
-            if isinstance(exp.fecha_ingreso, datetime)
-            else exp.fecha_ingreso
-        )
-        fecha_fin = date.today() if exp.actual else exp.fecha_salida
-        if isinstance(fecha_fin, datetime):
-            fecha_fin = fecha_fin.date()
-        if not fecha_fin:
+        fin = min(fin, hoy)
+        if fin < inicio:
             continue
-        total_dias += (fecha_fin - fecha_inicio).days
- 
-    return round(total_dias / 365.25, 1)
- 
- 
+        periodos.append((inicio, fin))
+
+    total_dias = 0
+    tramo_inicio = tramo_fin = None
+    for inicio, fin in sorted(periodos):
+        if tramo_fin is None or inicio > tramo_fin:
+            if tramo_fin is not None:
+                total_dias += (tramo_fin - tramo_inicio).days
+            tramo_inicio, tramo_fin = inicio, fin
+        else:
+            tramo_fin = max(tramo_fin, fin)
+    if tramo_fin is not None:
+        total_dias += (tramo_fin - tramo_inicio).days
+
+    return total_dias
+
+
+def dias_experiencia_por_usuario(ids_usuario):
+    """{id_usuario: días de experiencia} con una sola consulta."""
+    ids_usuario = list(ids_usuario)
+    registros_por_usuario = {id_usuario: [] for id_usuario in ids_usuario}
+    if ids_usuario:
+        for exp in Experiencia.query.filter(
+            Experiencia.id_usuario.in_(ids_usuario)
+        ).all():
+            registros_por_usuario[exp.id_usuario].append(exp)
+    return {
+        id_usuario: _dias_sin_solapar(registros)
+        for id_usuario, registros in registros_por_usuario.items()
+    }
+
+
+def obtener_experiencia_total(id_usuario):
+    """Años de experiencia (con un decimal), para mostrar."""
+    registros = Experiencia.query.filter_by(id_usuario=id_usuario).all()
+    return round(_dias_sin_solapar(registros) / DIAS_POR_ANIO, 1)
+
+
 def formatear_experiencia(anos):
     """
     Convierte el número de años (float) a un texto legible:
     menos de 1 año se muestra en meses, de ahí en adelante en años.
     """
-    if not anos:
+    if not anos or anos <= 0:
         return '—'
  
     if anos < 1:

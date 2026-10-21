@@ -187,6 +187,7 @@ Postulantes
 
                                 <form method="POST"
                                       action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                                     <select name="estado"
                                             class="form-control"

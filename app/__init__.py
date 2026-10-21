@@ -1,5 +1,9 @@
-from flask import Flask
-from .extensions import db, mail, login_manager
+from datetime import datetime
+
+from flask import Flask, flash, redirect, request, url_for
+from flask_wtf.csrf import CSRFError
+
+from .extensions import db, mail, login_manager, csrf
 from .web import web_bp
 from .usuario import usuario_bp
 from .admin import admin_bp
@@ -10,10 +14,11 @@ def create_app():
 
     app.config.from_object("config.Config")
 
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError("Falta la variable SECRET_KEY en el archivo .env")
+
     db.init_app(app)
-    #jwt.init_app(app)
-
-
+    csrf.init_app(app)
     mail.init_app(app)
 
     app.register_blueprint(web_bp)
@@ -23,16 +28,24 @@ def create_app():
 
 
     login_manager.init_app(app)
-    #login_manager.login_view = "auth.login"
 
-    #print(app.url_map)
+    from .utils.formato import registrar_filtros
+    registrar_filtros(app)
+
+    from .utils.sesion import registrar_control_sesion
+    registrar_control_sesion(app)
+
+    @app.errorhandler(CSRFError)
+    def csrf_invalido(error):
+        flash("La sesión del formulario expiró. Intenta de nuevo.", "warning")
+        return redirect(request.referrer or url_for("web.login"))
 
     ##me permite utilizar varibales globales
 
     @app.context_processor
     def dato_global():
         return{
-            "anio": 2026,
+            "anio": datetime.now().year,
             "version": "0.01",
             "titulo": "Principal mi Usuario",
             "LIMITES": {

@@ -88,6 +88,8 @@
                         <span class="badge badge-orange">Pendiente</span>
                     {% elif citacion.estado == 'confirmada' %}
                         <span class="badge badge-green">Confirmada</span>
+                    {% elif citacion.estado == 'rechazada' %}
+                        <span class="badge badge-red">Rechazada</span>
                     {% elif citacion.estado == 'cancelada' %}
                         <span class="badge badge-red">Cancelada</span>
                     {% else %}
@@ -96,12 +98,13 @@
                 </td>
 
                 <td>
-                    {% if citacion.respuesta == 'Confirmó' %}
-                        <span class="badge badge-green">Confirmó</span>
-                    {% elif citacion.respuesta == 'No confirmó' %}
-                        <span class="badge badge-red">No confirmó</span>
+                    {# respuesta guarda 'confirmada' / 'rechazada'; aquí se muestra cuándo respondió #}
+                    {% if citacion.respuesta and citacion.fecha_respuesta %}
+                        {{ citacion.fecha_respuesta.strftime('%d/%m/%Y %H:%M') }}
+                    {% elif citacion.respuesta %}
+                        Sí
                     {% else %}
-                        <span class="badge badge-gray">Pendiente</span>
+                        <span class="badge badge-gray">Sin respuesta</span>
                     {% endif %}
                 </td>
 
@@ -133,7 +136,8 @@
 </div>
 
 {% if pagination and pagination.pages > 1 %}
-{% set args = request.args.to_dict() %}
+{# flat=False conserva los filtros de estado (varias casillas) al cambiar de página #}
+{% set args = request.args.to_dict(flat=False) %}
 <div class="vac-paginador">
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
@@ -143,7 +147,7 @@
 
     <span class="vac-paginador-info">
         Página {{ pagination.page }} de {{ pagination.pages }}
-        · {{ pagination.total }} citación{{ 'es' if pagination.total != 1 }}
+        · {{ pagination.total }} {{ 'citación' if pagination.total == 1 else 'citaciones' }}
     </span>
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
@@ -169,6 +173,7 @@
         </p>
 
         <form id="form-reprogramar" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="campo campo-completo">
                 <label class="form-label" for="modal-reprogramar-fecha">Nueva fecha</label>

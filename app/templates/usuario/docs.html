@@ -19,6 +19,23 @@ Documentos
             </div>
         {% endif %}
  
+        <!-- Documentos obligatorios -->
+        <div class="lista-docs-subidos">
+            <p class="lista-docs-titulo">Documentos obligatorios</p>
+            <ul>
+                {% for tipo in documentos_obligatorios %}
+                <li>
+                    <span>{{ tipo }}</span>
+                    {% if tipo in documentos_faltantes %}
+                        <span class="form-error">Pendiente</span>
+                    {% else %}
+                        <span>✓ Cargado</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
         <!-- Documentos ya subidos -->
         {% if docs %}
         <div class="lista-docs-subidos">
@@ -27,9 +44,10 @@ Documentos
                 {% for d in docs %}
                 <li>
                     <span>{{ d.nombre }} ({{ d.tipo }})</span>
-                    <a href="{{ url_for('static', filename=d.ruta_soporte) }}" target="_blank">Ver</a>
+                    <a href="{{ url_for('web.ver_archivo', tipo='documento', id=d.id) }}" target="_blank" rel="noopener">Ver</a>
                     <form method="POST" action="{{ url_for('usuario.eliminar_documento', id=d.id) }}"
                           onsubmit="return confirm('¿Eliminar este documento?');" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-eliminar-fila" title="Eliminar">🗑️</button>
                     </form>
                 </li>
@@ -87,7 +105,7 @@ Documentos
                         Anterior
                     </a>
                 {% else %}
-                    <a href="{{ url_for('usuario.inicial') }}" class="btn-secondary">
+                    <a href="{{ url_for('usuario.principal') }}" class="btn-secondary">
                         Anterior
                     </a>
                 {% endif %}

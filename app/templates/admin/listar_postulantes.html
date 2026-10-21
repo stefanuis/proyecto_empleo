@@ -35,7 +35,7 @@ Postulantes - {{ vacante.titulo }}
                 <p class="filtro-grupo-titulo">Experiencia mínima</p>
                 <select name="experiencia_minima">
                     <option value="">Cualquier experiencia</option>
-                    {% for valor, etiqueta in [('0', 'Sin experiencia'), ('1', '1+ año'), ('2', '2+ años'), ('3', '3+ años'), ('5', '5+ años')] %}
+                    {% for valor, etiqueta in [('0.5', '6+ meses'), ('1', '1+ año'), ('2', '2+ años'), ('3', '3+ años'), ('5', '5+ años')] %}
                         <option value="{{ valor }}" {% if experiencia_seleccionada == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
@@ -58,11 +58,37 @@ Postulantes - {{ vacante.titulo }}
                 <input type="text" name="titulo_estudios" placeholder="Ej: Ingeniero, Enfermería..." value="{{ titulo_estudios_seleccionado }}">
             </div>
  
+            {% if not funciones_vacante %}
             <div class="vac-filtro-grupo">
                 <p class="filtro-grupo-titulo">Función desempeñada</p>
                 <input type="text" name="funcion" placeholder="Ej: atención al cliente, facturación..." value="{{ funcion_seleccionada }}">
             </div>
+            {% endif %}
         </div>
+
+        {% if funciones_vacante %}
+        <div class="vac-filtro-grupo filtro-funciones">
+            <p class="filtro-grupo-titulo">Funciones del cargo</p>
+            <div class="filtro-funciones-modo">
+                <label><input type="radio" name="modo_funciones" value="alguna" {% if modo_funciones != 'todas' %}checked{% endif %}> Al menos una</label>
+                <label><input type="radio" name="modo_funciones" value="todas" {% if modo_funciones == 'todas' %}checked{% endif %}> Todas las marcadas</label>
+            </div>
+            <div class="filtro-funciones-lista">
+                {% for funcion in funciones_vacante %}
+                    <label class="filtro-funcion">
+                        <input type="checkbox" name="funciones" value="{{ funcion.id }}" {% if funcion.id in funciones_filtro %}checked{% endif %}>
+                        {{ funcion.nombre }}
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <p class="form-hint">
+            Esta vacante no tiene funciones del cargo definidas.
+            <a href="{{ url_for('admin.editar_vacante', id=vacante.id) }}">Edítala y márcalas</a>
+            para ordenar a los postulantes por coincidencia.
+        </p>
+        {% endif %}
  
         <div class="post-filtros-acciones">
             <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
@@ -72,15 +98,30 @@ Postulantes - {{ vacante.titulo }}
 </form>
  
 <form id="form-citar" method="POST" action="{{ url_for('admin.citar_seleccionados', id=vacante.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="postulaciones_seleccionadas" id="input-ids-seleccionados">
  
     <div class="post-seleccion-acciones" style="display:flex; align-items:center; justify-content:space-between; margin:16px 0;">
         <div class="post-seleccion-info">
             <span id="contador-seleccionados">0 postulantes seleccionados</span>
         </div>
-        <button type="button" class="btn-postular" id="btn-citar-seleccionados">
-            Citar seleccionados
-        </button>
+        <div class="acciones-masivas">
+            <button type="button" class="btn-secondary btn-sm" data-accion-masiva="revision"
+                    data-confirmar="¿Pasar a En revisión a los postulantes seleccionados?">
+                Pasar a revisión
+            </button>
+            <button type="button" class="btn-secondary btn-sm" data-accion-masiva="rechazar"
+                    data-confirmar="¿Rechazar a los postulantes seleccionados y enviarles el correo de rechazo?">
+                Rechazar y enviar correo
+            </button>
+            <button type="button" class="btn-secondary btn-sm" id="btn-descargar-seleccionados"
+                    data-url="{{ url_for('admin.descargar_expedientes_zip') }}">
+                Descargar hojas de vida
+            </button>
+            <button type="button" class="btn-postular" id="btn-citar-seleccionados">
+                Citar seleccionados
+            </button>
+        </div>
     </div>
  
     <div class="vac-tabla-container">
@@ -89,6 +130,7 @@ Postulantes - {{ vacante.titulo }}
                 <tr>
                     <th><input type="checkbox" id="seleccionar-todos"></th>
                     <th>Candidato</th>
+                    {% if funciones_vacante %}<th>Coincidencia</th>{% endif %}
                     <th>Documento</th>
                     <th>Nivel académico</th>
                     <th>Experiencia</th>
@@ -99,12 +141,40 @@ Postulantes - {{ vacante.titulo }}
                 </tr>
             </thead>
             <tbody>
-                {% for postulacion, personal, nivel, experiencia in postulaciones %}
+                {% for postulacion, personal, nivel, experiencia, coincidencia in postulaciones %}
                     <tr>
                         <td><input type="checkbox" data-id="{{ postulacion.id }}" class="checkbox-postulante"></td>
-                        <td><strong>{{ personal.nombres }} {{ personal.apellidos }}</strong></td>
+                        <td>
+                            <strong>{{ personal.nombres }} {{ personal.apellidos }}</strong>
+                            {% if postulacion.video_url %}
+                                <br><a href="{{ postulacion.video_url }}" target="_blank" rel="noopener noreferrer"
+                                       class="enlace-video">▶ Ver video</a>
+                            {% elif vacante.requiere_video %}
+                                <br><span class="form-hint">Sin video</span>
+                            {% endif %}
+                        </td>
+                        {% if funciones_vacante %}
+                        <td class="coincidencia-celda">
+                            <div class="coincidencia-barra" role="img"
+                                 aria-label="{{ coincidencia.cantidad }} de {{ coincidencia.total }} funciones">
+                                <span style="width: {{ coincidencia.porcentaje }}%"></span>
+                            </div>
+                            <strong>{{ coincidencia.cantidad }} de {{ coincidencia.total }}</strong>
+                            {% if coincidencia.cumplidas %}
+                                <div class="coincidencia-funciones"
+                                     title="{{ coincidencia.cumplidas|map(attribute='nombre')|join(', ') }}">
+                                    {% for funcion in coincidencia.cumplidas[:2] %}
+                                        <span class="badge badge-green">{{ funcion.nombre }}</span>
+                                    {% endfor %}
+                                    {% if coincidencia.cumplidas|length > 2 %}
+                                        <span class="badge badge-gray">+{{ coincidencia.cumplidas|length - 2 }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        {% endif %}
                         <td>{{ personal.num_doc or '—' }}</td>
-                        <td>{{ nivel or '—' }}</td>
+                        <td>{{ nivel|nivel_academico }}</td>
                         <td>{{ experiencia }}</td>
                         <td>
                             {% if postulacion.estado == 'postulado' %}
@@ -129,15 +199,24 @@ Postulantes - {{ vacante.titulo }}
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="9" class="post-tabla-vacia">No hay postulantes que coincidan con los filtros.</td>
+                        <td colspan="{{ 10 if funciones_vacante else 9 }}" class="post-tabla-vacia">No hay postulantes que coincidan con los filtros.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </form>
+
+<!-- Acciones en bloque: lo llena el script con la acción y los ids marcados -->
+<form id="form-acciones-masivas" method="POST" action="{{ url_for('admin.acciones_masivas', id=vacante.id) }}" hidden>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="accion" id="input-accion-masiva">
+    <input type="hidden" name="ids" id="input-ids-masivos">
+</form>
+
 {% if pagination and pagination.pages > 1 %}
-{% set args = request.args.to_dict() %}
+{# flat=False conserva los filtros con varios valores (funciones) al cambiar de página #}
+{% set args = request.args.to_dict(flat=False) %}
 <div class="vac-paginador">
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
@@ -282,7 +361,38 @@ document.addEventListener("DOMContentLoaded", function () {
  
         formCitar.submit();
     });
- 
+
+    // Acciones en bloque: pasar a revisión / rechazar
+    const formMasivo = document.getElementById("form-acciones-masivas");
+    document.querySelectorAll("[data-accion-masiva]").forEach(function (boton) {
+        boton.addEventListener("click", function () {
+            const ids = idsSeleccionados();
+            if (ids.length === 0) {
+                alert("Selecciona al menos un postulante.");
+                return;
+            }
+            if (!confirm(boton.dataset.confirmar + " (" + ids.length + ")")) {
+                return;
+            }
+            document.getElementById("input-accion-masiva").value = boton.dataset.accionMasiva;
+            document.getElementById("input-ids-masivos").value = ids.join(",");
+            formMasivo.submit();
+        });
+    });
+
+    // Descargar las hojas de vida seleccionadas en un ZIP
+    const btnDescargar = document.getElementById("btn-descargar-seleccionados");
+    btnDescargar.addEventListener("click", function () {
+        const ids = idsSeleccionados();
+        if (ids.length === 0) {
+            alert("Selecciona al menos un postulante.");
+            return;
+        }
+        const params = new URLSearchParams();
+        ids.forEach(id => params.append("ids", id));
+        window.location.href = btnDescargar.dataset.url + "?" + params.toString();
+    });
+
     actualizarContador();
 });
 </script>

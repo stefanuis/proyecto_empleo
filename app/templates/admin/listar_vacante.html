@@ -6,102 +6,101 @@
 
 {% block contenido %}
 
-<form class="filtros-vacantes-admin" method="GET" action="{{ url_for('admin.listar_vacantes') }}">
+{% if solo_vencidas or solo_sin_funciones %}
+<div class="aviso-filtro-rapido" role="status">
+  Mostrando solo vacantes activas
+  {% if solo_vencidas %}con la fecha de cierre vencida{% endif %}
+  {% if solo_vencidas and solo_sin_funciones %} y {% endif %}
+  {% if solo_sin_funciones %}sin funciones del cargo definidas{% endif %}.
+  <a href="{{ url_for('admin.listar_vacantes') }}">Ver todas</a>
+</div>
+{% endif %}
 
-  <div class="input-buscar buscador-vacantes">
-    <i class="ti ti-search"></i>
-    <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
-    <button type="submit" name="accion" value="buscar" class="btn-secondary btn-sm">
-      Buscar
-    </button>
+<div class="vac-header">
+  <div>
+    <h2 class="vac-titulo">Vacantes</h2>
+    <p class="vac-subtitulo">Busca, filtra y gestiona las vacantes publicadas.</p>
+  </div>
+  <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary btn-sm">+ Crear vacante</a>
+</div>
+
+{# Un solo formulario: el texto buscado y los filtros se aplican juntos #}
+<form class="filtros-vacantes-admin filtros-avanzados-panel" method="GET" action="{{ url_for('admin.listar_vacantes') }}">
+
+  <div class="vac-filtro-busqueda">
+    <label class="filtro-grupo-titulo" for="buscar-vacante">Buscar</label>
+    <div class="input-buscar buscador-vacantes">
+      <i class="ti ti-search" aria-hidden="true"></i>
+      <input type="search" id="buscar-vacante" name="q" placeholder="Nombre de la vacante" value="{{ q }}">
+    </div>
   </div>
 
-  <div class="vac-filtros-info">
-    <p class="vac-filtros-info-texto"></p>
-  </div>
+  <div class="filtros-avanzados-grupos">
 
-  <div class="filtros-avanzados-panel">
+    <!-- Grupo: Vacante -->
+    <div class="vac-filtro-grupo">
+      <p class="filtro-grupo-titulo">Vacante</p>
 
-    <div class="filtros-avanzados-grupos">
-
-      <!-- Grupo: Vacante -->
-      <div class="vac-filtro-grupo">
-        <p class="filtro-grupo-titulo">Vacante</p>
-
-        <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
-          <option value="">Todas las áreas de aplicación</option>
-          {% for value, label in areas %}
-            {% if value %}
-              <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
-                {{ label }}
-              </option>
-            {% endif %}
-          {% endfor %}
-        </select>
-
-        <select name="vacantes" class="vac-filtro-select">
-          <option value="">Todas las vacantes</option>
-          {% for v in todas_las_vacantes %}
-            <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
-              {{ v.titulo }}
+      <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area" aria-label="Área de aplicación">
+        <option value="">Todas las áreas de aplicación</option>
+        {% for value, label in areas %}
+          {% if value %}
+            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
+              {{ label }}
             </option>
-          {% endfor %}
-        </select>
+          {% endif %}
+        {% endfor %}
+      </select>
 
-        <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0;">
-          Selecciona el área o la vacante que deseas filtrar.
-        </p>
-      </div>
+      <select name="vacantes" class="vac-filtro-select" aria-label="Vacante">
+        <option value="">Todas las vacantes</option>
+        {% for v in todas_las_vacantes %}
+          <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
+            {{ v.titulo }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
 
-      <!-- Grupo: Requisitos del puesto -->
-      <div class="vac-filtro-grupo">
-        <p class="filtro-grupo-titulo">Requisitos del puesto</p>
+    <!-- Grupo: Requisitos del puesto -->
+    <div class="vac-filtro-grupo">
+      <p class="filtro-grupo-titulo">Requisitos del puesto</p>
 
-        <select name="nivel" class="vac-filtro-select">
-          <option value="">Todos los niveles</option>
-          <option value="Bachillerato"    {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
-          <option value="tecnico"         {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
-          <option value="tecnologo"       {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
-          <option value="universitario"   {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
-          <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
-          <option value="maestria"        {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
-          <option value="doctorado"       {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
-        </select>
-      </div>
+      <select name="nivel" class="vac-filtro-select" aria-label="Nivel académico">
+        <option value="">Todos los niveles académicos</option>
+        {% for valor in niveles %}
+          <option value="{{ valor }}" {% if nivel_seleccionado == valor %}selected{% endif %}>{{ valor }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-      <!-- Grupo: Estado y fechas -->
-      <div class="vac-filtro-grupo">
-        <p class="filtro-grupo-titulo">Estado y fechas</p>
+    <!-- Grupo: Estado y fechas -->
+    <div class="vac-filtro-grupo">
+      <p class="filtro-grupo-titulo">Estado y fecha de publicación</p>
 
-        <select name="estado" class="vac-filtro-select vac-filtro-select-estado">
-          <option value="">Estados</option>
-          <option value="Activa"  {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
-          <option value="Cerrada" {% if estado_seleccionado == 'Cerrada' %}selected{% endif %}>Cerrada</option>
-        </select>
+      <select name="estado" class="vac-filtro-select vac-filtro-select-estado" aria-label="Estado">
+        <option value="">Todos los estados</option>
+        <option value="Activa"  {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
+        <option value="Cerrada" {% if estado_seleccionado == 'Cerrada' %}selected{% endif %}>Cerrada</option>
+      </select>
 
-        <div class="vac-filtro-fechas">
-          <div>
-            <label class="vac-filtro-label">Publicada desde</label>
-            <input type="date" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}">
-          </div>
-          <div>
-            <label class="vac-filtro-label">Publicada hasta</label>
-            <input type="date" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}">
-          </div>
+      <div class="vac-filtro-fechas">
+        <div>
+          <label class="vac-filtro-label" for="fecha-desde">Desde</label>
+          <input type="date" id="fecha-desde" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}">
+        </div>
+        <div>
+          <label class="vac-filtro-label" for="fecha-hasta">Hasta</label>
+          <input type="date" id="fecha-hasta" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}">
         </div>
       </div>
-
     </div>
 
-    <div class="vac-filtros-acciones">
-      <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
-        Restablecer
-      </button>
-      <button type="submit" name="accion" value="filtrar" class="btn-primary btn-sm">
-        Aplicar filtros
-      </button>
-    </div>
+  </div>
 
+  <div class="vac-filtros-acciones">
+    <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary btn-sm">Restablecer</a>
+    <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
   </div>
 
 </form>
@@ -178,6 +177,7 @@
                     action="{{ url_for('admin.cambiar_estado_vacante', id=vacante.id) }}"
                     style="display:inline;"
                     data-confirmar="{% if vacante.estado == 'Activa' %}¿Cerrar esta vacante? Dejará de recibir postulaciones.{% else %}¿Reabrir esta vacante?{% endif %}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-secondary btn-sm">
                   {{ 'Cerrar' if vacante.estado == 'Activa' else 'Reabrir' }}
                 </button>
@@ -189,6 +189,7 @@
                     action="{{ url_for('admin.eliminar_vacante', id=vacante.id) }}"
                     style="display:inline;"
                     data-confirmar="¿Eliminar esta vacante definitivamente? Esta acción no se puede deshacer.">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-secondary btn-sm" style="color:var(--badge-red-text);">
                   Eliminar
                 </button>

@@ -30,6 +30,10 @@
 
 </body>
 <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/sesion.js') }}" defer
+        data-minutos="{{ sesion_inactiva_minutos }}"
+        data-mantener="{{ url_for('web.mantener_sesion') }}"
+        data-salir="{{ url_for('web.cerrar', motivo='inactividad') }}"></script>
 
 <script>
 

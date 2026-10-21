@@ -1,5 +1,8 @@
+// Selector de funciones por área de aplicación. Lo usan el Perfil
+// profesional del candidato y el formulario de vacantes del admin: cualquier
+// formulario con data-funciones-url y los mismos ids de elementos.
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("form-wizard");
+    const form = document.querySelector("form[data-funciones-url]");
     const areaSelect = document.getElementById("area_aplicacion");
     const descripcion = document.getElementById("descripcion");
     const descripcionContador = document.getElementById("perfil-descripcion-contador");
@@ -24,7 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
     let areaActual = areaSelect.value;
 
     const actualizarContadorDescripcion = () => {
-        descripcionContador.textContent = `${descripcion.value.length} / 500`;
+        if (descripcion && descripcionContador) {
+            descripcionContador.textContent = `${descripcion.value.length} / 500`;
+        }
     };
 
     const actualizarVistaPrevia = () => {
@@ -151,7 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    descripcion.addEventListener("input", actualizarContadorDescripcion);
+    if (descripcion) {
+        descripcion.addEventListener("input", actualizarContadorDescripcion);
+    }
     busqueda.addEventListener("input", filtrarFunciones);
     areaSelect.addEventListener("change", () => {
         if (areaActual && areaSelect.value !== areaActual) {

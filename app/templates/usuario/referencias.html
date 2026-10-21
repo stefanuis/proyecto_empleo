@@ -24,7 +24,7 @@
 
             {{ form.hidden_tag() }}
 
-            <label class="campo-checkbox">
+            <label class="campo-checkbox opcion-no-tengo">
                 <input type="checkbox" id="no-tengo-referencias"
                        name="no_tengo_referencias" value="1"
                        {% if no_tengo %}checked{% endif %}>
@@ -59,10 +59,10 @@
                             {% endfor %}
                         </div>
 
-                        <!-- Parentesco -->
+                        <!-- Cargo / relación laboral -->
                         <div class="campo">
                             {{ entry.parentesco.label }}
-                            {{ entry.parentesco(class="form-control") }}
+                            {{ entry.parentesco(class="form-control" + (" is-invalid" if entry.parentesco.errors else ""), maxlength="30") }}
                             {% for error in entry.parentesco.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
@@ -147,8 +147,8 @@
                 <input class="form-control" name="Info_referencias-__INDEX__-apellidos">
             </div>
             <div class="campo">
-                <label>Parentesco/Relación laboral</label>
-                <input class="form-control" name="Info_referencias-__INDEX__-parentesco">
+                <label>Cargo / relación laboral</label>
+                <input class="form-control" name="Info_referencias-__INDEX__-parentesco" maxlength="30" placeholder="Ej: Jefe inmediato">
             </div>
             <div class="campo">
                 <label>Empresa/Institución</label>

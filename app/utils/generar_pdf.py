@@ -266,16 +266,12 @@ def generar_pdf_expediente(personal, vacante, post, academica=None,
             ]))
             elementos.append(fila_titulo)
  
-            institucion = f"{est.institucion or '—'} — {est.pais_institucion or '—'}"
-            elementos.append(Paragraph(_t(institucion), style_valor))
- 
+            elementos.append(Paragraph(_t(est.institucion or '—'), style_valor))
+
             detalle = (
-                f"Nivel: {est.nivel or '—'} · Área: {est.area or '—'} · "
-                f"Finalización: {est.mes_finalizacion or '—'}/{est.anno_finalizacion or '—'} · "
-                f"Intensidad: {est.intensidad_horaria or '—'}h"
+                f"Nivel: {est.nivel or '—'} · "
+                f"Finalización: {est.mes_finalizacion or '—'}/{est.anno_finalizacion or '—'}"
             )
-            if getattr(est, 'convalidacion', False):
-                detalle += " · Convalidado"
             elementos.append(Paragraph(_t(detalle), style_label))
             elementos.append(Spacer(1, 10))
     else:
@@ -314,14 +310,13 @@ def generar_pdf_expediente(personal, vacante, post, academica=None,
         filas = [[
             Paragraph(_t(c.nombre), style_valor),
             Paragraph(_t(c.institucion), style_valor),
-            Paragraph(_t(c.area), style_valor),
             Paragraph(_t(c.horas), style_valor),
             Paragraph(c.fecha_realizacion.strftime('%d/%m/%Y') if c.fecha_realizacion else '—', style_valor),
             Paragraph('Sí' if c.certificado else 'No', style_valor),
         ] for c in cursos]
         elementos.append(_tabla_simple(
-            ['Curso', 'Institución', 'Área', 'Horas', 'Fecha', 'Certificado'],
-            filas, [4.5 * cm, 3.8 * cm, 3 * cm, 1.4 * cm, 2.3 * cm, 2 * cm]))
+            ['Curso', 'Institución', 'Horas', 'Fecha', 'Certificado'],
+            filas, [6 * cm, 5.3 * cm, 1.4 * cm, 2.3 * cm, 2 * cm]))
     else:
         elementos.append(Paragraph('No registró cursos.', style_label))
  
@@ -340,7 +335,7 @@ def generar_pdf_expediente(personal, vacante, post, academica=None,
                 Paragraph(autoriza, style_valor),
             ])
         elementos.append(_tabla_simple(
-            ['Nombre', 'Parentesco', 'Empresa', 'Teléfono', 'Ciudad', 'Autoriza'],
+            ['Nombre', 'Cargo / relación', 'Empresa', 'Teléfono', 'Ciudad', 'Autoriza'],
             filas, [4 * cm, 2.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2 * cm]))
     else:
         elementos.append(Paragraph('No registró referencias.', style_label))

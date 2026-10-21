@@ -23,3 +23,4 @@ class OtrosDocumentos(db.Model):
         texto += f"nombre: {self.nombre}"
         texto += f"ruta_soporte: {self.ruta_soporte}"
         texto += f"tipo: {self.tipo}"
+        return texto

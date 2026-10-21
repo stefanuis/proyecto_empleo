@@ -56,7 +56,12 @@
                         <!-- Certificado -->
                         <div class="campo campo-certificado">
                             {{ entry.ruta_certificado.label }}
-                            {{ entry.ruta_certificado(class="form-control") }}
+                            {{ entry.ruta_certificado(class="form-control" + (" is-invalid" if entry.ruta_certificado.errors else "")) }}
+                            {% if entry.registro_id.data and entry.registro_id.data|string in certificados_guardados %}
+                                <small class="form-hint">Ya tienes un certificado cargado. Sube otro solo si quieres reemplazarlo.</small>
+                            {% else %}
+                                <small class="form-hint">Obligatorio si marcaste que tienes certificado.</small>
+                            {% endif %}
                             {% for error in entry.ruta_certificado.errors %}
                                 <span class="form-error">{{ error }}</span>
                             {% endfor %}
@@ -109,13 +114,14 @@
                 <label>Descripción de la discapacidad</label>
                 <textarea class="form-control" name="Info_discapacidades-__INDEX__-descripcion"></textarea>
             </div>
-            <div class="campo campo-checkbox">
+            <label class="campo campo-checkbox">
                 <input type="checkbox" class="campo-tiene-certificado" name="Info_discapacidades-__INDEX__-tiene_certificado">
-                <label>Tengo certificado de discapacidad</label>
-            </div>
+                <span>Tengo certificado de discapacidad</span>
+            </label>
             <div class="campo campo-certificado">
                 <label>Certificado de discapacidad</label>
                 <input type="file" class="form-control" name="Info_discapacidades-__INDEX__-ruta_certificado" disabled>
+                <small class="form-hint">Obligatorio si marcaste que tienes certificado.</small>
             </div>
         </div>
         <button type="button" class="btn-eliminar-fila" title="Eliminar">🗑️</button>

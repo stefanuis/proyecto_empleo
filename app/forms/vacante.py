@@ -8,11 +8,14 @@ from wtforms import (
     BooleanField,
     DateField
 )
+from datetime import date, datetime
+
 from wtforms.validators import (
     DataRequired,
     Optional,
     NumberRange,
-    Length
+    Length,
+    ValidationError,
 )
 
 
@@ -31,7 +34,7 @@ class VacanteForm(FlaskForm):
     area = SelectField(
          "Área/Departamento",
         choices=[
-            ("", "Selecciona el area"),
+            ("", "Selecciona el área"),
             ("Asistencial", "Asistencial"),
             ("Administrativa", "Administrativa")
            
@@ -76,7 +79,7 @@ class VacanteForm(FlaskForm):
 
     
     fecha_publicacion = DateField(
-        "Fecha de publicacion",
+        "Fecha de publicación",
         format="%Y-%m-%d",
         validators=[Optional()]
     )
@@ -84,13 +87,13 @@ class VacanteForm(FlaskForm):
     fecha_cierre = DateField(
         "Fecha de cierre",
         format="%Y-%m-%d",
-        validators=[Optional()]
+        validators=[DataRequired(message="La fecha de cierre es obligatoria y debe ser una fecha válida.")]
     )
 
     area_aplicacion = SelectField(
-        "Área de Aplicación",
+        "Área de aplicación",
         choices=[
-            ("", "Selecciona area de tu conocimiento"),
+            ("", "Selecciona el área de aplicación"),
             ("Administrativo", "Administrativo"),
             ("Admisiones", "Admisiones"),
             ("Archivo y Gestión Documental", "Archivo y Gestión Documental"),
@@ -128,7 +131,7 @@ class VacanteForm(FlaskForm):
     )
 
     nivel_academico = SelectField(
-        "Nivel Académico",
+        "Nivel académico",
         choices=[
             ("", "Selecciona un nivel"),
             ("Primaria", "Primaria"),
@@ -146,7 +149,7 @@ class VacanteForm(FlaskForm):
 
     
     numero_plazas= IntegerField(
-        "numero de plazas",
+        "Número de plazas",
         validators=[
             Optional(),
             NumberRange(min=0, max=70)
@@ -155,8 +158,25 @@ class VacanteForm(FlaskForm):
     )
     
     requiere_video = BooleanField(
-        "requiere video de presentacion",
+        "Requiere video de presentación",
         validators=[Optional()]
     )
 
     submit = SubmitField("Guardar vacante")
+
+    # WTForms ejecuta automáticamente los métodos validate_<campo>
+
+    def validate_fecha_cierre(self, field):
+        cierre = field.data.date() if isinstance(field.data, datetime) else field.data
+        publicacion = self.fecha_publicacion.data or date.today()
+        if isinstance(publicacion, datetime):
+            publicacion = publicacion.date()
+
+        if cierre < publicacion:
+            raise ValidationError(
+                "La fecha de cierre no puede ser anterior a la de publicación."
+            )
+        if self.estado.data == "Activa" and cierre < date.today():
+            raise ValidationError(
+                "Una vacante activa no puede tener una fecha de cierre pasada."
+            )

@@ -11,3 +11,4 @@ web_bp = Blueprint(
 from . import login
 from . import inicial
 from . import registro
+from . import archivos

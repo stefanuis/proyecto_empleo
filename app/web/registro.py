@@ -1,10 +1,12 @@
 from flask import render_template, request, url_for, redirect, flash
-from app.forms.registro import RegistroForm
-from flask_mail import Message
+from app.forms.registro import EstablecerClaveForm, RegistroForm
 import secrets
 from datetime import datetime, timedelta
 from app.models.user import User
-from app.extensions import db, mail
+from app.extensions import db
+from app.utils.correo import enviar_correo as enviar_correo_html
+from app.utils.permisos import url_panel
+from flask_login import current_user
 
 from . import web_bp
 
@@ -17,30 +19,20 @@ def enviar_correo(email, el_token, nombres):
         _external=True
     )
 
-    try:
-        msg = Message(
-            subject='Enlace de verificacion - Clinica Panamericana',
-            sender='noresponder@clinpanamericana.com',
-            recipients=[email]
-        )
-        msg.attach(
-            filename="logo_color.png",
-            content_type="image/png",
-            data=open("app/static/img/logo_color.png", "rb").read(),
-            disposition="inline",
-            headers={"Content-ID": "<logo_color>"}
-        )
-        msg.html = render_template("mensaje.html", nombres=nombres,enlace=enlace, minutos=TOKEN_EXPIRACION_MINUTOS)
-        mail.send(msg)
-    except Exception as e:
-        print(f'Error al enviar el correo. Intenta nuevamente más tarde.', 'error')
-        print("ERROR SMTP:")
-        print(type(e))
-        print(str(e))
+    return enviar_correo_html(
+        email,
+        'Enlace de verificacion - Clinica Panamericana',
+        "mensaje.html",
+        nombres=nombres,
+        enlace=enlace,
+        minutos=TOKEN_EXPIRACION_MINUTOS,
+    )
 
 
 @web_bp.route("/registro", methods=["GET"])
 def registro():
+    if current_user.is_authenticated:
+        return redirect(url_panel(current_user.rol))
     form=RegistroForm()
     return render_template("registro.html", form=form)
 
@@ -50,6 +42,8 @@ def registro_post():
     form = RegistroForm()
     if form.validate_on_submit():
         # Todo está correcto, procesa los datos
+        # El login compara el correo en minúsculas
+        form.email.data = form.email.data.strip().lower()
         
         d_registro = {}
         d_registro["nombres"] = request.form.get("nombres")
@@ -135,7 +129,8 @@ def confirmacion(token):
     # Buscar el usuario asociado al token
     usuario = User.query.filter_by(token=token).first()
 
-    if usuario is None:
+    # Las cuentas de administrador se activan en /activar-cuenta (definen contraseña)
+    if usuario is None or usuario.rol != "usuario":
         flash(
             "El enlace de verificación no es válido o ya fue utilizado.",
             "danger"
@@ -190,3 +185,57 @@ def confirmacion(token):
     )
 
     return redirect(url_for("web.login"))
+
+
+
+# ---------------------------------------------------------------------
+# Cuentas creadas por el admin maestro: el administrador nuevo recibe un
+# enlace para definir su propia contraseña.
+# ---------------------------------------------------------------------
+TOKEN_ACTIVACION_HORAS = 48
+
+
+def enviar_invitacion_admin(usuario):
+    """Genera un enlace nuevo y lo envía por correo (no hace commit)."""
+    usuario.token = secrets.token_urlsafe(32)
+    usuario.token_envio = datetime.now()
+    enlace = url_for('web.activar_cuenta', token=usuario.token, _external=True)
+    return enviar_correo_html(
+        usuario.correo,
+        'Activa tu cuenta de administrador - Clinica Panamericana',
+        "correos/activar_cuenta.html",
+        nombres=usuario.nombres,
+        enlace=enlace,
+        horas=TOKEN_ACTIVACION_HORAS,
+    )
+
+
+@web_bp.route("/activar-cuenta/<token>", methods=["GET", "POST"])
+def activar_cuenta(token):
+    usuario = User.query.filter_by(token=token).first()
+
+    if (
+        usuario is None
+        or usuario.token_envio is None
+        or datetime.now() - usuario.token_envio > timedelta(hours=TOKEN_ACTIVACION_HORAS)
+    ):
+        flash(
+            "El enlace no es válido o ya expiró. Pide al administrador que te envíe uno nuevo.",
+            "danger"
+        )
+        return redirect(url_for("web.login"))
+
+    form = EstablecerClaveForm()
+    if form.validate_on_submit():
+        usuario.set_password(form.password.data)
+        usuario.esta_verificada = True
+        usuario.esta_activa = True
+        # El enlace solo sirve una vez
+        usuario.token = None
+        usuario.token_envio = None
+        db.session.commit()
+
+        flash("Tu contraseña quedó guardada. Ya puedes iniciar sesión.", "success")
+        return redirect(url_for("web.login"))
+
+    return render_template("activar_cuenta.html", form=form, usuario=usuario)

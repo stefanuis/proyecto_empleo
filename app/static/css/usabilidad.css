@@ -1,0 +1,529 @@
+/* =====================================================================
+   AJUSTES DE USABILIDAD
+   Se carga al final de main.css. No cambia la identidad visual (colores,
+   tipografía, radios): corrige problemas de lectura, consistencia y
+   affordance encontrados al revisar las pantallas.
+   ===================================================================== */
+
+
+/* ---------------------------------------------------------------------
+   1. Mayúsculas: en español solo va mayúscula la primera letra.
+      Antes "capitalize" mostraba "Guardar Y Continuar", "Mi Hoja De Vida"
+      y nombres de funciones como "Administración De Medicamentos Por Vía…".
+   --------------------------------------------------------------------- */
+.btn-primary, .btn-secondary, .btn-outline, .btn-ghost,
+.btn-postular, .btn-completar,
+.sidebar-text, .toggle-header .sidebar-text,
+.tab-btn, .badge, .tag {
+  text-transform: none;
+}
+
+
+/* ---------------------------------------------------------------------
+   2. Listas desplegables: con "appearance: none" no se veía la flecha y
+      parecían campos de texto. Se agrega la flecha y la misma altura que
+      los demás campos.
+   --------------------------------------------------------------------- */
+select.form-control,
+.campo select.form-control {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2354545A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 36px;
+}
+
+input.form-control,
+select.form-control {
+  min-height: 42px;
+}
+
+
+/* ---------------------------------------------------------------------
+   3. Botones: había dos definiciones con tamaños distintos, por eso
+      cambiaban de alto entre pantallas. Se unifica alto y alineación.
+      Los enlaces con estilo de botón no se subrayan.
+   --------------------------------------------------------------------- */
+.btn-primary,
+.btn-secondary {
+  min-height: 42px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-sm,
+.btn-primary.btn-sm,
+.btn-secondary.btn-sm {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+a.btn-primary, a.btn-secondary, a.btn-outline,
+a.btn-postular, a.btn-ghost {
+  text-decoration: none;
+}
+
+/* Foco visible al navegar con teclado */
+.btn-primary:focus-visible, .btn-secondary:focus-visible,
+.btn-outline:focus-visible, .btn-postular:focus-visible,
+a:focus-visible, button:focus-visible {
+  outline: 3px solid var(--primary-light);
+  outline-offset: 2px;
+}
+
+
+/* ---------------------------------------------------------------------
+   4. Tablas del admin: en pantallas medianas se cortaban columnas
+      (Estado, Cierre). Ahora se desplazan horizontalmente.
+      "div." sube la especificidad para ganarle a los CSS de cada página.
+   --------------------------------------------------------------------- */
+div.vac-tabla-container {
+  overflow-x: auto;
+}
+
+.vac-tabla th {
+  white-space: nowrap;
+}
+
+/* Nombres y fechas en una sola línea: se leen de corrido */
+.vac-tabla td strong,
+.vac-tabla td:nth-last-child(-n+3) .badge {
+  white-space: nowrap;
+}
+
+/* Botones dentro de tablas: tamaño compacto */
+.vac-tabla .btn-primary,
+.vac-tabla .btn-secondary {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.vac-tabla .acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Funciones que cumple el candidato: chips cortos con el nombre completo
+   en el tooltip */
+.coincidencia-funciones .badge {
+  display: inline-block;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.enlace-video {
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+
+/* ---------------------------------------------------------------------
+   5. Iconos "ti ti-*": la fuente de Tabler no está en el proyecto y se
+      veían círculos vacíos. Se dibujan con los SVG de img/icons.
+   --------------------------------------------------------------------- */
+.ti {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  flex-shrink: 0;
+  vertical-align: -0.2em;
+  background-color: currentColor;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+
+.ti-arrow-left      { -webkit-mask-image: url("../img/icons/arrow-left.svg");      mask-image: url("../img/icons/arrow-left.svg"); }
+.ti-bell            { -webkit-mask-image: url("../img/icons/bell.svg");            mask-image: url("../img/icons/bell.svg"); }
+.ti-briefcase       { -webkit-mask-image: url("../img/icons/briefcase.svg");       mask-image: url("../img/icons/briefcase.svg"); }
+.ti-calendar-event  { -webkit-mask-image: url("../img/icons/calendar-event.svg");  mask-image: url("../img/icons/calendar-event.svg"); }
+.ti-clock           { -webkit-mask-image: url("../img/icons/clock.svg");           mask-image: url("../img/icons/clock.svg"); }
+.ti-currency-dollar { -webkit-mask-image: url("../img/icons/currency-dollar.svg"); mask-image: url("../img/icons/currency-dollar.svg"); }
+.ti-file-text       { -webkit-mask-image: url("../img/icons/file-text.svg");       mask-image: url("../img/icons/file-text.svg"); }
+.ti-note            { -webkit-mask-image: url("../img/icons/note.svg");            mask-image: url("../img/icons/note.svg"); }
+.ti-plus            { -webkit-mask-image: url("../img/icons/plus.svg");            mask-image: url("../img/icons/plus.svg"); }
+.ti-search          { -webkit-mask-image: url("../img/icons/search.svg");          mask-image: url("../img/icons/search.svg"); }
+.ti-share-2         { -webkit-mask-image: url("../img/icons/share-2.svg");         mask-image: url("../img/icons/share-2.svg"); }
+
+/* Contenedores circulares de icono (indicadores y tarjetas) */
+.kpi-icono .ti {
+  width: 22px;
+  height: 22px;
+}
+
+.icono.icono-teal,
+.icono.icono-azul {
+  background-color: var(--primary-mid);
+}
+
+.icono .ti {
+  width: 24px;
+  height: 24px;
+  color: #fff;
+}
+
+/* Tarjetas de vacantes y postulaciones: el título va junto al icono
+   (antes "space-between" lo mandaba al extremo derecho) */
+.card-vacante .card-header {
+  justify-content: flex-start;
+}
+
+/* Detalle de la vacante: icono rosa dentro del círculo claro */
+.vacante-info-item i.ti {
+  -webkit-mask: none;
+  mask: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vacante-info-item i.ti::before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  background-color: var(--primary);
+  -webkit-mask: var(--icono) center / contain no-repeat;
+  mask: var(--icono) center / contain no-repeat;
+}
+
+.vacante-info-item .ti-briefcase       { --icono: url("../img/icons/briefcase.svg"); }
+.vacante-info-item .ti-file-text       { --icono: url("../img/icons/file-text.svg"); }
+.vacante-info-item .ti-currency-dollar { --icono: url("../img/icons/currency-dollar.svg"); }
+
+
+/* ---------------------------------------------------------------------
+   6. Asistente (barra de progreso): el nombre del paso y "Paso 1 de 9"
+      se partían en dos líneas.
+   --------------------------------------------------------------------- */
+.barra-progreso-header {
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.barra-progreso-header .paso-nombre,
+.barra-progreso-header .paso-contador {
+  white-space: nowrap;
+}
+
+.barra-progreso-header .paso-descripcion {
+  flex: 1 1 220px;
+  margin: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   7. Botón "Eliminar" de las filas repetibles: era un círculo de 40px
+      y el texto "Eliminar" se salía. Ahora es un botón pequeño que
+      admite texto o icono.
+   --------------------------------------------------------------------- */
+.btn-eliminar-fila {
+  width: auto;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-eliminar-fila:hover {
+  transform: none;
+}
+
+
+/* ---------------------------------------------------------------------
+   8. Casillas de verificación dentro de un .campo (p. ej. "¿Tiene
+      certificado?"): quedaban centradas y debajo del texto.
+   --------------------------------------------------------------------- */
+.campo.campo-checkbox,
+.form-group.campo-checkbox {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.campo.campo-checkbox label,
+.form-group.campo-checkbox label {
+  margin: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   9. Documentos del candidato: las listas no tenían estilos (viñetas,
+      enlaces azules subrayados, botón de borrar desalineado).
+   --------------------------------------------------------------------- */
+.lista-docs-subidos {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+}
+
+.lista-docs-titulo {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.lista-docs-subidos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-docs-subidos li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--bg-soft);
+}
+
+.lista-docs-subidos li:first-child {
+  border-top: none;
+}
+
+.lista-docs-subidos li > span:first-child {
+  flex: 1;
+}
+
+.lista-docs-subidos a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lista-docs-subidos a:hover {
+  text-decoration: underline;
+}
+
+.lista-docs-subidos form {
+  margin: 0;
+}
+
+.lista-docs-subidos .btn-eliminar-fila {
+  margin-top: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   10. Datos de solo lectura (expediente): la etiqueta quedaba más lejos
+       de su valor que del campo siguiente. Proximidad: cada etiqueta
+       pegada a su dato.
+   --------------------------------------------------------------------- */
+.form-grid .campo:has(> .form-label + p) {
+  gap: 2px;
+}
+
+.form-grid .campo > .form-label:has(+ p) {
+  margin-bottom: 0;
+}
+
+.form-grid .campo > .form-label + p {
+  margin: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   11. Títulos de formularios sueltos (crear/editar vacante)
+   --------------------------------------------------------------------- */
+.formulario-titulo {
+  margin: 0 0 20px;
+  font-size: 22px;
+  color: var(--text-main);
+}
+
+
+/* ---------------------------------------------------------------------
+   12. Aviso de cierre de sesión por inactividad (js/sesion.js)
+   --------------------------------------------------------------------- */
+.aviso-sesion {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: calc(100vw - 40px);
+  padding: 14px 18px;
+  border: 1px solid var(--primary-light);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.aviso-sesion[hidden] {
+  display: none;
+}
+
+.aviso-sesion p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+@media (max-width: 600px) {
+  .aviso-sesion {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+
+/* ---------------------------------------------------------------------
+   13. Casillas de verificación: se veían con el estilo nativo del
+       navegador (pequeñas, grises y distintas en cada pantalla).
+   --------------------------------------------------------------------- */
+.campo-checkbox input[type="checkbox"],
+.form-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 2px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg-main) center / 14px no-repeat;
+  cursor: pointer;
+  transition: background-color var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+
+.campo-checkbox input[type="checkbox"]:hover,
+.form-check input[type="checkbox"]:hover {
+  border-color: var(--primary-mid);
+}
+
+.campo-checkbox input[type="checkbox"]:checked,
+.form-check input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+}
+
+.campo-checkbox input[type="checkbox"]:focus-visible,
+.form-check input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.2);
+}
+
+/* Casilla dentro de una fila (p. ej. "Trabajando actualmente"): se ve
+   como un campo más, alineada con los inputs vecinos. */
+.campo.campo-checkbox,
+.form-group.campo-checkbox {
+  align-self: end;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.campo.campo-checkbox:has(input:checked),
+.form-group.campo-checkbox:has(input:checked) {
+  border-color: var(--primary-light);
+  background: var(--primary-ultra-light);
+}
+
+.campo-checkbox label {
+  flex: 1;
+  cursor: pointer;
+}
+
+/* "No tengo experiencia / cursos / referencias": era texto suelto pegado
+   al primer registro. Ahora es una tarjeta separada del resto. */
+.opcion-no-tengo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-soft);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color var(--transition), background-color var(--transition);
+}
+
+.opcion-no-tengo:hover {
+  border-color: var(--primary-light);
+}
+
+.opcion-no-tengo:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-ultra-light);
+}
+
+
+/* ---------------------------------------------------------------------
+   14. Campos de archivo: el botón "Seleccionar archivo" era el del
+       navegador y no se distinguía la zona donde se carga el archivo.
+   --------------------------------------------------------------------- */
+input[type="file"].form-control {
+  padding: 8px;
+  border-style: dashed;
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+input[type="file"].form-control:hover:not(:disabled) {
+  border-color: var(--primary-mid);
+  background: var(--primary-ultra-light);
+}
+
+input[type="file"].form-control::file-selector-button {
+  margin-right: 12px;
+  padding: 7px 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--bg-main);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+input[type="file"].form-control:hover:not(:disabled)::file-selector-button {
+  background: var(--primary);
+  color: #fff;
+}
+
+input[type="file"].form-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input[type="file"].form-control:disabled::file-selector-button {
+  border-color: var(--border);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.campo-certificado .form-hint,
+.campo .form-hint {
+  display: block;
+  margin-top: 6px;
+}

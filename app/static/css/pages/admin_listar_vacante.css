@@ -1,26 +1,39 @@
-.buscador-vacantes {
-    flex: 1;
-}
-
-.vac-filtros-info {
+/* ── Encabezado de la página ── */
+.vac-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin-top: 14px;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 
-.vac-filtros-info-texto {
-    font-size: 13px;
+.vac-titulo {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 4px;
+}
+
+.vac-subtitulo {
+    font-size: 14px;
     color: var(--text-secondary);
     margin: 0;
 }
 
-.filtros-avanzados-panel {
+/* ── Tarjeta de filtros: buscador + filtros en un solo bloque ──
+   paginas.css define .filtros-vacantes-admin como flex; aquí es un bloque */
+.filtros-vacantes-admin.filtros-avanzados-panel {
+    display: block;
+    background: var(--bg-main);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    margin-top: 8px;
-    margin-bottom: 16px;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 0 0 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.vac-filtro-busqueda {
+    margin-bottom: 20px;
 }
 
 .filtros-avanzados-grupos {
@@ -53,8 +66,8 @@
 }
 
 .vac-filtro-fechas {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
 
@@ -121,19 +134,25 @@
 }
 
 .filtros-vacantes-admin .input-buscar {
-    flex: 1;
-    min-width: 220px;
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
+    display: block;
+    width: 100%;
+    min-width: 0;
+}
+
+.filtros-vacantes-admin .input-buscar .ti {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
 }
 
 .filtros-vacantes-admin .input-buscar input {
-    flex: 1;
-    min-width: 0;
-    padding: 10px 12px 10px 38px;
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px 10px 40px;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-main);
@@ -144,9 +163,36 @@
     transition: var(--transition);
 }
 
-.filtros-vacantes-admin .input-buscar .btn-secondary {
-    flex-shrink: 0;
-    white-space: nowrap;
+.filtros-vacantes-admin .input-buscar input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+/* ── Responsive: los grupos se apilan en vez de apretarse ── */
+@media (max-width: 1000px) {
+    .filtros-avanzados-grupos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .vac-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filtros-avanzados-grupos {
+        grid-template-columns: 1fr;
+    }
+
+    .vac-filtros-acciones {
+        flex-direction: column-reverse;
+    }
+
+    .vac-filtros-acciones .btn-primary,
+    .vac-filtros-acciones .btn-secondary {
+        width: 100%;
+    }
 }
 
 .vac-tabla-container {
