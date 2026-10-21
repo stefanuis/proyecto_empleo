@@ -106,6 +106,7 @@ def calcular_completitud_perfil(id_usuario):
 
 
 RANKING_NIVEL = {
+    'primaria': 0,
     'Bachillerato': 1,
     'tecnico': 2,
     'tecnologo': 3,
@@ -125,7 +126,7 @@ def obtener_nivel_mas_alto(id_usuario):
     if not registros:
         return None
 
-    registro_mas_alto = max(registros, key=lambda r: RANKING_NIVEL.get(r.nivel, 0))
+    registro_mas_alto = max(registros, key=lambda r: RANKING_NIVEL.get(r.nivel, -1))
     return registro_mas_alto.nivel
 
 

@@ -1,6 +1,11 @@
 from app.extensions import db
 from datetime import datetime
 
+from sqlalchemy import or_
+
+# Una citación cancelada (p. ej. reemplazada por una nueva) ya no cuenta
+ESTADO_CANCELADA = "cancelada"
+
 # ─────────────────────────────────────────────
 #  MODELO: User
 # ─────────────────────────────────────────────
@@ -18,6 +23,15 @@ class Citaciones(db.Model):
     token = db.Column(db.String(255), unique=True, index=True)
     fecha_envio = db.Column(db.DateTime)
     fecha_actualizacion = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    @classmethod
+    def vigente(cls):
+        """Filtro SQL: la citación no fue cancelada."""
+        return or_(cls.estado.is_(None), cls.estado != ESTADO_CANCELADA)
+
+    @property
+    def cancelada(self):
+        return self.estado == ESTADO_CANCELADA
 
 
     # ─────────────────────────────────────────

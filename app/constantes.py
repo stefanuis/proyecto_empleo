@@ -27,14 +27,20 @@ ESTADOS_POSTULACION = {
     "postulado": "Postulado",
     "revision": "En revisión",
     "entrevista": "Entrevista",
+    # Stock: el candidato gustó pero no se eligió; queda guardado para
+    # sugerirlo en próximas vacantes de la misma área
+    "stock": "En stock",
     "contratado": "Contratado",
     "rechazado": "Rechazado",
     "retirada": "Retirada",
 }
 
+# Lo que ve el candidato en "Mis postulaciones" (stock se le muestra como espera)
+ESTADOS_POSTULACION_CANDIDATO = {**ESTADOS_POSTULACION, "stock": "En espera"}
+
 # Estados a los que el candidato puede ser avisado por correo al cambiar.
-# "rechazado" tiene su propio correo (botón en el expediente) y la
-# entrevista se avisa con la citación.
+# "rechazado" usa su propio correo (c_rechazo.html, ver _notificar_rechazo
+# en admin/principal.py) y la entrevista se avisa con la citación.
 MENSAJES_CAMBIO_ESTADO = {
     "revision": {
         "asunto": "Tu postulación está en revisión",
@@ -60,4 +66,24 @@ MENSAJES_CAMBIO_ESTADO = {
             "se comunicará contigo para los siguientes pasos."
         ),
     },
+    "stock": {
+        "asunto": "Tu perfil quedó guardado para futuras vacantes",
+        "titulo": "Tu perfil quedó guardado para futuras vacantes",
+        "mensaje": (
+            "En esta ocasión la vacante se cubrió con otra persona, pero tu perfil "
+            "nos gustó. Lo guardamos para tenerte en cuenta en las próximas "
+            "vacantes similares; no necesitas hacer nada por ahora."
+        ),
+    },
+}
+
+# Correo cuando una persona en stock se agrega a una vacante nueva
+MENSAJE_DESDE_STOCK = {
+    "asunto": "Te tenemos en cuenta para una nueva vacante",
+    "titulo": "¡Te tenemos en cuenta para una nueva vacante!",
+    "mensaje": (
+        "Tu perfil estaba guardado en nuestro banco de candidatos y lo agregamos "
+        "a esta vacante. Nuestro equipo de Gestión Humana lo está revisando y te "
+        "avisaremos por este medio cuando haya novedades."
+    ),
 }

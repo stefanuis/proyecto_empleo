@@ -25,7 +25,7 @@ Postulantes - {{ vacante.titulo }}
                 <p class="filtro-grupo-titulo">Estado</p>
                 <select name="estado">
                     <option value="">Todos los estados</option>
-                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado'), ('retirada', 'Retirada')] %}
+                    {% for valor, etiqueta in estados.items() %}
                         <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
@@ -45,7 +45,7 @@ Postulantes - {{ vacante.titulo }}
                 <p class="filtro-grupo-titulo">Nivel de estudios</p>
                 <select name="nivel_estudios">
                     <option value="">Todos los niveles</option>
-                    {% for valor, etiqueta in [('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'), ('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'), ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado')] %}
+                    {% for valor, etiqueta in [('primaria', 'Primaria'), ('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'),('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'), ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado')] %}
                         <option value="{{ valor }}" {% if nivel_estudios_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
                     {% endfor %}
                 </select>
@@ -97,6 +97,43 @@ Postulantes - {{ vacante.titulo }}
     </div>
 </form>
  
+{% if sugerencias_stock %}
+<!-- Personas en stock de otras vacantes de la misma área -->
+<details class="stock-panel" open>
+    <summary class="stock-panel-cabecera">
+        <span class="badge badge-stock">{{ sugerencias_stock|length }}</span>
+        Candidatos en stock{% if vacante.area_aplicacion %} de {{ vacante.area_aplicacion }}{% endif %}
+        <span class="stock-panel-ayuda">Te gustaron en otras vacantes; agrégalos a esta en un clic.</span>
+    </summary>
+    <ul class="stock-lista">
+        {% for s in sugerencias_stock %}
+        <li class="stock-item">
+            <div class="stock-datos">
+                <a class="stock-nombre" href="{{ url_for('admin.ver_expediente', id=s.postulacion.id) }}">
+                    {{ s.personal.nombres if s.personal else s.usuario.nombres }} {{ s.personal.apellidos if s.personal else s.usuario.apellidos }}
+                </a>
+                <span class="stock-meta">
+                    En stock desde {{ (s.postulacion.fecha_actualizacion or s.postulacion.fecha_postulacion)|fecha_corta }}
+                    · vacante {{ s.vacante.titulo }}
+                </span>
+                {% if s.requisitos %}
+                    <span class="stock-aviso">{{ s.requisitos|join(' ') }}</span>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('admin.agregar_desde_stock', id=vacante.id) }}"
+                  data-confirmar="Se agregará a esta vacante en estado En revisión y se le avisará por correo."
+                  data-confirmar-titulo="¿Agregar a esta vacante?"
+                  data-confirmar-aceptar="Sí, agregar">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="postulacion_id" value="{{ s.postulacion.id }}">
+                <button type="submit" class="btn-primary btn-sm">Agregar a esta vacante</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+
 <form id="form-citar" method="POST" action="{{ url_for('admin.citar_seleccionados', id=vacante.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="postulaciones_seleccionadas" id="input-ids-seleccionados">
@@ -109,6 +146,11 @@ Postulantes - {{ vacante.titulo }}
             <button type="button" class="btn-secondary btn-sm" data-accion-masiva="revision"
                     data-confirmar="¿Pasar a En revisión a los postulantes seleccionados?">
                 Pasar a revisión
+            </button>
+            <button type="button" class="btn-secondary btn-sm" data-accion-masiva="stock"
+                    data-confirmar="Quedarán guardados para sugerirlos en próximas vacantes del área y se les avisará por correo."
+                    title="Te gustaron pero no los elegiste: quedan guardados para próximas vacantes">
+                Pasar a stock
             </button>
             <button type="button" class="btn-secondary btn-sm" data-accion-masiva="rechazar"
                     data-confirmar="¿Rechazar a los postulantes seleccionados y enviarles el correo de rechazo?">
@@ -177,7 +219,9 @@ Postulantes - {{ vacante.titulo }}
                         <td>{{ nivel|nivel_academico }}</td>
                         <td>{{ experiencia }}</td>
                         <td>
-                            {% if postulacion.estado == 'postulado' %}
+                            {% if postulacion.estado == 'stock' %}
+                                <span class="badge badge-stock">En stock</span>
+                            {% elif postulacion.estado == 'postulado' %}
                                 <span class="badge badge-pink">Postulado</span>
                             {% elif postulacion.estado == 'revision' %}
                                 <span class="badge badge-blue">En revisión</span>
@@ -187,10 +231,8 @@ Postulantes - {{ vacante.titulo }}
                                 <span class="badge badge-green">Contratado</span>
                             {% elif postulacion.estado == 'rechazado' %}
                                 <span class="badge badge-red">Rechazado</span>
-                            {% elif postulacion.estado == 'retirada' %}
-                                <span class="badge badge-gray">Retirada</span>
                             {% else %}
-                                <span class="badge badge-gray">{{ postulacion.estado }}</span>
+                                <span class="badge badge-gray">{{ estados.get(postulacion.estado, postulacion.estado) }}</span>
                             {% endif %}
                         </td>
                         <td>{{ postulacion.fecha_postulacion.strftime('%d/%m/%Y') if postulacion.fecha_postulacion else '—' }}</td>

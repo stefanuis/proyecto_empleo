@@ -30,6 +30,14 @@
         <h2 class="titulo-principal">Enlace inválido</h2>
         <p>Este enlace no es válido o ha expirado.</p>
 
+    {% elif cancelada %}
+        <h2 class="titulo-neutro">Esta citación ya no está vigente</h2>
+        <p>Te enviamos una citación más reciente. Usa los botones del último correo que recibiste.</p>
+
+    {% elif vencida %}
+        <h2 class="titulo-neutro">Esta citación ya pasó</h2>
+        <p>La entrevista era el {{ citacion.fecha|fecha_con_dia }}. Si necesitas una nueva fecha, comunícate con Gestión Humana.</p>
+
     {% elif ya_respondida %}
         <h2 class="titulo-neutro">Ya respondiste a esta citación</h2>
         <p>
@@ -40,8 +48,8 @@
     {% elif pendiente %}
         <h2 class="titulo-principal">Citación a entrevista</h2>
         <p>
-            Fecha: <strong>{{ citacion.fecha.strftime('%d/%m/%Y') }}</strong>
-            a las <strong>{{ citacion.hora.strftime('%I:%M %p') }}</strong>
+            Fecha: <strong>{{ citacion.fecha|fecha_con_dia }}</strong>
+            a las <strong>{{ citacion.hora|hora_12 }}</strong>
             {% if citacion.lugar %}<br>Lugar: <strong>{{ citacion.lugar }}</strong>{% endif %}
         </p>
         <p>
@@ -65,7 +73,7 @@
     {% elif respuesta == 'confirmar' %}
         <h2 class="titulo-principal">✓ Has confirmado tu asistencia</h2>
         <p>
-            Te esperamos el {{ citacion.fecha.strftime('%d/%m/%Y') }} a las {{ citacion.hora.strftime('%I:%M %p') }}
+            Te esperamos el {{ citacion.fecha|fecha_con_dia }} a las {{ citacion.hora|hora_12 }}
             {% if citacion.lugar %} en {{ citacion.lugar }}{% endif %}.
         </p>
 

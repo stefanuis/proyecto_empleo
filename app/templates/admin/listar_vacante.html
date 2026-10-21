@@ -1,109 +1,149 @@
 {% extends 'admin/base.html' %}
 
 {% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filtros_vacantes.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin_listar_vacante.css') }}">
 {% endblock %}
 
 {% block contenido %}
 
-{% if solo_vencidas or solo_sin_funciones %}
+{# Quita un parámetro de la URL (y vuelve a la página 1) #}
+{% macro url_sin(clave) -%}
+  {%- set args = {} -%}
+  {%- for k, v in request.args.items() if k != clave and k != 'page' -%}
+    {%- set _ = args.update({k: v}) -%}
+  {%- endfor -%}
+  {{ url_for('admin.listar_vacantes', **args) }}
+{%- endmacro %}
+
+{% if solo_sin_funciones %}
 <div class="aviso-filtro-rapido" role="status">
-  Mostrando solo vacantes activas
-  {% if solo_vencidas %}con la fecha de cierre vencida{% endif %}
-  {% if solo_vencidas and solo_sin_funciones %} y {% endif %}
-  {% if solo_sin_funciones %}sin funciones del cargo definidas{% endif %}.
-  <a href="{{ url_for('admin.listar_vacantes') }}">Ver todas</a>
+  Mostrando solo vacantes activas sin funciones del cargo definidas.
+  <a href="{{ url_sin('sin_funciones') }}">Quitar este filtro</a>
 </div>
 {% endif %}
 
 <div class="vac-header">
   <div>
     <h2 class="vac-titulo">Vacantes</h2>
-    <p class="vac-subtitulo">Busca, filtra y gestiona las vacantes publicadas.</p>
+    <p class="vac-subtitulo" aria-live="polite">
+      {{ pagination.total }} vacante{{ 's' if pagination.total != 1 }}
+      {%- if filtros_activos or solo_sin_funciones %} con estos filtros{% endif %}
+    </p>
   </div>
   <a href="{{ url_for('admin.crear_vacante') }}" class="btn-primary btn-sm">+ Crear vacante</a>
 </div>
 
-{# Un solo formulario: el texto buscado y los filtros se aplican juntos #}
-<form class="filtros-vacantes-admin filtros-avanzados-panel" method="GET" action="{{ url_for('admin.listar_vacantes') }}">
+<form class="vf-barra" id="vf-form" method="GET" action="{{ url_for('admin.listar_vacantes') }}" role="search">
+  {% if solo_sin_funciones %}<input type="hidden" name="sin_funciones" value="1">{% endif %}
 
-  <div class="vac-filtro-busqueda">
-    <label class="filtro-grupo-titulo" for="buscar-vacante">Buscar</label>
-    <div class="input-buscar buscador-vacantes">
+  <div class="vf-fila">
+    <label class="vf-buscar">
+      <span class="sr-only">Buscar vacantes</span>
       <i class="ti ti-search" aria-hidden="true"></i>
-      <input type="search" id="buscar-vacante" name="q" placeholder="Nombre de la vacante" value="{{ q }}">
-    </div>
+      <input type="search" name="q" placeholder="Nombre de la vacante" value="{{ q }}">
+    </label>
+    <button type="submit" class="btn-primary vf-btn-buscar">Buscar</button>
+    {% set n_filtros = filtros_activos|rejectattr(0, 'equalto', 'q')|list|length %}
+    <button type="button" class="vf-btn-filtros" id="vf-btn-filtros"
+            aria-expanded="false" aria-controls="vf-panel">
+      <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
+      Filtros{% if n_filtros %} ({{ n_filtros }}){% endif %}
+    </button>
   </div>
 
-  <div class="filtros-avanzados-grupos">
+  <div class="vf-panel vf-panel-admin" id="vf-panel">
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Área / departamento</span>
+      <select name="area" class="vf-select" data-autoenviar>
+        <option value="">Todas</option>
+        {% for valor in areas_departamento %}
+          <option value="{{ valor }}" {% if area_seleccionada == valor %}selected{% endif %}>{{ valor }}</option>
+        {% endfor %}
+      </select>
+    </label>
 
-    <!-- Grupo: Vacante -->
-    <div class="vac-filtro-grupo">
-      <p class="filtro-grupo-titulo">Vacante</p>
-
-      <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area" aria-label="Área de aplicación">
-        <option value="">Todas las áreas de aplicación</option>
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Área de aplicación</span>
+      <select name="area_aplicacion" class="vf-select" data-autoenviar>
+        <option value="">Todas</option>
         {% for value, label in areas %}
           {% if value %}
-            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
-              {{ label }}
-            </option>
+            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>{{ label }}</option>
           {% endif %}
         {% endfor %}
       </select>
+    </label>
 
-      <select name="vacantes" class="vac-filtro-select" aria-label="Vacante">
-        <option value="">Todas las vacantes</option>
-        {% for v in todas_las_vacantes %}
-          <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
-            {{ v.titulo }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Grupo: Requisitos del puesto -->
-    <div class="vac-filtro-grupo">
-      <p class="filtro-grupo-titulo">Requisitos del puesto</p>
-
-      <select name="nivel" class="vac-filtro-select" aria-label="Nivel académico">
-        <option value="">Todos los niveles académicos</option>
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Nivel académico</span>
+      <select name="nivel" class="vf-select" data-autoenviar>
+        <option value="">Todos</option>
         {% for valor in niveles %}
           <option value="{{ valor }}" {% if nivel_seleccionado == valor %}selected{% endif %}>{{ valor }}</option>
         {% endfor %}
       </select>
-    </div>
+    </label>
 
-    <!-- Grupo: Estado y fechas -->
-    <div class="vac-filtro-grupo">
-      <p class="filtro-grupo-titulo">Estado y fecha de publicación</p>
-
-      <select name="estado" class="vac-filtro-select vac-filtro-select-estado" aria-label="Estado">
-        <option value="">Todos los estados</option>
-        <option value="Activa"  {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Estado</span>
+      <select name="estado" class="vf-select" data-autoenviar>
+        <option value="">Todos</option>
+        <option value="Activa" {% if estado_seleccionado == 'Activa' %}selected{% endif %}>Activa</option>
         <option value="Cerrada" {% if estado_seleccionado == 'Cerrada' %}selected{% endif %}>Cerrada</option>
       </select>
+    </label>
 
-      <div class="vac-filtro-fechas">
-        <div>
-          <label class="vac-filtro-label" for="fecha-desde">Desde</label>
-          <input type="date" id="fecha-desde" name="fecha_publicacion_desde" value="{{ fecha_publicacion_desde_valor }}">
-        </div>
-        <div>
-          <label class="vac-filtro-label" for="fecha-hasta">Hasta</label>
-          <input type="date" id="fecha-hasta" name="fecha_publicacion_hasta" value="{{ fecha_publicacion_hasta_valor }}">
-        </div>
-      </div>
-    </div>
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Postulaciones</span>
+      <select name="postulaciones" class="vf-select" data-autoenviar>
+        <option value="">Todas</option>
+        <option value="con" {% if postulaciones_seleccionado == 'con' %}selected{% endif %}>Con postulaciones</option>
+        <option value="sin" {% if postulaciones_seleccionado == 'sin' %}selected{% endif %}>Sin postulaciones</option>
+      </select>
+    </label>
 
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Publicada desde</span>
+      <input type="date" name="fecha_publicacion_desde" class="vf-select" id="fecha-desde"
+             value="{{ fecha_publicacion_desde_valor }}" data-autoenviar>
+    </label>
+
+    <label class="vf-campo">
+      <span class="vf-etiqueta">Publicada hasta</span>
+      <input type="date" name="fecha_publicacion_hasta" class="vf-select" id="fecha-hasta"
+             value="{{ fecha_publicacion_hasta_valor }}" data-autoenviar>
+    </label>
+
+    <label class="vf-interruptor">
+      <input type="checkbox" name="vencidas" value="1" role="switch"
+             {% if solo_vencidas %}checked{% endif %} data-autoenviar>
+      <span class="vf-interruptor-pista" aria-hidden="true"></span>
+      <span>Solo vencidas</span>
+    </label>
+
+    <noscript><button type="submit" class="btn-secondary btn-sm">Aplicar</button></noscript>
   </div>
-
-  <div class="vac-filtros-acciones">
-    <a href="{{ url_for('admin.listar_vacantes') }}" class="btn-secondary btn-sm">Restablecer</a>
-    <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
-  </div>
-
 </form>
+
+{% if fechas_invertidas %}
+<p class="aviso-compatibilidad vf-aviso" role="status">
+  La fecha "desde" era posterior a la fecha "hasta"; las intercambiamos.
+</p>
+{% endif %}
+
+{% if filtros_activos %}
+<div class="vf-activos" aria-label="Filtros activos">
+  {% for clave, texto in filtros_activos %}
+    <a class="vf-chip" href="{{ url_sin(clave) }}" aria-label="Quitar filtro {{ texto }}">
+      {{ texto }} <i class="ti ti-x" aria-hidden="true"></i>
+    </a>
+  {% endfor %}
+  {% if filtros_activos|length > 1 %}
+    <a class="vf-limpiar" href="{{ url_for('admin.listar_vacantes') }}">Limpiar todo</a>
+  {% endif %}
+</div>
+{% endif %}
 
 <div class="vac-tabla-container">
   <table class="vac-tabla">
@@ -202,7 +242,13 @@
         </tr>
       {% else %}
         <tr>
-          <td colspan="10" class="vac-tabla-vacia">No se encontraron vacantes.</td>
+          <td colspan="10" class="vac-tabla-vacia">
+            {% if filtros_activos or solo_sin_funciones %}
+              Ninguna vacante coincide con los filtros. <a href="{{ url_for('admin.listar_vacantes') }}">Quitar filtros</a>
+            {% else %}
+              Aún no hay vacantes. <a href="{{ url_for('admin.crear_vacante') }}">Crea la primera</a>
+            {% endif %}
+          </td>
         </tr>
       {% endfor %}
     </tbody>
@@ -220,7 +266,6 @@
 
     <span class="vac-paginador-info">
         Página {{ pagination.page }} de {{ pagination.pages }}
-        · {{ pagination.total }} vacante{{ 's' if pagination.total != 1 }}
     </span>
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
@@ -230,5 +275,35 @@
 
 </div>
 {% endif %}
+
+<script>
+// Los filtros se aplican al instante; las fechas no pueden quedar al revés
+(function () {
+  const form = document.getElementById("vf-form");
+  const panel = document.getElementById("vf-panel");
+  const boton = document.getElementById("vf-btn-filtros");
+  const desde = document.getElementById("fecha-desde");
+  const hasta = document.getElementById("fecha-hasta");
+
+  function limitarFechas() {
+    hasta.min = desde.value || "";
+    desde.max = hasta.value || "";
+  }
+  limitarFechas();
+
+  form.querySelectorAll("[data-autoenviar]").forEach(function (campo) {
+    campo.addEventListener("change", function () {
+      limitarFechas();
+      form.submit();
+    });
+  });
+
+  // En celular el panel de filtros se abre con el botón "Filtros"
+  boton.addEventListener("click", function () {
+    const abierto = panel.classList.toggle("abierto");
+    boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+  });
+})();
+</script>
 
 {% endblock %}

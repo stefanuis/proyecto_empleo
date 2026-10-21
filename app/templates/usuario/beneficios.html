@@ -4,177 +4,52 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/usuario_beneficios.css') }}">
 {% endblock %}
 
-{% block titulo %}
-Competencias Profesionales
-{% endblock %}
-
 {% block contenido %}
 
-<div class="wrap">
- 
-  <div class="hero-image">
+{% set beneficios = [
+    ("tools-kitchen-2", "Alimentación", "Disfruta de un <b>subsidio del 57%</b> en almuerzos. El 43% restante se descuenta por nómina."),
+    ("eye", "Optometría", "Consulta gratuita (si compras lentes y monturas), <b>20% de descuento en lentes</b> y pago por nómina hasta $400.000."),
+    ("microscope", "Exámenes médicos", "Descuentos especiales en exámenes de laboratorio y tarifas preferenciales en imagenología. <span class=\"beneficio-nota\">Aplican estudios seleccionados.</span>"),
+    ("stethoscope", "Salud especializada", "Solo pagas el <b>30% del valor</b> de la consulta con médico especialista."),
+    ("shield-heart", "Seguros de vida", "Tarifa especial en póliza SURA con deducción por nómina, más una <b>póliza patronal gratuita</b> pagada por la clínica (WTW)."),
+    ("pig-money", "Finanzas personales", "Convenios de ahorro y crédito con Confiar, Fodelsa, Comfama, Bancolombia y BBVA."),
+    ("users-group", "Comités de apoyo", "¿Eres parte de un comité de SST? Recibe <b>1 día adicional de vacaciones</b> como reconocimiento."),
+    ("heart-handshake", "Póliza exequial", "Cobertura de gastos y servicios funerarios del colaborador, con apoyo económico y logístico."),
+    ("beach", "Vacaciones", "Relájate y disfruta tus vacaciones como se debe… ¡sin contar los sábados!"),
+    ("brain", "Salud mental", "Apoyo psicológico profesional para acompañarte en situaciones personales o laborales. ¡Estamos para ti!"),
+    ("school", "Plataforma de aprendizaje", "Actualiza tus conocimientos y consulta todos nuestros lineamientos institucionales en línea."),
+] %}
 
-    <span>Espacio para imagen · sugerido 1120×420px</span>
-  </div>
- 
-  <div class="grid">
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
-            <img src="" alt="">
-        </div>
-        <span class="num">01</span>
-      </div>
-      <h3>Alimentación</h3>
-      <p>Disfruta de un <b>subsidio del 57%</b> en almuerzos. El 43% restante se descuenta por nómina.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }} " alt="" >
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#54545A"></div>
-        <span class="num">02</span>
-      </div>
-      <h3>Optometría</h3>
-      <p>Consulta gratuita (si compras lentes y monturas), <b>20% de descuento en lentes</b> y pago por nómina hasta $400.000.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
+<section class="beneficios">
 
-        </div>
-        <span class="num">03</span>
-      </div>
-      <h3>Exámenes médicos</h3>
-      <p>Descuentos especiales en exámenes de laboratorio y tarifas preferenciales en imagenología. <span style="opacity:.75">(Aplican estudios seleccionados)</span></p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#54545A">
+    <a href="{{ url_for('usuario.principal') }}" class="beneficios-volver"
+       style="--icono: url('{{ url_for('static', filename='img/icons/arrow-left.svg') }}')">
+        Volver al inicio
+    </a>
 
-        </div>
-        <span class="num">04</span>
-      </div>
-      <h3>Salud especializada</h3>
-      <p>Solo pagas el <b>30% del valor</b> de la consulta con médico especialista.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
-            <img src="" alt="">
-        </div>
-        <span class="num">05</span>
-      </div>
-      <h3>Seguros de vida</h3>
-      <p>Tarifa especial en póliza SURA con deducción por nómina, más una <b>póliza patronal gratuita</b> pagada por la clínica (WTW).</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#54545A">
-            <img src="" alt="">
-        </div>
-        <span class="num">06</span>
-      </div>
-      <h3>Finanzas personales</h3>
-      <p>Convenios de ahorro y crédito con Confiar, Fodelsa, Comfama, Bancolombia y BBVA.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
-            <img src="" alt="">
-        </div>
-        <span class="num">07</span>
-      </div>
-      <h3>Comités de apoyo</h3>
-      <p>¿Eres parte de un comité de SST? Recibe <b>1 día adicional de vacaciones</b> como reconocimiento.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#54545A">
-            <img src="" alt="">
-        </div>
-        <span class="num">08</span>
-      </div>
-      <h3>Póliza exequial</h3>
-      <p>Cobertura de gastos y servicios funerarios del colaborador, con apoyo económico y logístico.</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
-            <img src="" alt="">
-        </div>
-        <span class="num">09</span>
-      </div>
-      <h3>Vacaciones</h3>
-      <p>Relájate y disfruta tus vacaciones como se debe… ¡sin contar los sábados!</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#54545A">
-            <img src="" alt="">
-        </div>
-        <span class="num">10</span>
-      </div>
-      <h3>Salud mental</h3>
-      <p>Apoyo psicológico profesional para acompañarte en situaciones personales o laborales. ¡Estamos para ti!</p>
-    </div>
- 
-    <div class="card">
-      <div class="card-image">
-        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="">
-      </div>
-      <div class="top">
-        <div class="icon" style="background:#D81B60">
-            <img src="" alt="">
-        </div>
-        <span class="num">11</span>
-      </div>
-      <h3>Plataforma de aprendizaje</h3>
-      <p>Actualiza tus conocimientos y consulta todos nuestros lineamientos institucionales en línea.</p>
-    </div>
- 
-  </div>
-</div>
+    <header class="beneficios-encabezado">
+        <span class="beneficios-etiqueta">Beneficios</span>
+        <h1>Lo que ganas al trabajar con nosotros</h1>
+        <p>cuentas con apoyos pensados para tu salud, tu bienestar y tu crecimiento.</p>
+    </header>
 
+    <figure class="beneficios-portada">
+        <img src="{{ url_for('static', filename='img/beneficios2.JPG') }}" alt="Colaboradores de la clínica">
+    </figure>
 
+    <ul class="beneficios-lista">
+        {% for icono, titulo, texto in beneficios %}
+        <li class="beneficio">
+            <span class="beneficio-icono" aria-hidden="true"
+                  style="--icono: url('{{ url_for('static', filename='img/icons/' ~ icono ~ '.svg') }}')"></span>
+            <div>
+                <h3>{{ titulo }}</h3>
+                <p>{{ texto|safe }}</p>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
 
+</section>
 
 {% endblock %}

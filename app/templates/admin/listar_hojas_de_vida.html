@@ -1,119 +1,139 @@
 {% extends 'admin/base.html' %}
 
 {% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filtros_vacantes.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin_listar_hojas_de_vida.css') }}">
 {% endblock %}
 
 {% block contenido %}
 
+{# Quita un filtro de la URL (y vuelve a la página 1) #}
+{% macro url_sin(clave) -%}
+    {%- set args = {} -%}
+    {%- for k, v in request.args.items() if k != clave and k != 'page' -%}
+        {%- set _ = args.update({k: v}) -%}
+    {%- endfor -%}
+    {{ url_for('admin.listar_hoja_vida', **args) }}
+{%- endmacro %}
+
+{# Mismos filtros de la URL, sin la página: para el ZIP de "todos" #}
+{% set args_filtro = {} %}
+{% for k, v in request.args.items() if k != 'page' %}{% set _ = args_filtro.update({k: v}) %}{% endfor %}
+
 <div class="post-header">
     <div>
-        <h2 class="post-titulo">Hojas de vida / Expedientes</h2>
-        <p class="post-subtitulo">Auditoría y descarga masiva de todos los postulantes</p>
+        <h2 class="post-titulo">Hojas de vida</h2>
+        <p class="post-subtitulo" aria-live="polite">
+            {{ pagination.total }} postulante{{ 's' if pagination.total != 1 }}
+            {%- if filtros_activos %} con estos filtros{% endif %}
+        </p>
     </div>
 </div>
 
-<form method="GET" action="{{ url_for('admin.listar_hoja_vida') }}">
-
-    <div class="filtros-avanzados-panel post-filtros-panel">
-
-        <div class="post-filtros-grid-3">
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Buscar candidato</p>
-                <input type="text" name="q" placeholder="Nombre o documento..." value="{{ q }}">
-            </div>
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Vacante</p>
-                <select name="vacante_id">
-                    <option value="">Todas las vacantes</option>
-                    {% for v in vacantes %}
-                        <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>
-                            {{ v.titulo }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Estado</p>
-                <select name="estado">
-                    <option value="">Todos los estados</option>
-                    {% for valor, etiqueta in [('postulado', 'Postulado'), ('revision', 'En revisión'), ('entrevista', 'Entrevista'), ('contratado', 'Contratado'), ('rechazado', 'Rechazado'), ('retirada', 'Retirada')] %}
-                        <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>
-                            {{ etiqueta }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-        </div>
-
-        <div class="post-filtros-grid-3">
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Postulado desde</p>
-                <input type="date" name="fecha_desde" value="{{ fecha_desde }}">
-            </div>
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Postulado hasta</p>
-                <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}">
-            </div>
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Nivel académico</p>
-                <select name="nivel_academico">
-                    <option value="">Todos los niveles</option>
-                    {% for valor, etiqueta in [('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'), ('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'), ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado')] %}
-                        <option value="{{ valor }}" {% if nivel_academico_seleccionado == valor %}selected{% endif %}>
-                            {{ etiqueta }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-        </div>
-
-        <div class="post-filtros-grid-3">
-
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Expediente</p>
-                <select name="completitud">
-                    <option value="">Completo e incompleto</option>
-                    <option value="completo" {% if completitud_seleccionada == 'completo' %}selected{% endif %}>Solo completos</option>
-                    <option value="incompleto" {% if completitud_seleccionada == 'incompleto' %}selected{% endif %}>Solo incompletos</option>
-                </select>
-            </div>
-
-        </div>
-
-        <div class="post-filtros-acciones">
-            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
-                Restablecer
-            </button>
-            <button type="submit" class="btn-primary btn-sm">
-                Aplicar filtro
-            </button>
-        </div>
-
+<form class="vf-barra" id="vf-form" method="GET" action="{{ url_for('admin.listar_hoja_vida') }}" role="search">
+    <div class="vf-fila">
+        <label class="vf-buscar">
+            <span class="sr-only">Buscar candidato</span>
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="search" name="q" placeholder="Nombre, documento o correo" value="{{ q }}">
+        </label>
+        <button type="submit" class="btn-primary vf-btn-buscar">Buscar</button>
+        {% set n_filtros = filtros_activos|rejectattr(0, 'equalto', 'q')|list|length %}
+        <button type="button" class="vf-btn-filtros" id="vf-btn-filtros"
+                aria-expanded="false" aria-controls="vf-panel">
+            <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
+            Filtros{% if n_filtros %} ({{ n_filtros }}){% endif %}
+        </button>
     </div>
 
+    <div class="vf-panel vf-panel-admin" id="vf-panel">
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Vacante</span>
+            <select name="vacante_id" class="vf-select" data-autoenviar>
+                <option value="">Todas</option>
+                {% for v in vacantes %}
+                    <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>{{ v.titulo }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Estado</span>
+            <select name="estado" class="vf-select" data-autoenviar>
+                <option value="">Todos</option>
+                {% for valor, etiqueta in estados.items() %}
+                    <option value="{{ valor }}" {% if estado_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Tiene estudios de</span>
+            <select name="nivel_academico" class="vf-select" data-autoenviar>
+                <option value="">Cualquier nivel</option>
+                {% for valor, etiqueta in niveles %}
+                    <option value="{{ valor }}" {% if nivel_academico_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Hoja de vida</span>
+            <select name="completitud" class="vf-select" data-autoenviar>
+                <option value="">Completas e incompletas</option>
+                <option value="completo" {% if completitud_seleccionada == 'completo' %}selected{% endif %}>Solo completas</option>
+                <option value="incompleto" {% if completitud_seleccionada == 'incompleto' %}selected{% endif %}>Solo incompletas</option>
+            </select>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Postulado desde</span>
+            <input type="date" name="fecha_desde" id="fecha-desde" class="vf-select" value="{{ fecha_desde }}" data-autoenviar>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Postulado hasta</span>
+            <input type="date" name="fecha_hasta" id="fecha-hasta" class="vf-select" value="{{ fecha_hasta }}" data-autoenviar>
+        </label>
+
+        <noscript><button type="submit" class="btn-secondary btn-sm">Aplicar</button></noscript>
+    </div>
 </form>
 
-<div class="post-filtros-info" style="display:flex; justify-content:space-between; align-items:center; margin:16px 0;">
-    <p style="color:var(--text-secondary); font-size:13.5px; margin:0;">
-        {% if pagination %}
-            Mostrando {{ postulantes|length }} de {{ pagination.total }} postulante{{ 's' if pagination.total != 1 else '' }}
-        {% else %}
-            Mostrando {{ postulantes|length }} postulante{{ 's' if postulantes|length != 1 else '' }}
-        {% endif %}
-    </p>
+{% if fechas_invertidas %}
+<p class="aviso-compatibilidad vf-aviso" role="status">
+    La fecha "desde" era posterior a la fecha "hasta"; las intercambiamos.
+</p>
+{% endif %}
 
-    <button type="button" id="btn-descargar-zip" class="btn-primary btn-sm">
-        Descargar todo en ZIP
-    </button>
+{% if filtros_activos %}
+<div class="vf-activos" aria-label="Filtros activos">
+    {% for clave, texto in filtros_activos %}
+        <a class="vf-chip" href="{{ url_sin(clave) }}" aria-label="Quitar filtro {{ texto }}">
+            {{ texto }} <i class="ti ti-x" aria-hidden="true"></i>
+        </a>
+    {% endfor %}
+    {% if filtros_activos|length > 1 %}
+        <a class="vf-limpiar" href="{{ url_for('admin.listar_hoja_vida') }}">Limpiar todo</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="hv-acciones-lista">
+    <p class="hv-seleccion" id="hv-seleccion" aria-live="polite">
+        Mostrando {{ postulantes|length }} de {{ pagination.total }}
+    </p>
+    {% if pagination.total %}
+    <div class="hv-zip">
+        <button type="button" id="btn-zip-seleccionados" class="btn-primary btn-sm" hidden>
+            Descargar seleccionados
+        </button>
+        <a id="btn-zip-todos" class="btn-secondary btn-sm"
+           href="{{ url_for('admin.descargar_expedientes_zip', todos=1, **args_filtro) }}">
+            Descargar {{ 'las ' ~ pagination.total if pagination.total > 1 else 'la' }} hoja{{ 's' if pagination.total != 1 }} de vida (ZIP)
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 <form id="form-descargar-zip" method="GET" action="{{ url_for('admin.descargar_expedientes_zip') }}">
@@ -122,8 +142,8 @@
     <table class="vac-tabla">
         <thead>
             <tr>
-                <th style="width:36px;">
-                    <input type="checkbox" id="chk-todos">
+                <th class="hv-col-check">
+                    <input type="checkbox" id="chk-todos" aria-label="Seleccionar todos los de esta página">
                 </th>
                 <th>Nombre</th>
                 <th>Documento</th>
@@ -140,11 +160,17 @@
             {% for post in postulantes %}
                 <tr>
                     <td>
-                        <input type="checkbox" name="ids" value="{{ post.id }}" class="chk-postulante">
+                        <input type="checkbox" name="ids" value="{{ post.id }}" class="chk-postulante"
+                               aria-label="Seleccionar a {{ post.personal.nombres if post.personal else 'este postulante' }}">
                     </td>
 
                     <td>
-                        <strong>{{ post.personal.nombres }} {{ post.personal.apellidos }}</strong>
+                        {% if post.personal %}
+                            <strong>{{ post.personal.nombres }} {{ post.personal.apellidos }}</strong>
+                        {% else %}
+                            <strong>{{ post.usuario.nombres if post.usuario else '' }} {{ post.usuario.apellidos if post.usuario else '' }}</strong>
+                            <span class="hv-sin-datos">Sin datos personales</span>
+                        {% endif %}
                     </td>
 
                     <td>
@@ -156,13 +182,9 @@
                     </td>
 
                     <td>
-                        {% if post.personal %}
-                            <div>{{ post.usuario.correo if post.usuario else '—' }}</div>
-                            <div style="color:var(--text-secondary); font-size:12.5px;">
-                                {{ post.personal.num_cel or '' }}
-                            </div>
-                        {% else %}
-                            —
+                        <div>{{ post.usuario.correo if post.usuario else '—' }}</div>
+                        {% if post.personal and post.personal.num_cel %}
+                            <div class="hv-sub">{{ post.personal.num_cel }}</div>
                         {% endif %}
                     </td>
 
@@ -170,7 +192,7 @@
                         {% if post.nivel_mas_alto %}
                             {{ post.nivel_mas_alto|nivel_academico }}
                         {% else %}
-                            <span style="color:var(--text-secondary);">Sin registrar</span>
+                            <span class="hv-sub">Sin estudios finalizados</span>
                         {% endif %}
                     </td>
 
@@ -199,6 +221,8 @@
                             <span class="badge badge-red">Rechazado</span>
                         {% elif post.estado == 'retirada' %}
                             <span class="badge badge-gray">Retirada</span>
+                        {% elif post.estado == 'stock' %}
+                            <span class="badge badge-stock">En stock</span>
                         {% else %}
                             <span class="badge badge-gray">{{ post.estado }}</span>
                         {% endif %}
@@ -207,9 +231,9 @@
                     <td>
                         {% if post.completitud %}
                             {% if post.completitud.porcentaje == 100 %}
-                                <span class="badge badge-green">Completo</span>
+                                <span class="badge badge-green">Completa</span>
                             {% else %}
-                                <span class="badge badge-orange">{{ post.completitud.porcentaje }}%</span>
+                                <span class="badge badge-orange" title="Falta: {{ post.completitud.faltantes|join(', ') }}">{{ post.completitud.porcentaje }}%</span>
                             {% endif %}
                         {% else %}
                             —
@@ -218,18 +242,26 @@
 
                     <td>
                         <div class="vac-acciones">
-                            <a href="{{ url_for('admin.ver_expediente', id=post.id) }}" target="_blank" class="btn-secondary btn-sm">
-                                Ver CV
+                            <a href="{{ url_for('admin.ver_expediente', id=post.id) }}" class="btn-secondary btn-sm">
+                                Ver expediente
                             </a>
+                            {% if post.personal %}
                             <a href="{{ url_for('admin.descargar_expediente', id=post.id) }}" class="btn-primary btn-sm">
-                                Descargar
+                                PDF
                             </a>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
             {% else %}
                 <tr>
-                    <td colspan="10" class="vac-tabla-vacia">No se encontraron postulantes.</td>
+                    <td colspan="10" class="vac-tabla-vacia">
+                        {% if filtros_activos %}
+                            Ningún postulante coincide con los filtros. <a href="{{ url_for('admin.listar_hoja_vida') }}">Quitar filtros</a>
+                        {% else %}
+                            Aún no hay postulaciones.
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -241,10 +273,8 @@
 {% if pagination and pagination.pages > 1 %}
 <div class="vac-paginador">
 
-    <a
-        class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
-        href="{% if pagination.has_prev %}{{ url_for('admin.listar_hoja_vida', page=pagination.prev_num, vacante_id=vacante_seleccionada, estado=estado_seleccionado, q=q, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta, nivel_academico=nivel_academico_seleccionado, completitud=completitud_seleccionada) }}{% else %}#{% endif %}"
-    >
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
+       href="{% if pagination.has_prev %}{{ url_for('admin.listar_hoja_vida', page=pagination.prev_num, **args_filtro) }}{% else %}#{% endif %}">
         ← Anterior
     </a>
 
@@ -252,52 +282,70 @@
         Página {{ pagination.page }} de {{ pagination.pages }}
     </span>
 
-    <a
-        class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
-        href="{% if pagination.has_next %}{{ url_for('admin.listar_hoja_vida', page=pagination.next_num, vacante_id=vacante_seleccionada, estado=estado_seleccionado, q=q, fecha_desde=fecha_desde, fecha_hasta=fecha_hasta, nivel_academico=nivel_academico_seleccionado, completitud=completitud_seleccionada) }}{% else %}#{% endif %}"
-    >
+    <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
+       href="{% if pagination.has_next %}{{ url_for('admin.listar_hoja_vida', page=pagination.next_num, **args_filtro) }}{% else %}#{% endif %}">
         Siguiente →
     </a>
 
 </div>
 {% endif %}
 
-
-
 <script>
-const chkTodos = document.getElementById('chk-todos');
-const chksPostulante = document.querySelectorAll('.chk-postulante');
-const btnZip = document.getElementById('btn-descargar-zip');
-const formZip = document.getElementById('form-descargar-zip');
+(function () {
+    // ---- Filtros: se aplican al instante y las fechas no quedan al revés ----
+    const form = document.getElementById("vf-form");
+    const panel = document.getElementById("vf-panel");
+    const botonFiltros = document.getElementById("vf-btn-filtros");
+    const desde = document.getElementById("fecha-desde");
+    const hasta = document.getElementById("fecha-hasta");
 
-function actualizarBotonZip() {
-    const marcados = document.querySelectorAll('.chk-postulante:checked').length;
-    btnZip.textContent = marcados > 0
-        ? `Descargar seleccionados (${marcados})`
-        : 'Descargar todo en ZIP';
-}
+    function limitarFechas() {
+        hasta.min = desde.value || "";
+        desde.max = hasta.value || "";
+    }
+    limitarFechas();
 
-chkTodos.addEventListener('change', () => {
-    chksPostulante.forEach(chk => chk.checked = chkTodos.checked);
-    actualizarBotonZip();
-});
-
-chksPostulante.forEach(chk => {
-    chk.addEventListener('change', () => {
-        if (!chk.checked) chkTodos.checked = false;
-        actualizarBotonZip();
+    form.querySelectorAll("[data-autoenviar]").forEach(function (campo) {
+        campo.addEventListener("change", function () {
+            limitarFechas();
+            form.submit();
+        });
     });
-});
 
-btnZip.addEventListener('click', () => {
-    const marcados = document.querySelectorAll('.chk-postulante:checked').length;
+    botonFiltros.addEventListener("click", function () {
+        const abierto = panel.classList.toggle("abierto");
+        botonFiltros.setAttribute("aria-expanded", abierto ? "true" : "false");
+    });
 
-    if (marcados === 0) {
-        chksPostulante.forEach(chk => chk.checked = true);
+    // ---- Selección y descarga en ZIP ----
+    const chkTodos = document.getElementById("chk-todos");
+    const chks = document.querySelectorAll(".chk-postulante");
+    const formZip = document.getElementById("form-descargar-zip");
+    const btnSeleccionados = document.getElementById("btn-zip-seleccionados");
+    const seleccion = document.getElementById("hv-seleccion");
+    const textoInicial = seleccion.textContent;
+
+    function actualizar() {
+        const marcados = document.querySelectorAll(".chk-postulante:checked").length;
+        if (btnSeleccionados) {
+            btnSeleccionados.hidden = marcados === 0;
+            btnSeleccionados.textContent = "Descargar seleccionados (" + marcados + ")";
+        }
+        seleccion.textContent = marcados > 0 ? marcados + " seleccionado(s)" : textoInicial;
+        chkTodos.checked = marcados > 0 && marcados === chks.length;
+        chkTodos.indeterminate = marcados > 0 && marcados < chks.length;
     }
 
-    formZip.submit();
-});
+    chkTodos.addEventListener("change", function () {
+        chks.forEach(function (chk) { chk.checked = chkTodos.checked; });
+        actualizar();
+    });
+    chks.forEach(function (chk) { chk.addEventListener("change", actualizar); });
+
+    if (btnSeleccionados) {
+        btnSeleccionados.addEventListener("click", function () { formZip.submit(); });
+    }
+})();
 </script>
 
 {% endblock %}

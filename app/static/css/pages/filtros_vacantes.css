@@ -1,0 +1,295 @@
+/* ==================================================
+   FILTROS DE VACANTES — compartido por la vista del
+   candidato y la del admin: encabezado, barra de
+   filtros y etiquetas de filtros activos
+   ================================================== */
+
+.vf-encabezado {
+    margin-bottom: 20px;
+}
+
+.vf-titulo {
+    margin: 0 0 4px;
+    color: var(--text-main);
+    font-size: var(--fs-titulo-pagina);
+    font-weight: var(--fw-titulo);
+}
+
+.vf-resumen {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+
+/* ==================================================
+   BARRA DE FILTROS
+   ================================================== */
+
+.vf-barra {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.vf-fila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vf-buscar {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.vf-buscar .ti {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.vf-buscar input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px 0 38px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.vf-buscar input:focus,
+.vf-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ultra-light);
+}
+
+.vf-btn-buscar {
+    height: 42px;
+}
+
+/* Solo se ve en celular */
+.vf-btn-filtros {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.vf-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: end;
+    gap: 12px;
+}
+
+.vf-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.vf-etiqueta {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.vf-select {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.vf-select:hover {
+    border-color: var(--primary-mid);
+}
+
+
+/* Admin: más filtros, en 4 columnas */
+.vf-panel-admin {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Interruptor "Solo a las que puedo postularme" */
+
+.vf-interruptor {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    color: var(--text-main);
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.vf-interruptor input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.vf-interruptor-pista {
+    position: relative;
+    flex: 0 0 auto;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--border);
+    transition: background var(--transition);
+}
+
+.vf-interruptor-pista::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition);
+}
+
+.vf-interruptor input:checked + .vf-interruptor-pista {
+    background: var(--primary);
+}
+
+.vf-interruptor input:checked + .vf-interruptor-pista::after {
+    transform: translateX(16px);
+}
+
+.vf-interruptor input:focus-visible + .vf-interruptor-pista {
+    box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.25);
+}
+
+
+/* ==================================================
+   FILTROS ACTIVOS
+   ================================================== */
+
+.vf-activos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.vf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px 5px 12px;
+    border: 1px solid var(--primary-light);
+    border-radius: 999px;
+    background: var(--primary-ultra-light);
+    color: var(--primary);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background var(--transition);
+}
+
+.vf-chip .ti {
+    width: 14px;
+    height: 14px;
+}
+
+.vf-chip:hover,
+.vf-chip:focus-visible {
+    background: var(--primary-light);
+}
+
+.vf-limpiar {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.vf-limpiar:hover {
+    color: var(--primary);
+}
+
+.vf-aviso {
+    margin-bottom: 20px;
+}
+
+
+/* ==================================================
+   RESPONSIVE
+   ================================================== */
+
+@media (max-width: 1000px) {
+    .vf-panel,
+    .vf-panel-admin {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .vf-interruptor {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .vf-barra {
+        padding: 12px;
+    }
+
+    .vf-btn-buscar {
+        display: none;
+    }
+
+    .vf-btn-filtros {
+        display: inline-flex;
+    }
+
+    .vf-panel,
+    .vf-panel-admin {
+        display: none;
+        grid-template-columns: 1fr;
+    }
+
+    .vf-panel.abierto {
+        display: grid;
+    }
+}

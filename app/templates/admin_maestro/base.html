@@ -30,6 +30,7 @@
 
 </body>
 <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/sidebar.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/sesion.js') }}" defer
         data-minutos="{{ sesion_inactiva_minutos }}"
         data-mantener="{{ url_for('web.mantener_sesion') }}"
@@ -83,38 +84,8 @@
                 if (arrow) arrow.classList.remove('open');
                 if (header) header.classList.remove('active');
             });
-
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar && sidebar.classList.contains('mobile-open')) {
-                sidebar.classList.remove('mobile-open');
-            }
         }
     });
-
-    const sidebar = document.querySelector('.sidebar');
-    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-
-    if (sidebarToggleBtn && sidebar) {
-        sidebarToggleBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            sidebar.classList.toggle('mobile-open');
-        });
-    }
-
-    document.querySelectorAll('.sidebar a').forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth <= 768 && sidebar) {
-                sidebar.classList.remove('mobile-open');
-            }
-        });
-    });
-
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768 && sidebar && sidebar.classList.contains('mobile-open')) {
-            sidebar.classList.remove('mobile-open');
-        }
-    });
-
     document.querySelectorAll('.toggle-content a').forEach(link => {
         link.addEventListener('click', function() {
             const content = this.closest('.toggle-content');

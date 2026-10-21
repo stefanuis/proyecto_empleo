@@ -1,42 +1,532 @@
 /* ==================================================
-   BADGES DE ESTADO - POSTULACIONES
+   MIS POSTULACIONES (CANDIDATO)
+   Usa .vf-titulo, .vf-buscar y .vf-chip de filtros_vacantes.css
    ================================================== */
- 
-.tag-estado {
+
+.post-pagina {
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+/* Colores de cada estado: badge, punto de la pestaña y franja de la tarjeta */
+.estado-postulado  { --estado-color: var(--primary);           --estado-fondo: var(--primary-ultra-light); }
+.estado-revision   { --estado-color: var(--badge-blue-text);   --estado-fondo: var(--badge-blue); }
+.estado-entrevista { --estado-color: var(--badge-orange-text); --estado-fondo: var(--badge-orange); }
+.estado-contratado { --estado-color: var(--badge-green-text);  --estado-fondo: var(--badge-green); }
+.estado-rechazado  { --estado-color: var(--badge-red-text);    --estado-fondo: var(--badge-red); }
+.estado-retirada   { --estado-color: var(--secondary);         --estado-fondo: var(--badge-gray); }
+.estado-stock      { --estado-color: #00695C;                  --estado-fondo: #E0F2F1; }
+
+
+/* ==================================================
+   ENCABEZADO Y BÚSQUEDA
+   ================================================== */
+
+.post-encabezado {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.post-buscar {
+    flex: 0 1 280px;
+}
+
+
+/* ==================================================
+   PESTAÑAS POR ESTADO
+   ================================================== */
+
+.post-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.post-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.post-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: -1px;
+    padding: 10px 14px;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--transition), border-color var(--transition);
+}
+
+.post-tab:hover {
+    color: var(--text-main);
+}
+
+.post-tab.activa {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.post-tab-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--estado-color);
+}
+
+.post-tab-num {
+    min-width: 22px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.post-tab.activa .post-tab-num {
+    background: var(--primary-ultra-light);
+    color: var(--primary);
+}
+
+
+/* ==================================================
+   TARJETA
+   ================================================== */
+
+.post-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.post-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 22px 16px 24px;
+    overflow: hidden;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+/* Franja de color del estado a la izquierda */
+.post-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    background: var(--estado-color);
+}
+
+.post-card:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.post-card-postulado  { --estado-color: var(--primary); }
+.post-card-revision   { --estado-color: var(--badge-blue-text); }
+.post-card-entrevista { --estado-color: var(--badge-orange-text); }
+.post-card-contratado { --estado-color: var(--badge-green-text); }
+.post-card-rechazado  { --estado-color: var(--badge-red-text); }
+.post-card-retirada   { --estado-color: var(--border); }
+.post-card-stock      { --estado-color: #00897B; }
+
+.post-card-retirada .post-cargo,
+.post-card-retirada .post-meta {
+    color: var(--text-secondary);
+}
+
+/* Entrevista sin confirmar: se destaca para que no se pase por alto */
+.post-card-accion {
+    border-color: var(--badge-orange-text);
+    box-shadow: 0 0 0 3px var(--badge-orange);
+}
+
+.post-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.post-titulos {
+    min-width: 0;
+}
+
+.post-cargo {
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
+    color: var(--text-main);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+}
+
+.post-cargo:hover,
+.post-cargo:focus-visible {
+    color: var(--primary);
+}
+
+.post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.tag.tag-estado {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--estado-fondo);
+    color: var(--estado-color);
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
 }
- 
-.estado-postulado {
-    background: #fde2ea;
-    color: #c2185b;
+
+
+/* ==================================================
+   PASOS (compactos: punto + texto, unidos por una línea)
+   ================================================== */
+
+.post-pasos {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
- 
-.estado-revision {
-    background: #dbeafe;
-    color: #1d4ed8;
+
+.post-paso {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 12px;
 }
- 
-.estado-entrevista {
-    background: #ffe8cc;
-    color: #b45309;
+
+/* Línea hacia el paso siguiente */
+.post-paso:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 26px;
+    right: 6px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--border);
 }
- 
-.estado-contratado {
-    background: #d1f5e0;
-    color: #157347;
+
+.post-paso:has(+ .completado)::after,
+.post-paso:has(+ .activo)::after,
+.post-paso:has(+ .contratado)::after,
+.post-paso:has(+ .rechazado)::after,
+.post-paso:has(+ .stock)::after {
+    background: var(--primary-light);
 }
- 
-.estado-rechazado {
-    background: #f8d7da;
-    color: #721c24;
+
+.post-paso-punto {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--bg-main);
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
 }
- 
-.estado-retirada {
-    background: #e9ecef;
-    color: #495057;
+
+.post-paso-texto {
+    padding-right: 8px;
+    line-height: 1.3;
+}
+
+.post-paso.completado .post-paso-punto {
+    border-color: var(--primary);
+    background: var(--primary);
+}
+
+.post-paso.completado {
+    color: var(--text-main);
+}
+
+.post-paso.activo .post-paso-punto {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-ultra-light);
+}
+
+.post-paso.activo .post-paso-punto::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.post-paso.activo {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.post-paso.contratado .post-paso-punto {
+    border-color: var(--badge-green-text);
+    background: var(--badge-green-text);
+}
+
+.post-paso.rechazado .post-paso-punto {
+    border-color: var(--badge-red-text);
+    background: var(--badge-red-text);
+}
+
+.post-paso.stock .post-paso-punto {
+    border-color: #00897B;
+    background: #00897B;
+}
+
+.post-paso.contratado,
+.post-paso.rechazado,
+.post-paso.stock {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.post-paso.omitido .post-paso-punto {
+    border-style: dashed;
+}
+
+.post-paso.omitido .post-paso-texto {
+    text-decoration: line-through;
+}
+
+
+/* ==================================================
+   MENSAJE SEGÚN EL ESTADO
+   ================================================== */
+
+.post-aviso {
+    display: flex;
+    gap: 12px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.post-aviso p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.post-aviso-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    color: var(--badge-orange-text);
+    font-size: 17px;
+}
+
+.post-aviso-cuerpo {
+    min-width: 0;
+}
+
+.post-aviso-titulo {
+    color: var(--text-main) !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.post-aviso-entrevista {
+    background: var(--badge-orange);
+}
+
+.post-aviso-stock {
+    background: #E0F2F1;
+    color: #00695C;
+}
+
+.post-aviso-exito {
+    background: var(--badge-green);
+    color: var(--badge-green-text);
+}
+
+.post-aviso-estado {
+    margin-top: 6px !important;
+    font-weight: 500;
+}
+
+.post-ok {
+    color: var(--badge-green-text) !important;
+}
+
+.post-aviso-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+
+/* ==================================================
+   PIE
+   ================================================== */
+
+.post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.post-footer form {
+    margin: 0;
+}
+
+.post-ver {
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.post-ver:hover span {
+    display: inline-block;
+    transform: translateX(2px);
+}
+
+.post-retirar {
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+}
+
+.post-retirar:hover,
+.post-retirar:focus-visible {
+    background: var(--badge-red);
+    color: var(--badge-red-text);
+}
+
+
+/* ==================================================
+   SIN RESULTADOS
+   ================================================== */
+
+.post-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 56px 20px;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-main);
+    text-align: center;
+}
+
+.post-vacio-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 6px;
+    border-radius: 50%;
+    background: var(--primary-ultra-light);
+    color: var(--primary);
+    font-size: 24px;
+}
+
+.post-vacio h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 16px;
+}
+
+.post-vacio p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+}
+
+.post-vacio p a {
+    color: var(--primary);
+}
+
+.post-vacio .btn-primary {
+    margin-top: 10px;
+}
+
+
+/* ==================================================
+   RESPONSIVE
+   ================================================== */
+
+@media (max-width: 640px) {
+    .post-encabezado {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .post-buscar {
+        flex-basis: auto;
+    }
+
+    .post-card {
+        padding: 16px 16px 12px 20px;
+    }
+
+    .post-cabecera {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .post-paso {
+        font-size: 11px;
+    }
+
+    .post-paso:not(:last-child)::after {
+        left: 24px;
+        right: 2px;
+    }
 }

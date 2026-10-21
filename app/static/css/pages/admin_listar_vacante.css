@@ -8,9 +8,9 @@
 }
 
 .vac-titulo {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--primary);
+    font-size: var(--fs-titulo-pagina);
+    font-weight: var(--fw-titulo);
+    color: var(--text-main);
     margin: 0 0 4px;
 }
 
@@ -20,178 +20,21 @@
     margin: 0;
 }
 
-/* ── Tarjeta de filtros: buscador + filtros en un solo bloque ──
-   paginas.css define .filtros-vacantes-admin como flex; aquí es un bloque */
-.filtros-vacantes-admin.filtros-avanzados-panel {
-    display: block;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin: 0 0 24px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.vac-filtro-busqueda {
-    margin-bottom: 20px;
-}
-
-.filtros-avanzados-grupos {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-}
-
-.filtro-grupo-titulo {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    margin: 0 0 8px;
-}
-
-.vac-filtro-select {
-    width: 100%;
-}
-
-.vac-filtro-select-area,
-.vac-filtro-select-estado {
-    margin-bottom: 8px;
-}
-
-.vac-filtro-ayuda {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin: 6px 0 0;
-}
-
-.vac-filtro-fechas {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.vac-filtro-label {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: block;
-    margin-bottom: 3px;
-}
-
-.vac-filtros-acciones {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 16px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
-}
+/* La barra de filtros está en filtros_vacantes.css (compartida con el candidato) */
 
 .vac-tabla-vacia {
     text-align: center;
     padding: 30px;
 }
 
-.vac-filtro-grupo select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    cursor: pointer;
-    outline: none;
-    transition: var(--transition);
-}
-
-.vac-filtro-grupo select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-ultra-light);
-}
-
-.vac-filtro-grupo select:hover {
-    border-color: var(--primary-mid);
-}
-
-.vac-filtro-grupo input[type="date"] {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: var(--transition);
-}
-
-.vac-filtro-grupo input[type="date"]:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-ultra-light);
-}
-
-.filtros-vacantes-admin .input-buscar {
-    position: relative;
-    display: block;
-    width: 100%;
-    min-width: 0;
-}
-
-.filtros-vacantes-admin .input-buscar .ti {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    pointer-events: none;
-}
-
-.filtros-vacantes-admin .input-buscar input {
-    width: 100%;
-    min-height: 42px;
-    padding: 10px 12px 10px 40px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-main);
-    color: var(--text-main);
-    font-family: inherit;
-    font-size: 14px;
-    outline: none;
-    transition: var(--transition);
-}
-
-.filtros-vacantes-admin .input-buscar input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-ultra-light);
-}
-
-/* ── Responsive: los grupos se apilan en vez de apretarse ── */
-@media (max-width: 1000px) {
-    .filtros-avanzados-grupos {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.vac-tabla-vacia a {
+    color: var(--primary);
 }
 
 @media (max-width: 640px) {
     .vac-header {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .filtros-avanzados-grupos {
-        grid-template-columns: 1fr;
-    }
-
-    .vac-filtros-acciones {
-        flex-direction: column-reverse;
-    }
-
-    .vac-filtros-acciones .btn-primary,
-    .vac-filtros-acciones .btn-secondary {
-        width: 100%;
     }
 }
 

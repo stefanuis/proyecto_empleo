@@ -5,459 +5,615 @@
 {% endblock %}
 
 {% block titulo %}
-Expediente — {{ personal.nombres }} {{ personal.apellidos }}
+{% set nombre_candidato = ((personal.nombres ~ ' ' ~ personal.apellidos) if personal else (usuario.nombres ~ ' ' ~ usuario.apellidos))|trim %}
+Expediente — {{ nombre_candidato }}
 {% endblock %}
 
+{% macro vacio(texto) -%}
+    <p class="exp-vacio">{{ texto }}</p>
+{%- endmacro %}
+
+{% macro estado_postulacion(estado) -%}
+    <span class="exp-estado exp-estado--{{ estado }}">{{ estados.get(estado, estado|capitalize) }}</span>
+{%- endmacro %}
+
 {% block contenido %}
-<div class="contenedor-padre">
-  <div class="contenedor-formulario" style="max-width: 900px;">
+{% set nombre_candidato = ((personal.nombres ~ ' ' ~ personal.apellidos) if personal else (usuario.nombres ~ ' ' ~ usuario.apellidos))|trim %}
+{% set proceso_abierto = post.estado not in ['contratado', 'rechazado', 'retirada'] %}
 
-    <div class="card-header">
-        <span class="card-title">Hoja de vida del postulante</span>
-        <div class="logo-principal">
-            <img src="{{  url_for('static',filename='img/logo_color.png')}}" alt="">
-        </div>
-        <!----
-        <div class="card-actions">
-            <a href="{{ url_for('admin.listar_postulantes', id=post.id_vacante) }}"
-               class="btn-secondary">
-                Volver a postulantes
-            </a>
-        </div>
-        -->
-    </div>
+<div class="exp">
 
-    <!-- Encabezado -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-        <div style="display:flex; gap:14px; align-items:center;">
-            {% if personal.ruta_foto_perfil %}
-                <img src="{{ personal.ruta_foto_perfil }}" alt="" class="avatar avatar-lg">
+    <!-- ── Barra superior: volver, navegar entre postulantes y descargar ── -->
+    <nav class="exp-barra" aria-label="Navegación del expediente">
+        <a class="exp-volver" href="{{ url_for('admin.listar_postulantes', id=vacante.id) }}">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i> Postulantes de {{ vacante.titulo }}
+        </a>
+
+        <div class="exp-navegacion">
+            {% if navegacion.anterior %}
+                <a class="exp-nav-btn" href="{{ url_for('admin.ver_expediente', id=navegacion.anterior) }}" aria-label="Postulante anterior">←</a>
             {% else %}
-                <div class="avatar-placeholder avatar-lg">
-                    {{ personal.nombres[0] }}{{ personal.apellidos[0] }}
-                </div>
+                <span class="exp-nav-btn deshabilitado" aria-hidden="true">←</span>
             {% endif %}
-            <div>
-                <h2 style="margin:0;">{{ personal.nombres }} {{ personal.apellidos }}</h2>
-                <p style="color:var(--text-secondary); margin-top:4px;">
-                    Postuló a: {{ vacante.titulo }}
-                </p>
-                {% if post.video_url %}
-                    <a href="{{ post.video_url }}" target="_blank" rel="noopener noreferrer"
-                       class="btn-outline btn-sm enlace-video">▶ Ver video de presentación</a>
-                {% elif vacante.requiere_video %}
-                    <p class="form-hint">Esta vacante pedía video, pero la postulación no tiene uno.</p>
-                {% endif %}
-            </div>
+            <span class="exp-nav-pos">{{ navegacion.posicion }} de {{ navegacion.total }}</span>
+            {% if navegacion.siguiente %}
+                <a class="exp-nav-btn" href="{{ url_for('admin.ver_expediente', id=navegacion.siguiente) }}" aria-label="Postulante siguiente">→</a>
+            {% else %}
+                <span class="exp-nav-btn deshabilitado" aria-hidden="true">→</span>
+            {% endif %}
         </div>
 
-        {% if post.estado == 'postulado' %}
-            <span class="badge badge-pink">Postulado</span>
-        {% elif post.estado == 'revision' %}
-            <span class="badge badge-blue">En revisión</span>
-        {% elif post.estado == 'entrevista' %}
-            <span class="badge badge-orange">Entrevista</span>
-        {% elif post.estado == 'contratado' %}
-            <span class="badge badge-green">Contratado</span>
-        {% elif post.estado == 'rechazado' %}
-            <span class="badge badge-red">Rechazado</span>
-        {% else %}
-            <span class="badge badge-gray">{{ post.estado }}</span>
+        {% if personal %}
+        <a class="btn-secondary btn-sm" href="{{ url_for('admin.descargar_expediente', id=post.id) }}">Descargar PDF</a>
         {% endif %}
-    </div>
+    </nav>
 
-    <!-- ── Información personal ── -->
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información personal</h3>
-    <div class="form-grid">
-        <div class="campo">
-            <label class="form-label">Documento</label>
-            <p>{{ personal.tipo_doc or '—' }} {{ personal.num_doc or '' }}</p>
+    <!-- ── Encabezado del candidato ── -->
+    <header class="exp-cabecera">
+        <div class="exp-avatar" aria-hidden="true">
+            {{ (personal.nombres if personal else usuario.nombres or '')[:1] }}{{ (personal.apellidos if personal else usuario.apellidos or '')[:1] }}
         </div>
-        <div class="campo">
-            <label class="form-label">Fecha de expedición</label>
-            <p>{{ personal.fecha_exp_doc|fecha_corta }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Fecha de nacimiento</label>
-            <p>{{ personal.fecha_nacimiento|fecha_corta }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Género</label>
-            <p>{{ personal.genero or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Grupo étnico</label>
-            <p>{{ personal.grupo_etnico or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Nacionalidad</label>
-            <p>{{ personal.nacionalidad or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Estado civil</label>
-            <p>{{ personal.estado_civil or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Personas a cargo</label>
-            <p>{{ personal.personas_cargo if personal.personas_cargo is not none else '—' }}</p>
-        </div>
-        <div class="campo campo-completo">
-            <label class="form-label">Ubicación</label>
-            <p>
-                {{ personal.direccion or '—' }}, {{ personal.barrio or '' }},
-                {{ personal.municipio or '' }} — {{ personal.departamento or '' }}
-                {% if personal.vive_rural == 'si' %} (zona rural){% endif %}
+        <div class="exp-identidad">
+            <h1 class="exp-nombre">{{ nombre_candidato or 'Candidato sin nombre' }}</h1>
+            <p class="exp-subtitulo">
+                Postuló a <strong>{{ vacante.titulo }}</strong> el {{ post.fecha_postulacion|fecha_corta }}
             </p>
-        </div>
-        {% if personal.ruta_foto_doc %}
-        <div class="campo">
-            <label class="form-label">Documento de identidad</label>
-            <a href="{{ personal.ruta_foto_doc }}" target="_blank" class="btn-outline btn-sm">Ver imagen</a>
-        </div>
-        {% endif %}
-    </div>
-
-    {% if perfil_profesional %}
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Perfil profesional</h3>
-    <div class="form-grid">
-        <div class="campo">
-            <label class="form-label">Área de aplicación</label>
-            <p>{{ perfil_profesional.area_aplicacion or '—' }}</p>
-        </div>
-        <div class="campo campo-completo">
-            <label class="form-label">Descripción del perfil</label>
-            <p>{{ perfil_profesional.descripcion or '—' }}</p>
-        </div>
-        <div class="campo campo-completo">
-            <label class="form-label">Funciones que domina</label>
-            {% if funciones_perfil %}
-                <p>{{ funciones_perfil | map(attribute='nombre') | join(', ') }}</p>
-            {% else %}
-                <p>—</p>
-            {% endif %}
-        </div>
-        {% if coincidencia.total %}
-        <div class="campo campo-completo">
-            <label class="form-label">
-                Coincidencia con la vacante: {{ coincidencia.cantidad }} de {{ coincidencia.total }} funciones
-            </label>
-            <div class="coincidencia-barra">
-                <span style="width: {{ coincidencia.porcentaje }}%"></span>
-            </div>
-            <ul class="funciones-match-lista">
-                {% for funcion in coincidencia.cumplidas %}
-                    <li class="funcion-cumple"><span aria-hidden="true">✓</span> {{ funcion.nombre }}</li>
-                {% endfor %}
-                {% for funcion in coincidencia.faltantes %}
-                    <li class="funcion-falta"><span aria-hidden="true">○</span> {{ funcion.nombre }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-    </div>
-    {% endif %}
-
-    <!-- ── Contacto ── -->
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Contacto</h3>
-    <div class="form-grid">
-        <div class="campo">
-            <label class="form-label">Correo</label>
-            <p>{{ usuario.correo or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Celular</label>
-            <p>{{ personal.num_cel or '—' }}</p>
-        </div>
-        <div class="campo">
-            <label class="form-label">Celular alterno</label>
-            <p>{{ personal.num_cel_dos or '—' }}</p>
-        </div>
-    </div>
-
-        <!-- ── Información académica ── -->
-        <h3 style="border-top:1px solid var(--border); padding-top:20px;">Información académica</h3>
-        {% if academica %}
-            {% for est in academica %}
-            <div class="job-card" style="flex-direction:column; align-items:stretch; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between;">
-                    <p class="job-title" style="margin:0;">{{ est.titulo or (est.nivel|nivel_academico) }}</p>
-                    <span class="badge badge-gray">{{ est.estado or '—' }}</span>
-                </div>
-                <p class="job-company" style="margin:4px 0;">{{ est.institucion or '—' }}</p>
-                <p style="font-size:12.5px; color:var(--text-secondary);">
-                    Nivel: {{ est.nivel|nivel_academico }} ·
-                    Finalización: {{ est.mes_finalizacion or '—' }}/{{ est.anno_finalizacion or '—' }}
-                </p>
-            </div>
-            {% endfor %}
-        {% else %}
-            <p style="color:var(--text-secondary);">No registró información académica.</p>
-        {% endif %}
-    <!-- ── Información experiencia ── -->
-    {% if experiencia %}
-        <h3 style="border-top:1px solid var(--border); padding-top:20px;">Experiencia laboral</h3>
-        {% for exp in experiencia %}
-            <div class="job-card" style="flex-direction:column; align-items:stretch; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between;">
-                    <p class="job-title" style="margin:0;">{{ exp.cargo or '—' }}</p>
-                    {% if exp.actual %}<span class="badge badge-green">Actual</span>{% endif %}
-                </div>
-                <p class="job-company" style="margin:4px 0;">
-                    {{ exp.entidad or '—' }}{% if exp.area %} — {{ exp.area }}{% endif %}
-                </p>
-                <p style="font-size:12.5px; color:var(--text-secondary);">
-                    {{ exp.fecha_ingreso|mes_anio }} –
-                    {{ 'Actualidad' if exp.actual else (exp.fecha_salida|mes_anio) }}
-                    {% if exp.municipio or exp.departamento or exp.pais %} · {{ [exp.municipio, exp.departamento, exp.pais] | select | join(', ') }}{% endif %}
-                    {% if exp.motivo and not exp.actual %} · Motivo de retiro: {{ exp.motivo }}{% endif %}
-                    {% if exp.otro %} · {{ exp.otro }}{% endif %}
-                </p>
-                {% if exp.funciones %}
-                <ul class="steps-list" style="margin-top:6px;">
-                    {% for f in exp.funciones %}<li>{{ f.funcion }}</li>{% endfor %}
-                </ul>
+            <div class="exp-contacto-rapido">
+                {% if usuario.correo %}
+                    <a href="mailto:{{ usuario.correo }}"><i class="ti ti-mail" aria-hidden="true"></i> {{ usuario.correo }}</a>
+                {% endif %}
+                {% if personal and personal.num_cel %}
+                    <a href="tel:{{ personal.num_cel }}"><i class="ti ti-phone" aria-hidden="true"></i> {{ personal.num_cel }}</a>
+                {% endif %}
+                {% if post.video_url %}
+                    <a href="{{ post.video_url }}" target="_blank" rel="noopener noreferrer">▶ Video de presentación</a>
                 {% endif %}
             </div>
-        {% endfor %}
-    {% endif %}
-
-        <!-- ── Cursos ── -->
-    {% if cursos %}
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Cursos</h3>
-        {% for c in cursos %}
-            <div class="job-card" style="flex-direction:column; align-items:stretch; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between;">
-                    <p class="job-title" style="margin:0;">{{ c.nombre }}</p>
-                    {% if c.certificado %}<span class="badge badge-green">Con certificado</span>{% endif %}
-                </div>
-                <p class="job-company" style="margin:4px 0;">{{ c.institucion }}</p>
-                <p style="font-size:12.5px; color:var(--text-secondary);">
-                    {{ c.horas or '—' }} h ·
-                    {{ c.fecha_realizacion.strftime('%d/%m/%Y') if c.fecha_realizacion else '—' }}
-                </p>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- ── Referencias ── -->
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Referencias</h3>
-    {% if referencias %}
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Cargo / relación</th>
-                        <th>Empresa</th>
-                        <th>Teléfono</th>
-                        <th>Ciudad</th>
-                        <th>Autoriza contacto</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ref in referencias %}
-                    <tr>
-                        <td>{{ ref.nombres }} {{ ref.apellidos }}</td>
-                        <td>{{ ref.parentesco or '—' }}</td>
-                        <td>{{ ref.empresa or '—' }}</td>
-                        <td>{{ ref.telefono or '—' }}</td>
-                        <td>{{ ref.ciudad or '—' }}</td>
-                        <td>{{ 'Sí' if ref.autoriza == 'si' else 'No' }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <p style="color:var(--text-secondary);">No registró referencias.</p>
-    {% endif %}
-
-    <!-- ── Referencias personales ── -->
-        {% if referencias_personales %}
-        <h3 style="border-top:1px solid var(--border); padding-top:20px;">Referencias personales</h3>
-        <div class="table-wrapper">
-            <table>
-            <thead><tr><th>Nombre</th><th>Parentesco</th><th>Teléfono</th></tr></thead>
-            <tbody>
-                {% for r in referencias_personales %}
-                <tr>
-                <td>{{ r.nombres }} {{ r.apellidos }}</td>
-                <td>{{ r.parentesco or '—' }}</td>
-                <td>{{ r.telefono or '—' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            </table>
-        </div>
-        {% endif %}
-
-        {% if discapacidades %}
-        <h3 style="border-top:1px solid var(--border); padding-top:20px;">Discapacidades</h3>
-        {% for d in discapacidades %}
-            <span class="tag">{{ d.categoria or '—' }}</span>
-            {% if d.ruta_certificado %}
-                <a href="{{ url_for('web.ver_archivo', tipo='certificado', id=d.id) }}"
-                   target="_blank" rel="noopener" class="btn-outline btn-sm">Ver certificado</a>
-            {% endif %}
-        {% endfor %}
-        {% endif %}
-            <!-- ── Documentos adicionales ── -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:20px;">
-            <h3 style="margin:0;">Documentos adicionales</h3>
-            {% if documentos %}
-                <a href="{{ url_for('admin.descargar_documentos_candidato', id=post.id) }}" class="btn-secondary btn-sm">
-                    Descargar todos (ZIP)
-                </a>
+            {% if vacante.requiere_video and not post.video_url %}
+                <p class="form-hint">Esta vacante pedía video, pero la postulación no tiene uno.</p>
             {% endif %}
         </div>
+        {{ estado_postulacion(post.estado) }}
+    </header>
 
-        {% if documentos %}
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Tipo</th>
-                            <th>Fecha de carga</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for documento in documentos %}
-                        <tr>
-                            <td>{{ documento.nombre }}</td>
-                            <td>{{ documento.tipo or '—' }}</td>
-                            <td>{{ documento.fecha_registro|fecha_corta }}</td>
-                            <td>
-                                {% if documento.ruta_soporte %}
-                                    <a href="{{ url_for('web.ver_archivo', tipo='documento', id=documento.id) }}" target="_blank" rel="noopener" class="btn-outline btn-sm">Ver documento</a>
-                                {% else %}
-                                    —
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p style="color:var(--text-secondary);">No cargó documentos adicionales.</p>
-        {% endif %}
+    <div class="exp-layout">
 
+        <!-- ════════════ HOJA DE VIDA ════════════ -->
+        <div class="exp-principal">
 
-    <!-- ── Estado y notas del reclutador ── -->
-    <h3 style="border-top:1px solid var(--border); padding-top:20px;">Gestión del reclutador</h3>
-    <form method="POST" action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-grid">
-            <div class="campo">
-                <label class="form-label">Estado</label>
-                    <select name="estado" class="form-control">
-                        <option value="postulado"  {% if post.estado == 'postulado' %}selected{% endif %}>Postulado</option>
-                        <option value="revision"   {% if post.estado == 'revision' %}selected{% endif %}>En revisión</option>
-                        <option value="entrevista" {% if post.estado == 'entrevista' %}selected{% endif %}>Entrevista</option>
-                        <option value="contratado" {% if post.estado == 'contratado' %}selected{% endif %}>Contratado</option>
-                        <option value="rechazado"  {% if post.estado == 'rechazado' %}selected{% endif %}>Rechazado</option>
-                        <option value="retirada"   {% if post.estado == 'retirada' %}selected{% endif %}>Retirada</option>
-                    </select>
-            </div>
-            <div class="campo campo-completo">
-                <label class="form-label">Notas del reclutador</label>
-                <textarea name="notas_reclutador" class="form-control">{{ post.notas_reclutador or '' }}</textarea>
-            </div>
-        </div>
-
-
-        <div class="campo campo-completo">
-            <br>
-            <label class="form-label">Notas extras</label>
-
-            <div class="tabs-notas">
-                <button type="button" class="tab-btn active" data-tab="psicologia">Psicología</button>
-                <button type="button" class="tab-btn" data-tab="talento_humano">Gestión Humana</button>
-            </div>
-
-            <div class="tab-content active" id="tab-psicologia">
-                <textarea name="notas_psicologia" class="form-control">{{ post.notas_psicologia or '' }}</textarea>
-            </div>
-
-            <div class="tab-content" id="tab-talento_humano">
-                <textarea name="notas_talento_humano" class="form-control">{{ post.notas_talento_humano or '' }}</textarea>
-            </div>
-        </div>
-        
-        <label class="campo-checkbox" style="margin-top:12px;">
-            <input type="checkbox" name="notificar" value="1" checked>
-            Avisar al candidato por correo si cambia a En revisión, Entrevista o Contratado
-        </label>
-
-        <div class="form-botones">
-            <button type="submit" class="btn-primary">Guardar cambios</button>
-        </div>
-    </form>
-
-    <!-- ── Historial de la postulación ── -->
-    <div style="border-top:1px solid var(--border); margin-top:24px; padding-top:20px;">
-        <h3 style="margin-bottom:12px;">Historial</h3>
-        {% if historial %}
-            <ol class="historial-lista">
-                {% for evento, autor in historial %}
-                    <li class="historial-evento">
-                        <span class="historial-fecha">{{ evento.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+            <!-- ── Requisitos de la vacante ── -->
+            {% if requisitos or coincidencia.total %}
+            <section class="exp-seccion exp-requisitos" aria-labelledby="t-requisitos">
+                <h2 id="t-requisitos" class="exp-titulo">Requisitos de la vacante</h2>
+                <ul class="exp-requisitos-lista">
+                    {% for r in requisitos %}
+                    <li class="{{ 'cumple' if r.cumple else 'no-cumple' }}">
+                        <span class="exp-req-icono" aria-hidden="true">{{ '✓' if r.cumple else '✕' }}</span>
                         <div>
-                            <strong>{{ evento.accion }}</strong>
-                            {% if evento.detalle %}<p class="historial-detalle">{{ evento.detalle }}</p>{% endif %}
-                            <span class="historial-autor">
-                                {% if autor %}{{ autor.nombres }} {{ autor.apellidos }}{% else %}Sistema{% endif %}
-                            </span>
+                            <strong>{{ r.nombre }}</strong>
+                            <span class="exp-req-detalle">Pide {{ r.requerido }} · tiene {{ r.candidato }}</span>
+                        </div>
+                        <span class="sr-only">{{ 'Cumple' if r.cumple else 'No cumple' }}</span>
+                    </li>
+                    {% endfor %}
+                    {% if coincidencia.total %}
+                    <li class="{{ 'cumple' if coincidencia.cantidad == coincidencia.total else ('parcial' if coincidencia.cantidad else 'no-cumple') }}">
+                        <span class="exp-req-icono" aria-hidden="true">{{ coincidencia.cantidad }}/{{ coincidencia.total }}</span>
+                        <div class="exp-req-funciones">
+                            <strong>Funciones del cargo</strong>
+                            <div class="coincidencia-barra"><span style="width: {{ coincidencia.porcentaje }}%"></span></div>
+                            <details>
+                                <summary>Ver funciones</summary>
+                                <ul class="funciones-match-lista">
+                                    {% for funcion in coincidencia.cumplidas %}
+                                        <li class="funcion-cumple"><span aria-hidden="true">✓</span> {{ funcion.nombre }}</li>
+                                    {% endfor %}
+                                    {% for funcion in coincidencia.faltantes %}
+                                        <li class="funcion-falta"><span aria-hidden="true">○</span> {{ funcion.nombre }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </details>
                         </div>
                     </li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p class="form-hint">Aún no hay movimientos registrados para esta postulación.</p>
-        {% endif %}
+                    {% endif %}
+                </ul>
+            </section>
+            {% endif %}
+
+            <!-- ── Identificación ── -->
+            <section class="exp-seccion" aria-labelledby="t-identificacion">
+                <h2 id="t-identificacion" class="exp-titulo">Identificación</h2>
+                {% if personal %}
+                <dl class="exp-datos">
+                    <div><dt>Documento</dt><dd>{{ personal.tipo_doc or '—' }} {{ personal.num_doc or '' }}</dd></div>
+                    <div><dt>Fecha de expedición</dt><dd>{{ personal.fecha_exp_doc|fecha_corta }}</dd></div>
+                    <div>
+                        <dt>Fecha de nacimiento</dt>
+                        <dd>
+                            {{ personal.fecha_nacimiento|fecha_corta }}
+                            {% set anios = personal.fecha_nacimiento|edad %}
+                            {% if anios is not none %}<span class="exp-dato-extra">({{ anios }} años)</span>{% endif %}
+                        </dd>
+                    </div>
+                    <div><dt>Nacionalidad</dt><dd>{{ personal.nacionalidad or '—' }}</dd></div>
+                    <div class="exp-dato-ancho">
+                        <dt>Ubicación</dt>
+                        <dd>{{ ubicacion or '—' }}{% if personal.vive_rural == 'si' %} <span class="exp-dato-extra">(zona rural)</span>{% endif %}</dd>
+                    </div>
+                </dl>
+
+                <details class="exp-desplegable">
+                    <summary>Datos demográficos</summary>
+                    <dl class="exp-datos">
+                        <div><dt>Género</dt><dd>{{ personal.genero or '—' }}</dd></div>
+                        <div><dt>Grupo étnico</dt><dd>{{ personal.grupo_etnico or '—' }}</dd></div>
+                        <div><dt>Estado civil</dt><dd>{{ personal.estado_civil or '—' }}</dd></div>
+                        <div><dt>Personas a cargo</dt><dd>{{ personal.personas_cargo if personal.personas_cargo is not none else '—' }}</dd></div>
+                    </dl>
+                </details>
+                {% else %}
+                    {{ vacio('El candidato no ha llenado sus datos personales.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Contacto ── -->
+            <section class="exp-seccion" aria-labelledby="t-contacto">
+                <h2 id="t-contacto" class="exp-titulo">Contacto</h2>
+                <dl class="exp-datos">
+                    <div>
+                        <dt>Correo</dt>
+                        <dd>{% if usuario.correo %}<a href="mailto:{{ usuario.correo }}">{{ usuario.correo }}</a>{% else %}—{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Celular</dt>
+                        <dd>{% if personal and personal.num_cel %}<a href="tel:{{ personal.num_cel }}">{{ personal.num_cel }}</a>{% else %}—{% endif %}</dd>
+                    </div>
+                    <div>
+                        <dt>Celular alterno</dt>
+                        <dd>{% if personal and personal.num_cel_dos %}<a href="tel:{{ personal.num_cel_dos }}">{{ personal.num_cel_dos }}</a>{% else %}—{% endif %}</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <!-- ── Perfil profesional ── -->
+            <section class="exp-seccion" aria-labelledby="t-perfil">
+                <h2 id="t-perfil" class="exp-titulo">Perfil profesional</h2>
+                {% if perfil_profesional %}
+                <dl class="exp-datos">
+                    <div><dt>Área de aplicación</dt><dd>{{ perfil_profesional.area_aplicacion or '—' }}</dd></div>
+                    <div class="exp-dato-ancho"><dt>Descripción</dt><dd class="exp-texto-largo">{{ perfil_profesional.descripcion or '—' }}</dd></div>
+                    <div class="exp-dato-ancho">
+                        <dt>Funciones que domina</dt>
+                        <dd>
+                            {% if funciones_perfil %}
+                                <div class="exp-chips">
+                                    {% for funcion in funciones_perfil %}<span class="exp-chip">{{ funcion.nombre }}</span>{% endfor %}
+                                </div>
+                            {% else %}—{% endif %}
+                        </dd>
+                    </div>
+                </dl>
+                {% else %}
+                    {{ vacio('No completó su perfil profesional.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Formación académica ── -->
+            <section class="exp-seccion" aria-labelledby="t-academica">
+                <h2 id="t-academica" class="exp-titulo">Formación académica</h2>
+                {% if academica %}
+                <ol class="exp-linea">
+                    {% for est in academica %}
+                    <li>
+                        <span class="exp-linea-fecha">
+                            {% if est.estado == 'finalizado' and est.anno_finalizacion %}
+                                {{ est.anno_finalizacion }}
+                            {% else %}
+                                {{ est.estado|estado_academico }}
+                            {% endif %}
+                        </span>
+                        <div class="exp-linea-cuerpo">
+                            <p class="exp-linea-titulo">{{ est.titulo or (est.nivel|nivel_academico) }}</p>
+                            <p class="exp-linea-sub">{{ est.institucion or '—' }} · {{ est.nivel|nivel_academico }}</p>
+                        </div>
+                        <span class="exp-etiqueta {{ 'exp-etiqueta--ok' if est.estado == 'finalizado' }}">{{ est.estado|estado_academico }}</span>
+                    </li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                    {{ vacio('No registró formación académica.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Experiencia laboral ── -->
+            <section class="exp-seccion" aria-labelledby="t-experiencia">
+                <div class="exp-titulo-fila">
+                    <h2 id="t-experiencia" class="exp-titulo">Experiencia laboral</h2>
+                    {% if experiencia %}<span class="exp-total">Total: {{ experiencia_total }}</span>{% endif %}
+                </div>
+                {% if experiencia %}
+                <ol class="exp-linea">
+                    {% for exp in experiencia %}
+                    <li>
+                        <span class="exp-linea-fecha">
+                            {{ exp.fecha_ingreso|mes_anio }}<br>
+                            {{ 'Actualidad' if exp.actual else (exp.fecha_salida|mes_anio) }}
+                        </span>
+                        <div class="exp-linea-cuerpo">
+                            <p class="exp-linea-titulo">{{ exp.cargo or '—' }}</p>
+                            <p class="exp-linea-sub">
+                                {{ exp.entidad or '—' }}{% if exp.area %} · {{ exp.area }}{% endif %}
+                                {% set lugar_exp = [exp.municipio, exp.departamento, exp.pais]|select|join(', ') %}
+                                {% if lugar_exp %} · {{ lugar_exp }}{% endif %}
+                            </p>
+                            {% if exp.motivo and not exp.actual %}
+                                <p class="exp-linea-nota">Motivo de retiro: {{ exp.motivo }}{% if exp.otro %} — {{ exp.otro }}{% endif %}</p>
+                            {% endif %}
+                            {% if exp.funciones %}
+                            <ul class="exp-funciones">
+                                {% for f in exp.funciones %}<li>{{ f.funcion }}</li>{% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                        {% if exp.actual %}<span class="exp-etiqueta exp-etiqueta--ok">Actual</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                    {{ vacio('No registró experiencia laboral.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Cursos ── -->
+            <section class="exp-seccion" aria-labelledby="t-cursos">
+                <h2 id="t-cursos" class="exp-titulo">Cursos</h2>
+                {% if cursos %}
+                <ol class="exp-linea">
+                    {% for c in cursos %}
+                    <li>
+                        <span class="exp-linea-fecha">{{ c.fecha_realizacion.year if c.fecha_realizacion else '—' }}</span>
+                        <div class="exp-linea-cuerpo">
+                            <p class="exp-linea-titulo">{{ c.nombre }}</p>
+                            <p class="exp-linea-sub">{{ c.institucion }}{% if c.horas %} · {{ c.horas }} h{% endif %}</p>
+                        </div>
+                        {% if c.certificado %}<span class="exp-etiqueta exp-etiqueta--ok">Con certificado</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                    {{ vacio('No registró cursos.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Referencias laborales ── -->
+            <section class="exp-seccion" aria-labelledby="t-referencias">
+                <h2 id="t-referencias" class="exp-titulo">Referencias laborales</h2>
+                {% if referencias %}
+                <div class="table-wrapper">
+                    <table class="exp-tabla">
+                        <thead>
+                            <tr><th>Nombre</th><th>Cargo / relación</th><th>Empresa</th><th>Teléfono</th><th>Ciudad</th><th>Autoriza contacto</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for ref in referencias %}
+                            <tr>
+                                <td>{{ ref.nombres }} {{ ref.apellidos }}</td>
+                                <td>{{ ref.parentesco or '—' }}</td>
+                                <td>{{ ref.empresa or '—' }}</td>
+                                <td>{% if ref.telefono %}<a href="tel:{{ ref.telefono }}">{{ ref.telefono }}</a>{% else %}—{% endif %}</td>
+                                <td>{{ ref.ciudad or '—' }}</td>
+                                <td>{{ 'Sí' if ref.autoriza == 'si' else 'No' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    {{ vacio('No registró referencias laborales.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Referencias personales ── -->
+            <section class="exp-seccion" aria-labelledby="t-ref-personales">
+                <h2 id="t-ref-personales" class="exp-titulo">Referencias personales</h2>
+                {% if referencias_personales %}
+                <div class="table-wrapper">
+                    <table class="exp-tabla">
+                        <thead><tr><th>Nombre</th><th>Parentesco</th><th>Teléfono</th></tr></thead>
+                        <tbody>
+                            {% for r in referencias_personales %}
+                            <tr>
+                                <td>{{ r.nombres }} {{ r.apellidos }}</td>
+                                <td>{{ r.parentesco or '—' }}</td>
+                                <td>{% if r.telefono %}<a href="tel:{{ r.telefono }}">{{ r.telefono }}</a>{% else %}—{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    {{ vacio('No registró referencias personales.') }}
+                {% endif %}
+            </section>
+
+            <!-- ── Discapacidad (opcional para el candidato) ── -->
+            {% if discapacidades %}
+            <section class="exp-seccion" aria-labelledby="t-discapacidad">
+                <h2 id="t-discapacidad" class="exp-titulo">Discapacidad</h2>
+                <ul class="exp-lista-simple">
+                    {% for d in discapacidades %}
+                    <li>
+                        <span>{{ d.categoria or '—' }}</span>
+                        {% if d.ruta_certificado %}
+                            <a href="{{ url_for('web.ver_archivo', tipo='certificado', id=d.id) }}"
+                               target="_blank" rel="noopener" class="btn-outline btn-sm">Ver certificado</a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+
+            <!-- ── Documentos ── -->
+            <section class="exp-seccion" aria-labelledby="t-documentos">
+                <div class="exp-titulo-fila">
+                    <h2 id="t-documentos" class="exp-titulo">Documentos</h2>
+                    {% if documentos %}
+                        <a href="{{ url_for('admin.descargar_documentos_candidato', id=post.id) }}" class="btn-secondary btn-sm">Descargar todos (ZIP)</a>
+                    {% endif %}
+                </div>
+                {% if documentos %}
+                <ul class="exp-lista-simple">
+                    {% for documento in documentos %}
+                    <li>
+                        <div>
+                            <span class="exp-linea-titulo">{{ documento.nombre }}</span>
+                            <span class="exp-linea-sub">{{ documento.tipo or 'Otro' }} · cargado el {{ documento.fecha_registro|fecha_corta }}</span>
+                        </div>
+                        {% if documento.ruta_soporte %}
+                            <a href="{{ url_for('web.ver_archivo', tipo='documento', id=documento.id) }}" target="_blank" rel="noopener" class="btn-outline btn-sm">Ver</a>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                    {{ vacio('No cargó documentos.') }}
+                {% endif %}
+            </section>
+
+        </div>
+
+        <!-- ════════════ PANEL DE GESTIÓN ════════════ -->
+        <aside class="exp-panel" aria-label="Gestión de la postulación">
+
+            <!-- Entrevista -->
+            <section class="exp-tarjeta">
+                <h2 class="exp-tarjeta-titulo">Entrevista</h2>
+                {% if citacion %}
+                    <p class="exp-cita-fecha">
+                        <i class="ti ti-calendar-event" aria-hidden="true"></i>
+                        {{ citacion.fecha|fecha_con_dia }} · {{ citacion.hora|hora_12 }}
+                    </p>
+                    {% if citacion.lugar %}<p class="exp-cita-lugar">{{ citacion.lugar }}</p>{% endif %}
+                    <p class="exp-cita-respuesta">
+                        {% if citacion.respuesta == 'confirmada' %}
+                            <span class="exp-punto exp-punto--ok"></span> Confirmó asistencia
+                        {% elif citacion.respuesta == 'rechazada' %}
+                            <span class="exp-punto exp-punto--no"></span> Dijo que no puede asistir
+                        {% elif citacion.fecha < hoy %}
+                            <span class="exp-punto exp-punto--vencida"></span> Nunca respondió
+                        {% else %}
+                            <span class="exp-punto exp-punto--pendiente"></span> Aún no responde
+                        {% endif %}
+                    </p>
+                {% else %}
+                    <p class="exp-vacio">Sin citación.</p>
+                {% endif %}
+                {% if proceso_abierto %}
+                    <button type="button" class="btn-primary btn-sm exp-btn-ancho" id="btn-abrir-citar">
+                        {{ 'Citar de nuevo' if citacion else 'Citar a entrevista' }}
+                    </button>
+                    {% if citacion %}<p class="form-hint">La citación actual quedará cancelada.</p>{% endif %}
+                {% endif %}
+            </section>
+
+            <!-- Estado y notas -->
+            <section class="exp-tarjeta">
+                <h2 class="exp-tarjeta-titulo">Gestión del reclutador</h2>
+                <form method="POST" action="{{ url_for('admin.actualizar_postulacion', id=post.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="exp-campo">
+                        <label class="form-label" for="exp-estado">Estado</label>
+                        <select name="estado" id="exp-estado" class="form-control">
+                            {% for valor, etiqueta in estados.items() %}
+                                <option value="{{ valor }}" {% if post.estado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                            {% endfor %}
+                        </select>
+                        {# El correo de rechazo sale al guardar el estado; aquí solo se ve si llegó #}
+                        {% if post.estado == 'rechazado' %}
+                            {% if post.fecha_correo_rechazo %}
+                                <p class="form-hint exp-correo-estado">
+                                    ✓ Correo de rechazo enviado el {{ post.fecha_correo_rechazo.strftime('%d/%m/%Y a las %H:%M') }}.
+                                </p>
+                            {% else %}
+                                <p class="form-hint exp-correo-estado exp-correo-pendiente">
+                                    El candidato aún no recibió el correo de rechazo.
+                                    <button type="submit" form="form-reenviar-rechazo" class="exp-enlace">Enviarlo ahora</button>
+                                </p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <label class="campo-checkbox exp-campo">
+                        <input type="checkbox" name="notificar" value="1" checked>
+                        Avisar al candidato por correo si cambia a En revisión, Entrevista, Contratado o Rechazado
+                    </label>
+
+                    <div class="exp-campo">
+                        <div class="exp-notas-tabs" role="tablist" aria-label="Notas">
+                            <button type="button" role="tab" class="exp-nota-tab activa" aria-selected="true" data-tab="reclutador">Reclutador</button>
+                            <button type="button" role="tab" class="exp-nota-tab" aria-selected="false" data-tab="psicologia">Psicología</button>
+                            <button type="button" role="tab" class="exp-nota-tab" aria-selected="false" data-tab="talento_humano">Gestión Humana</button>
+                        </div>
+                        <textarea name="notas_reclutador" class="form-control exp-nota activa" data-nota="reclutador" rows="5"
+                                  aria-label="Notas del reclutador" placeholder="Notas del reclutador...">{{ post.notas_reclutador or '' }}</textarea>
+                        <textarea name="notas_psicologia" class="form-control exp-nota" data-nota="psicologia" rows="5"
+                                  aria-label="Notas de psicología" placeholder="Notas de psicología...">{{ post.notas_psicologia or '' }}</textarea>
+                        <textarea name="notas_talento_humano" class="form-control exp-nota" data-nota="talento_humano" rows="5"
+                                  aria-label="Notas de Gestión Humana" placeholder="Notas de Gestión Humana...">{{ post.notas_talento_humano or '' }}</textarea>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-sm exp-btn-ancho">Guardar cambios</button>
+                </form>
+
+                {# Fuera del formulario de arriba (no se pueden anidar formularios);
+                   lo usa el botón "Enviarlo ahora" con el atributo form= #}
+                {% if post.estado == 'rechazado' and not post.fecha_correo_rechazo %}
+                <form id="form-reenviar-rechazo" method="POST" action="{{ url_for('admin.enviar_rechazo', id=post.id) }}"
+                      data-confirmar="Se enviará el correo de rechazo a este candidato."
+                      data-confirmar-titulo="¿Enviar correo de rechazo?"
+                      data-confirmar-aceptar="Sí, enviar" hidden>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                </form>
+                {% endif %}
+            </section>
+
+            <!-- Otras postulaciones del candidato -->
+            {% if otras_postulaciones %}
+            <section class="exp-tarjeta">
+                <h2 class="exp-tarjeta-titulo">Otras postulaciones</h2>
+                <ul class="exp-otras">
+                    {% for otra, otra_vacante in otras_postulaciones %}
+                    <li>
+                        <a href="{{ url_for('admin.ver_expediente', id=otra.id) }}">{{ otra_vacante.titulo }}</a>
+                        <span class="exp-otras-meta">{{ otra.fecha_postulacion|fecha_corta }}</span>
+                        {{ estado_postulacion(otra.estado) }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+
+            <!-- Historial -->
+            <section class="exp-tarjeta">
+                <h2 class="exp-tarjeta-titulo">Historial</h2>
+                {% if historial %}
+                    <ol class="historial-lista">
+                        {% for evento, autor in historial %}
+                            <li class="historial-evento">
+                                <span class="historial-fecha">{{ evento.fecha.strftime('%d/%m/%Y %H:%M') }}</span>
+                                <div>
+                                    <strong>{{ evento.accion }}</strong>
+                                    {% if evento.detalle %}<p class="historial-detalle">{{ evento.detalle }}</p>{% endif %}
+                                    <span class="historial-autor">
+                                        {% if autor %}{{ autor.nombres }} {{ autor.apellidos }}{% else %}Sistema{% endif %}
+                                    </span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="exp-vacio">Aún no hay movimientos registrados.</p>
+                {% endif %}
+            </section>
+
+        </aside>
     </div>
-
-    <!-- ── Notificación al candidato (solo si está rechazado) ── -->
-    {% if post.estado == 'rechazado' %}
-    <div style="border-top:1px solid var(--border); margin-top:24px; padding-top:20px;">
-        <h3 style="margin-bottom:8px;">Notificación al candidato</h3>
-
-        {% if post.fecha_correo_rechazo %}
-            <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:12px;">
-                Correo enviado el {{ post.fecha_correo_rechazo.strftime('%d/%m/%Y a las %H:%M') }}.
-            </p>
-        {% else %}
-            <p style="color:var(--text-secondary); font-size:13.5px; margin-bottom:12px;">
-                El candidato aún no ha sido notificado.
-            </p>
-        {% endif %}
-
-        <form method="POST" action="{{ url_for('admin.enviar_rechazo', id=post.id) }}"
-              data-confirmar="¿Enviar el correo de rechazo a este candidato?"
-              data-confirmar-titulo="Enviar respuesta"
-              data-confirmar-aceptar="Sí, enviar">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn-secondary">
-                {{ 'Reenviar correo de rechazo' if post.fecha_correo_rechazo else 'Enviar respuesta al candidato' }}
-            </button>
-        </form>
-    </div>
-    {% endif %}
-  </div>
 </div>
 
+{% if proceso_abierto %}
+<!-- ── Modal: citar a entrevista ── -->
+<div id="modal-citar" class="exp-modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-citar-titulo">
+    <div class="exp-modal-caja">
+        <button type="button" class="exp-modal-cerrar" data-cerrar-modal aria-label="Cerrar">&times;</button>
+        <h2 id="modal-citar-titulo" class="exp-tarjeta-titulo">Citar a entrevista</h2>
+        <p class="form-hint">Se enviará un correo a {{ nombre_candidato }} para que confirme su asistencia.</p>
+
+        <form id="form-citar" method="POST" action="{{ url_for('admin.citar_seleccionados', id=vacante.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="postulaciones_seleccionadas" id="citar-datos">
+            <input type="hidden" name="volver" value="{{ request.path }}">
+
+            <div class="exp-modal-grid">
+                <div class="exp-campo">
+                    <label class="form-label" for="citar-fecha">Fecha</label>
+                    <input type="date" id="citar-fecha" class="form-control" min="{{ hoy.isoformat() }}" required>
+                </div>
+                <div class="exp-campo">
+                    <label class="form-label" for="citar-hora">Hora</label>
+                    <input type="time" id="citar-hora" class="form-control" required>
+                </div>
+            </div>
+            <div class="exp-campo">
+                <label class="form-label" for="citar-lugar">Lugar o enlace</label>
+                <input type="text" id="citar-lugar" class="form-control" value="{{ citacion.lugar if citacion else '' }}"
+                       placeholder="Oficina principal / enlace de videollamada">
+            </div>
+            <div class="exp-campo">
+                <label class="form-label" for="citar-mensaje">Mensaje adicional</label>
+                <textarea id="citar-mensaje" class="form-control" rows="3" placeholder="Trae tu documento de identidad..."></textarea>
+            </div>
+
+            <div class="exp-modal-acciones">
+                <button type="button" class="btn-secondary btn-sm" data-cerrar-modal>Cancelar</button>
+                <button type="submit" class="btn-primary btn-sm">Enviar citación</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <script>
-document.querySelectorAll('.tabs-notas .tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const tab = btn.dataset.tab;
+document.addEventListener("DOMContentLoaded", function () {
 
-        document.querySelectorAll('.tabs-notas .tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+    // ---- Pestañas de notas: las tres se envían siempre, solo cambia cuál se ve ----
+    document.querySelectorAll(".exp-nota-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+            document.querySelectorAll(".exp-nota-tab").forEach(function (t) {
+                const activa = t === tab;
+                t.classList.toggle("activa", activa);
+                t.setAttribute("aria-selected", activa ? "true" : "false");
+            });
+            document.querySelectorAll(".exp-nota").forEach(function (nota) {
+                nota.classList.toggle("activa", nota.dataset.nota === tab.dataset.tab);
+            });
+        });
+    });
 
-        document.querySelectorAll('.campo-completo .tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
+    // ---- Modal de citar ----
+    const modal = document.getElementById("modal-citar");
+    const abrir = document.getElementById("btn-abrir-citar");
+    if (!modal || !abrir) return;
+
+    function cerrar() {
+        modal.hidden = true;
+        abrir.focus();
+    }
+
+    abrir.addEventListener("click", function () {
+        modal.hidden = false;
+        document.getElementById("citar-fecha").focus();
+    });
+    modal.querySelectorAll("[data-cerrar-modal]").forEach(function (b) {
+        b.addEventListener("click", cerrar);
+    });
+    modal.addEventListener("click", function (e) {
+        if (e.target === modal) cerrar();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !modal.hidden) cerrar();
+    });
+
+    // El servidor recibe los datos como JSON, igual que la cita masiva
+    document.getElementById("form-citar").addEventListener("submit", function () {
+        document.getElementById("citar-datos").value = JSON.stringify({
+            ids: [{{ post.id }}],
+            fecha: document.getElementById("citar-fecha").value,
+            hora: document.getElementById("citar-hora").value,
+            lugar: document.getElementById("citar-lugar").value.trim(),
+            mensaje: document.getElementById("citar-mensaje").value.trim()
+        });
     });
 });
 </script>

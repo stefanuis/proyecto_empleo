@@ -17,7 +17,9 @@ TOTAL_PASOS = len(PASOS_seguimiento)
 # Ejemplo: {"Medicina": ["Enfermería"]} permite Enfermería para vacantes de Medicina.
 AREAS_AFINES = {}
 
-VALIDAR_NIVEL_ACADEMICO = False
+# Exige que el candidato tenga finalizado el nivel académico de la vacante
+# (o uno superior: un universitario cumple una vacante de bachillerato).
+VALIDAR_NIVEL_ACADEMICO = True
 
 REGLAS_PASO = {
     "personal": {

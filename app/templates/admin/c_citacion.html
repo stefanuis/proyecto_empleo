@@ -1,9 +1,9 @@
-<!-- citaciones.html -->
+<!-- Correo de citación a entrevista (también se usa al reprogramar) -->
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Has sido citado a entrevista</title>
+    <title>{{ 'Tu entrevista fue reprogramada' if reprogramada else 'Has sido citado a entrevista' }}</title>
 </head>
 <body style="margin:0;padding:20px;background:#F5F5F5;font-family:'DM Sans',Arial,sans-serif;">
     <table cellpadding="0" cellspacing="0" border="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:10px;border:1px solid #E0E0E0;">
@@ -21,11 +21,23 @@
                 </h2>
 
                 <p style="font-size:14px;line-height:1.6;color:#757575;margin:0 0 20px 0;">
-                    Has sido citado a una entrevista. A continuación los detalles:
+                    {% if reprogramada %}
+                    Tu entrevista cambió de fecha. Estos son los nuevos detalles; la citación anterior ya no es válida:
+                    {% else %}
+                    Has sido citado a una entrevista{% if vacante %} para la vacante <strong style="color:#2C2C2A;">{{ vacante }}</strong>{% endif %}. A continuación los detalles:
+                    {% endif %}
                 </p>
 
                 <!-- Tabla de datos de la citación -->
                 <table cellpadding="0" cellspacing="0" border="0" style="width:100%;background:#FBEAF0;border:1px solid #F4C0D1;border-radius:10px;margin:0 0 24px 0;">
+                    {% if vacante and reprogramada %}
+                    <tr>
+                        <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
+                            <span style="font-size:12px;color:#54545A;">Vacante</span><br>
+                            <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ vacante }}</span>
+                        </td>
+                    </tr>
+                    {% endif %}
                     <tr>
                         <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
                             <span style="font-size:12px;color:#54545A;">Fecha</span><br>
@@ -39,7 +51,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding:16px 20px;border-bottom:1px solid #F4C0D1;">
+                        <td style="padding:16px 20px;{% if mensaje %}border-bottom:1px solid #F4C0D1;{% endif %}">
                             <span style="font-size:12px;color:#54545A;">Lugar</span><br>
                             <span style="font-size:14px;font-weight:600;color:#2C2C2A;">{{ lugar }}</span>
                         </td>

@@ -1,69 +1,135 @@
 {% extends 'usuario/base.html' %}
 
 {% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filtros_vacantes.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/usuario_postulaciones.css') }}">
 {% endblock %}
 {% block contenido %}
 
 <div class="main-area">
 
-    <header class="topbar-vacantes">
-        <p class="topbar-title">Mis postulaciones</p>
-        <div class="topbar-actions">
-            <i class="ti ti-bell"></i>
-        </div>
-    </header>
+    <main class="page-content post-pagina">
 
-    <main class="page-content">
-
-        <form method="GET" class="filtros">
-            <div class="input-buscar">
-                <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por cargo" value="{{ request.args.get('q', '') }}">
+        <header class="post-encabezado">
+            <div>
+                <h1 class="vf-titulo">Mis postulaciones</h1>
+                <p class="vf-resumen">Sigue el avance de cada proceso en el que participas.</p>
             </div>
-            <select name="estado" onchange="this.form.submit()">
-                <option value="">Todos los estados</option>
-                <option value="postulado">Postulado</option>
-                <option value="revision">En revisión</option>
-                <option value="entrevista">Entrevista</option>
-                <option value="contratado">Contratado</option>
-                <option value="rechazado">Rechazado</option>
-                <option value="retirada">Retirada</option>
-            </select>
-        </form>
+            {% if tiene_postulaciones %}
+            <form method="GET" class="post-buscar" role="search">
+                {% if estado_filtro %}<input type="hidden" name="estado" value="{{ estado_filtro }}">{% endif %}
+                <label class="vf-buscar">
+                    <span class="sr-only">Buscar por cargo</span>
+                    <i class="ti ti-search" aria-hidden="true"></i>
+                    <input type="search" name="q" placeholder="Buscar por cargo" value="{{ q }}">
+                </label>
+            </form>
+            {% endif %}
+        </header>
 
-        <div class="grid-vacantes grid-postulaciones">
+        {% if tiene_postulaciones %}
+        {# Pestañas por estado: solo aparecen los estados que tienen postulaciones #}
+        <nav class="post-tabs" aria-label="Filtrar por estado">
+            <a class="post-tab {% if not estado_filtro %}activa{% endif %}"
+               href="{{ url_for('usuario.mis_postulaciones', q=q or None) }}"
+               {% if not estado_filtro %}aria-current="page"{% endif %}>
+                Todas <span class="post-tab-num">{{ total_conteos }}</span>
+            </a>
+            {% for valor, etiqueta in estados.items() %}
+                {% if conteos.get(valor) or estado_filtro == valor %}
+                <a class="post-tab {% if estado_filtro == valor %}activa{% endif %}"
+                   href="{{ url_for('usuario.mis_postulaciones', estado=valor, q=q or None) }}"
+                   {% if estado_filtro == valor %}aria-current="page"{% endif %}>
+                    <span class="post-tab-punto estado-{{ valor }}" aria-hidden="true"></span>
+                    {{ etiqueta }} <span class="post-tab-num">{{ conteos.get(valor, 0) }}</span>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </nav>
+
+        {% if q %}
+        <div class="vf-activos" aria-label="Búsqueda activa">
+            <a class="vf-chip" href="{{ url_for('usuario.mis_postulaciones', estado=estado_filtro or None) }}" aria-label="Quitar búsqueda {{ q }}">
+                “{{ q }}” <i class="ti ti-x" aria-hidden="true"></i>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="post-lista">
             {% for p in postulaciones %}
-                <div class="card-vacante">
-                    <div class="card-header">
-                        <div class="icono icono-teal" aria-hidden="true"><i class="ti ti-briefcase"></i></div>
-                        <div class="card-titulos">
-                            <p class="card-cargo">{{ p.vacante.titulo }}</p>
-                            <p class="card-categoria">Postulado el {{ p.post.fecha_postulacion|fecha_corta }}</p>
+                {% set estado = p.post.estado %}
+                {% set citacion = p.citacion %}
+                {% set requiere_accion = estado == 'entrevista' and citacion and not citacion.respuesta and citacion.token %}
+                <article class="post-card post-card-{{ estado }} {% if requiere_accion %}post-card-accion{% endif %}">
+
+                    <div class="post-cabecera">
+                        <div class="post-titulos">
+                            <a class="post-cargo" href="{{ url_for('usuario.detalle_vacante', id=p.vacante.id) }}">{{ p.vacante.titulo }}</a>
+                            <p class="post-meta">
+                                <span>{{ p.vacante.area_aplicacion or 'Área no especificada' }}</span>
+                                <span aria-hidden="true">·</span>
+                                <span>Postulado el {{ p.post.fecha_postulacion|fecha_corta }}</span>
+                            </p>
                         </div>
-                        <span class="tag tag-estado estado-{{ p.post.estado }}">{{ p.post.estado|capitalize }}</span>
+                        <span class="tag tag-estado estado-{{ estado }}">{{ estados.get(estado, estado|capitalize) }}</span>
                     </div>
 
-                    {% if p.post.estado != 'retirada' %}
-                        <div class="stepper">
-                            {% for paso in ['Postulado', 'En revisión', 'Entrevista', 'Decisión'] %}
-                            <div class="paso-wrap">
-                                <div class="paso {% if loop.index < p.paso_actual %}completado{% elif loop.index == p.paso_actual %}activo{% endif %}">
-                                    <div class="circulo">
-                                        {% if loop.index < p.paso_actual %}✓{% else %}{{ loop.index }}{% endif %}
-                                    </div>
-                                    <span class="paso-label">{{ paso }}</span>
-                                </div>
-                            </div>
-                            {% if not loop.last %}
-                            <div class="linea {% if loop.index < p.paso_actual %}linea-completada{% endif %}"></div>
-                            {% endif %}
+                    {% if estado != 'retirada' %}
+                        <ol class="post-pasos" aria-label="Avance de la postulación">
+                            {% for etiqueta, estado_paso in p.pasos %}
+                            <li class="post-paso {{ estado_paso }}">
+                                <span class="post-paso-punto" aria-hidden="true">
+                                    {% if estado_paso in ['completado', 'contratado'] %}✓{% elif estado_paso == 'rechazado' %}✕{% elif estado_paso == 'stock' %}★{% endif %}
+                                </span>
+                                <span class="post-paso-texto">{{ etiqueta }}</span>
+                                {% if estado_paso == 'activo' %}<span class="sr-only">(etapa actual)</span>{% endif %}
+                                {% if estado_paso == 'omitido' %}<span class="sr-only">(no aplicó)</span>{% endif %}
+                            </li>
                             {% endfor %}
-                        </div>
+                        </ol>
                     {% endif %}
 
-                    {% if p.post.estado not in ['retirada', 'contratado', 'rechazado'] %}
-                        <div class="card-footer">
+                    {# Mensaje según el estado #}
+                    {% if estado == 'entrevista' and citacion %}
+                        <div class="post-aviso post-aviso-entrevista">
+                            <div class="post-aviso-icono" aria-hidden="true"><i class="ti ti-calendar-event"></i></div>
+                            <div class="post-aviso-cuerpo">
+                                <p class="post-aviso-titulo">
+                                    Entrevista el {{ citacion.fecha|fecha_corta }} a las {{ citacion.hora.strftime('%H:%M') }}
+                                </p>
+                                {% if citacion.lugar %}<p>{{ citacion.lugar }}</p>{% endif %}
+                                {% if citacion.respuesta == 'confirmada' %}
+                                    <p class="post-aviso-estado post-ok">✓ Confirmaste tu asistencia</p>
+                                {% elif citacion.respuesta == 'rechazada' %}
+                                    <p class="post-aviso-estado">Indicaste que no puedes asistir. Gestión Humana se comunicará contigo.</p>
+                                {% elif citacion.token %}
+                                    <div class="post-aviso-acciones">
+                                        <a class="btn-primary btn-sm" href="{{ url_for('usuario.responder_citacion', token=citacion.token, respuesta='confirmar') }}">Confirmar asistencia</a>
+                                        <a class="btn-secondary btn-sm" href="{{ url_for('usuario.responder_citacion', token=citacion.token, respuesta='rechazar') }}">No puedo asistir</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% elif estado == 'entrevista' %}
+                        <p class="post-aviso">Avanzaste a entrevista. Pronto recibirás un correo con la fecha, la hora y el lugar.</p>
+                    {% elif estado == 'contratado' %}
+                        <p class="post-aviso post-aviso-exito">¡Felicitaciones! Gestión Humana se comunicará contigo para los siguientes pasos.</p>
+                    {% elif estado == 'stock' %}
+                        <p class="post-aviso post-aviso-stock">Esta vez la vacante se cubrió con otra persona, pero tu perfil nos gustó: lo guardamos para tenerte en cuenta en próximas vacantes similares.</p>
+                    {% elif estado == 'rechazado' %}
+                        <p class="post-aviso">En esta ocasión no continuaste en el proceso. Gracias por tu interés: puedes postularte a otras vacantes.</p>
+                    {% elif estado == 'retirada' %}
+                        <p class="post-aviso">Esta postulación fue retirada y ya no está en proceso.</p>
+                    {% elif p.vacante.estado == 'Cerrada' %}
+                        <p class="post-aviso">La vacante ya no recibe postulaciones, pero tu proceso sigue en curso.</p>
+                    {% endif %}
+
+                    <div class="post-footer">
+                        <a class="post-ver" href="{{ url_for('usuario.detalle_vacante', id=p.vacante.id) }}">
+                            Ver vacante <span aria-hidden="true">→</span>
+                        </a>
+                        {% if estado not in ['retirada', 'contratado', 'rechazado'] %}
                             <form
                                 action="{{ url_for('usuario.retirar_postulacion', id=p.post.id) }}"
                                 method="POST"
@@ -73,25 +139,28 @@
                                 data-confirmar-aceptar="Sí, retirar"
                             >
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn-secondary btn-sm">
-                                    Retirar postulación
-                                </button>
+                                <button type="submit" class="post-retirar">Retirar postulación</button>
                             </form>
-                        </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
 
-                </div>
+                </article>
             {% else %}
-                <div class="empty-state">
-                    <span class="empty-icon">🔍</span>
-                    <h3>No tienes postulaciones activas</h3>
-                    <p>Explora las vacantes disponibles y postúlate.</p>
+                <div class="post-vacio">
+                    <div class="post-vacio-icono" aria-hidden="true"><i class="ti ti-briefcase"></i></div>
+                    {% if tiene_postulaciones %}
+                        <h3>Ninguna postulación coincide</h3>
+                        <p>Prueba con otro cargo u otro estado, o <a href="{{ url_for('usuario.mis_postulaciones') }}">ver todas</a>.</p>
+                    {% else %}
+                        <h3>Aún no te has postulado a ninguna vacante</h3>
+                        <p>Explora las vacantes abiertas y postúlate a las que te interesen.</p>
+                        <a class="btn-primary" href="{{ url_for('usuario.vacantes') }}">Ver vacantes</a>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
 
     </main>
 </div>
-
 
 {% endblock %}

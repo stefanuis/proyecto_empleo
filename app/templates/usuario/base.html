@@ -3,10 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ titulo }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     {% block page_css %}{% endblock %}
+    {# Ajustes para celular del portal del candidato (el admin no la carga) #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/movil_usuario.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}">
 </head>
 
@@ -29,6 +32,7 @@
     {% include 'usuario/footer.html' %}
     <script src="{{ url_for('static', filename='js/limite_filas.js') }}"></script>
     <script src="{{ url_for('static', filename='js/alertas.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/sesion.js') }}" defer
             data-minutos="{{ sesion_inactiva_minutos }}"
             data-mantener="{{ url_for('web.mantener_sesion') }}"

@@ -1,33 +1,742 @@
-.card-header {
+/* =============================================
+   EXPEDIENTE DEL CANDIDATO (ADMIN)
+   Hoja de vida a la izquierda, panel de gestión a la derecha
+   ============================================= */
+
+.exp {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+/* .contenido tiene overflow: auto, y eso hace que position: sticky se mida
+   contra él y no contra la ventana: la barra y el panel bajaban 64px y
+   tapaban el encabezado. clip recorta igual el desborde horizontal pero no
+   crea un contenedor de scroll, así que sticky vuelve a funcionar. */
+.contenido:has(> .exp) {
+    overflow: visible;
+    overflow-x: clip;
+}
+
+
+/* ── Barra superior: volver, anterior/siguiente, PDF ── */
+
+.exp-barra {
+    position: sticky;
+    top: var(--navbar-height);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: -10px 0 16px;
+    padding: 10px 0;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+.exp-volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin-right: auto;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.exp-volver:hover {
+    color: var(--primary);
+}
+
+.exp-navegacion {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.exp-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-main);
+    text-decoration: none;
+    transition: border-color var(--transition), color var(--transition);
+}
+
+.exp-nav-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.exp-nav-btn.deshabilitado {
+    color: var(--border);
+    pointer-events: none;
+}
+
+.exp-nav-pos {
+    min-width: 56px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+
+/* ── Encabezado del candidato ── */
+
+.exp-cabecera {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 20px 22px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.exp-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-ultra-light);
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.exp-identidad {
+    flex: 1;
+    min-width: 0;
+}
+
+.contenido h1.exp-nombre {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 22px;
+    line-height: 1.3;
+}
+
+.contenido .exp-subtitulo {
+    margin: 2px 0 8px;
+    font-size: 13.5px;
+}
+
+.exp-contacto-rapido {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+}
+
+.exp-contacto-rapido a {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--primary);
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.exp-contacto-rapido a:hover {
+    text-decoration: underline;
+}
+
+
+/* Estado de la postulación (mismos colores que Mis postulaciones) */
+
+.exp-estado {
+    flex: 0 0 auto;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--badge-gray);
+    color: var(--badge-gray-text);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.exp-estado--postulado  { background: var(--primary-ultra-light); color: var(--primary); }
+.exp-estado--revision   { background: var(--badge-blue);   color: var(--badge-blue-text); }
+.exp-estado--entrevista { background: var(--badge-orange); color: var(--badge-orange-text); }
+.exp-estado--contratado { background: var(--badge-green);  color: var(--badge-green-text); }
+.exp-estado--rechazado  { background: var(--badge-red);    color: var(--badge-red-text); }
+.exp-estado--retirada   { background: var(--badge-gray);   color: var(--badge-gray-text); }
+.exp-estado--stock      { background: #E0F2F1;             color: #00695C; }
+
+
+/* ── Dos columnas ── */
+
+.exp-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    align-items: start;
+    gap: 20px;
+}
+
+.exp-principal {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+.exp-panel {
+    position: sticky;
+    top: calc(var(--navbar-height) + 64px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: calc(100vh - var(--navbar-height) - 80px);
+    overflow-y: auto;
+    padding-bottom: 4px;
+}
+
+
+/* ── Secciones de la hoja de vida ── */
+
+.exp-seccion,
+.exp-tarjeta {
+    padding: 18px 20px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+
+.contenido h2.exp-titulo,
+.contenido h2.exp-tarjeta-titulo {
+    margin: 0 0 14px;
+    color: var(--text-main);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.contenido h2.exp-tarjeta-titulo {
+    font-size: 14px;
+}
+
+.exp-titulo-fila {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.exp-total {
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.contenido .exp-vacio {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    font-style: italic;
+}
+
+
+/* Datos en etiqueta / valor */
+
+.exp-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px 20px;
+    margin: 0;
+}
+
+.exp-datos dt {
+    margin-bottom: 2px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.exp-datos dd {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.exp-datos a {
+    color: var(--primary);
+}
+
+.exp-dato-ancho {
+    grid-column: 1 / -1;
+}
+
+.exp-dato-extra {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.exp-texto-largo {
+    white-space: pre-line;
+    line-height: 1.6;
+}
+
+.exp-desplegable {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+
+.exp-desplegable summary,
+.exp-req-funciones summary {
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.exp-desplegable[open] summary {
+    margin-bottom: 12px;
+}
+
+.exp-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.exp-chip {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--bg-soft);
+    color: var(--text-main);
+    font-size: 12.5px;
+}
+
+
+/* Requisitos de la vacante */
+
+.exp-requisitos {
+    border-left: 4px solid var(--primary);
+}
+
+.exp-requisitos-lista {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exp-requisitos-lista li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.exp-req-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cumple .exp-req-icono    { background: var(--badge-green);  color: var(--badge-green-text); }
+.parcial .exp-req-icono   { background: var(--badge-orange); color: var(--badge-orange-text); }
+.no-cumple .exp-req-icono { background: var(--badge-red);    color: var(--badge-red-text); }
+
+.exp-requisitos-lista strong {
+    display: block;
+    color: var(--text-main);
+    font-size: 13.5px;
+}
+
+.exp-req-detalle {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.exp-req-funciones {
+    flex: 1;
+    min-width: 0;
+}
+
+.exp-req-funciones .coincidencia-barra {
+    margin: 6px 0;
+}
+
+
+/* Línea de tiempo: formación, experiencia, cursos */
+
+.exp-linea {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exp-linea li {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 14px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+}
+
+.exp-linea li:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.exp-linea-fecha {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.contenido .exp-linea-titulo {
+    display: block;
+    margin: 0;
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.contenido .exp-linea-sub {
+    display: block;
+    margin: 2px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.contenido .exp-linea-nota {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+}
+
+.exp-funciones {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.exp-etiqueta {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--bg-soft);
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.exp-etiqueta--ok {
+    background: var(--badge-green);
+    color: var(--badge-green-text);
+}
+
+
+/* Tablas y listas simples */
+
+.exp-tabla {
+    width: 100%;
+    font-size: 13.5px;
+}
+
+.exp-tabla a,
+.exp-lista-simple a:not(.btn-outline) {
+    color: var(--primary);
+}
+
+.exp-lista-simple {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exp-lista-simple li {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e2e5e9;
-    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
 }
 
-.card-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1a1a1a;
-    order: 1;
+.exp-lista-simple li:first-child {
+    padding-top: 0;
+    border-top: 0;
 }
 
-.logo-principal {
-    order: 2;
-    margin-left: auto;
+
+/* ── Panel de gestión ── */
+
+.exp-campo {
+    margin-bottom: 14px;
+}
+
+.exp-btn-ancho {
+    justify-content: center;
+    width: 100%;
+}
+
+.contenido .exp-cita-fecha {
     display: flex;
     align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--text-main);
+    font-size: 13.5px;
+    font-weight: 600;
 }
 
-.logo-principal img {
-    height: 60px;
-    width: auto;
-    object-fit: contain;
+.contenido .exp-cita-lugar {
+    margin: 2px 0 0 22px;
+    font-size: 13px;
 }
 
-.card-actions {
-    order: 3;
+.contenido .exp-cita-respuesta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 14px 22px;
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.exp-tarjeta .exp-vacio {
+    margin-bottom: 12px;
+}
+
+.exp-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.exp-punto--ok       { background: #2E7D32; }
+.exp-punto--no       { background: #C62828; }
+.exp-punto--pendiente { background: #B45309; }
+.exp-punto--vencida  { background: #5E35B1; }
+
+.exp-notas-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.exp-nota-tab {
+    margin-bottom: -1px;
+    padding: 6px 10px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.exp-nota-tab.activa {
+    border-bottom-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.exp-nota {
+    display: none;
+    resize: vertical;
+}
+
+.exp-nota.activa {
+    display: block;
+}
+
+.exp-otras {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.exp-otras li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+}
+
+.exp-otras li:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.exp-otras a {
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.exp-otras a:hover {
+    color: var(--primary);
+}
+
+.exp-otras-meta {
+    grid-row: 2;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.exp-otras .exp-estado {
+    grid-row: 1 / span 2;
+    align-self: center;
+    font-size: 11px;
+}
+
+/* En el panel angosto el historial va en una sola columna */
+.exp-panel .historial-evento {
+    grid-template-columns: 1fr;
+    gap: 2px;
+}
+
+
+/* Estado del correo de rechazo, junto al selector de estado */
+
+.exp-correo-estado {
+    margin-top: 6px;
+    color: var(--badge-green-text);
+}
+
+.exp-correo-pendiente {
+    color: var(--badge-orange-text);
+}
+
+.exp-enlace {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+
+/* ── Modal de citar ── */
+
+.exp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(44, 44, 42, 0.45);
+}
+
+.exp-modal[hidden] {
+    display: none;
+}
+
+.exp-modal-caja {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--bg-main);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+.exp-modal-cerrar {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.exp-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.exp-modal-acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+
+/* ── Responsive ── */
+
+@media (max-width: 1100px) {
+    .exp-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .exp-panel {
+        position: static;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 640px) {
+    .exp-barra {
+        flex-wrap: wrap;
+    }
+
+    .exp-volver {
+        flex-basis: 100%;
+    }
+
+    .exp-cabecera {
+        flex-wrap: wrap;
+        padding: 16px;
+    }
+
+    .exp-seccion,
+    .exp-tarjeta {
+        padding: 16px;
+    }
+
+    .exp-linea li {
+        grid-template-columns: 1fr auto;
+    }
+
+    .exp-linea-fecha {
+        grid-column: 1 / -1;
+    }
+
+    .exp-modal-grid {
+        grid-template-columns: 1fr;
+    }
 }

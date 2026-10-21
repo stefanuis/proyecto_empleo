@@ -30,7 +30,7 @@
 
             <div class="navbar-usuario">
                 <span class="usuario-iniciales">
-                    {{ current_user.nombres[0] }}{{ current_user.apellidos[0] }}
+                    {{ (current_user.nombres or '')[:1] }}{{ (current_user.apellidos or '')[:1] }}
                 </span>
 
             </div>

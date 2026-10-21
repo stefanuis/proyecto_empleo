@@ -20,6 +20,8 @@ import os
 from werkzeug.utils import secure_filename
 from flask import current_app
 from datetime import date, datetime
+
+from sqlalchemy import func, or_
 from app.extensions import db
 from app.models.user import User
 from app.models.personal import Personal
@@ -42,6 +44,8 @@ from app.models.discapacidades import Discapacidades
 from app.constantes import (
     DISCAPACIDAD_CATEGORIAS,
     DISCAPACIDAD_CATEGORIAS_LEGADAS,
+    ESTADOS_POSTULACION,
+    ESTADOS_POSTULACION_CANDIDATO,
 )
 from app.forms.docs import documentoForm
 from app.forms.docs import documentoItemForm
@@ -57,7 +61,10 @@ from app.utils.perfil import (
     formatear_experiencia,
     obtener_experiencia_total,
 )
-from app.utils.requisitos import cumple_requisitos
+from app.utils.requisitos import (
+    condiciones_vacantes_postulables,
+    cumple_requisitos,
+)
 from app.utils.permisos import exigir_rol
 from app.utils.historial import registrar_evento
 from app.utils.archivos import eliminar_archivo, guardar_archivo
@@ -386,6 +393,7 @@ def principal():
     ).filter(
         Postulacion.id_usuario == current_user.id,
         Citaciones.fecha >= date.today(),
+        Citaciones.vigente(),
         db.or_(Citaciones.respuesta.is_(None), Citaciones.respuesta != "rechazada"),
     ).order_by(Citaciones.fecha.asc(), Citaciones.hora.asc()).first()
 
@@ -1963,34 +1971,51 @@ def detalle_vacante(id):
 @usuario_bp.route('/vacantes', methods=["GET"])
 @login_required
 def vacantes():
-    accion = request.args.get("accion", "")
     q = request.args.get("q", "").strip()
     area_aplicacion = request.args.get("area_aplicacion", "").strip()
     nivel = request.args.get("nivel", "").strip()
-    estado = request.args.get("estado", "Activa")
-
-    # Solo se aceptan los dos estados válidos; cualquier otro valor vuelve a "Activa"
-    if estado not in ("Activa", "Cerrada"):
-        estado = "Activa"
+    orden = request.args.get("orden", "recientes")
+    solo_postulables = request.args.get("postulables") == "1"
+    if orden not in ORDENES_VACANTES:
+        orden = "recientes"
 
     page = request.args.get("page", 1, type=int)
     per_page = 12   # par, porque la cuadrícula es de 2 columnas
 
-    query = Vacante.query.filter_by(estado=estado)
+    # El candidato solo ve vacantes abiertas: activas y con la convocatoria vigente
+    inicio_hoy = datetime.combine(date.today(), datetime.min.time())
+    query = Vacante.query.filter(
+        Vacante.estado == "Activa",
+        or_(Vacante.fecha_cierre.is_(None), Vacante.fecha_cierre >= inicio_hoy),
+    )
 
-    if accion == "buscar":
-        if q:
-            query = query.filter(Vacante.titulo.ilike(f"%{q}%"))
+    # El texto buscado y los filtros se aplican juntos
+    if q:
+        patron = f"%{q}%"
+        query = query.filter(or_(
+            Vacante.titulo.ilike(patron),
+            Vacante.descripcion.ilike(patron),
+            Vacante.area_aplicacion.ilike(patron),
+        ))
 
-    elif accion == "filtrar":
-        if area_aplicacion:
-            query = query.filter(Vacante.area_aplicacion == area_aplicacion)
+    if area_aplicacion:
+        query = query.filter(Vacante.area_aplicacion == area_aplicacion)
 
-        if nivel:
-            query = query.filter(Vacante.nivel_academico == nivel)
+    if nivel:
+        query = query.filter(Vacante.nivel_academico == nivel)
+
+    if solo_postulables:
+        query = query.filter(*condiciones_vacantes_postulables(current_user.id))
 
     # El id desempata fechas iguales para que el orden entre páginas sea estable
-    query = query.order_by(Vacante.fecha_publicacion.desc(), Vacante.id.desc())
+    if orden == "cierre":
+        query = query.order_by(
+            Vacante.fecha_cierre.is_(None),
+            Vacante.fecha_cierre.asc(),
+            Vacante.id.desc(),
+        )
+    else:
+        query = query.order_by(Vacante.fecha_publicacion.desc(), Vacante.id.desc())
 
     total = query.count()
     total_paginas = max(1, (total + per_page - 1) // per_page)
@@ -2008,11 +2033,15 @@ def vacantes():
         "next_num": page + 1,
     }
 
-    areas_aplicacion = (
-        VacanteForm
-        .area_aplicacion
-        .kwargs["choices"]
-    )
+    areas_aplicacion = [
+        (valor, etiqueta)
+        for valor, etiqueta in VacanteForm.area_aplicacion.kwargs["choices"]
+        if valor
+    ]
+    # Mismos valores que guarda el formulario de vacantes
+    niveles = [
+        valor for valor, _ in VacanteForm.nivel_academico.kwargs["choices"] if valor
+    ]
     requisitos_por_vacante = {
         vacante.id: cumple_requisitos(current_user.id, vacante)
         for vacante in vacantes
@@ -2025,14 +2054,31 @@ def vacantes():
         id_usuario=current_user.id
     ).first()
 
+    # Filtros activos, para mostrarlos como etiquetas que se pueden quitar
+    filtros_activos = []
+    if q:
+        filtros_activos.append(("q", f"“{q}”"))
+    if area_aplicacion:
+        filtros_activos.append(("area_aplicacion", area_aplicacion))
+    if nivel:
+        filtros_activos.append(("nivel", nivel))
+    if solo_postulables:
+        filtros_activos.append(("postulables", "Puedo postularme"))
+
     return render_template(
         "usuario/vacantes.html",
         vacantes=vacantes,
         pagination=pagination,
         areas=areas_aplicacion,
+        niveles=niveles,
+        ordenes=ORDENES_VACANTES,
         q=q,
         area_aplicacion_seleccionada=area_aplicacion,
         nivel_seleccionado=nivel,
+        orden_seleccionado=orden,
+        solo_postulables=solo_postulables,
+        hoy=date.today(),
+        filtros_activos=filtros_activos,
         requisitos_por_vacante=requisitos_por_vacante,
         coincidencias=coincidencias,
         perfil_profesional_faltante=(
@@ -2040,6 +2086,14 @@ def vacantes():
             or not (perfil_profesional.area_aplicacion or "").strip()
         ),
     )
+
+
+ORDENES_VACANTES = {
+    "recientes": "Más recientes",
+    "cierre": "Cierran pronto",
+}
+
+
 @usuario_bp.route("/vacantes/<int:id>/postular", methods=["POST"])
 @login_required
 def postular(id):
@@ -2123,7 +2177,9 @@ def postular(id):
 @login_required
 def mis_postulaciones():
     q = request.args.get('q', '').strip()
-    estado_filtro = request.args.get('estado', '')
+    estado_filtro = request.args.get('estado', '').strip()
+    if estado_filtro not in ESTADOS_POSTULACION:
+        estado_filtro = ''
 
     query = db.session.query(Postulacion, Vacante).join(
         Vacante, Vacante.id == Postulacion.id_vacante
@@ -2131,33 +2187,98 @@ def mis_postulaciones():
         Postulacion.id_usuario == current_user.id
     )
 
+    tiene_postulaciones = db.session.query(
+        query.exists()
+    ).scalar()
+
     if q:
         query = query.filter(Vacante.titulo.ilike(f'%{q}%'))
+
+    # Cantidad por estado (con la búsqueda aplicada) para las pestañas
+    conteos = dict(
+        query.with_entities(Postulacion.estado, func.count(Postulacion.id))
+        .group_by(Postulacion.estado)
+        .all()
+    )
+
     if estado_filtro:
         query = query.filter(Postulacion.estado == estado_filtro)
 
     resultados = query.order_by(Postulacion.fecha_postulacion.desc()).all()
 
-    # Mapeo de estado -> número de paso para el stepper
-    PASOS = {'postulado': 1, 'revision': 2, 'entrevista': 3}
+    # Última citación de cada postulación, para mostrar los datos de la entrevista
+    ids = [post.id for post, _ in resultados]
+    citaciones = {}
+    if ids:
+        for citacion in (
+            Citaciones.query
+            .filter(Citaciones.id_postulacion.in_(ids), Citaciones.vigente())
+            .order_by(Citaciones.id.asc())
+        ):
+            citaciones[citacion.id_postulacion] = citacion
 
     postulaciones = []
     for post, vacante in resultados:
-        if post.estado in ('contratado', 'rechazado'):
-            paso_actual = 4
-        else:
-            paso_actual = PASOS.get(post.estado, 1)
-
         postulaciones.append({
             'post': post,
             'vacante': vacante,
-            'paso_actual': paso_actual
+            'pasos': _pasos_postulacion(post.estado, post.id in citaciones),
+            'citacion': citaciones.get(post.id),
         })
 
     return render_template(
         'usuario/postulaciones.html',
-        postulaciones=postulaciones
+        postulaciones=postulaciones,
+        estados=ESTADOS_POSTULACION_CANDIDATO,
+        q=q,
+        estado_filtro=estado_filtro,
+        tiene_postulaciones=tiene_postulaciones,
+        conteos=conteos,
+        total_conteos=sum(conteos.values()),
     )
+
+
+def _pasos_postulacion(estado, tuvo_entrevista):
+    """Pasos del indicador de avance: [(etiqueta, estado_del_paso), ...].
+
+    estado_del_paso: completado | activo | pendiente | omitido |
+    contratado | rechazado | stock.
+    """
+    if estado == 'contratado':
+        return [
+            ('Postulado', 'completado'),
+            ('En revisión', 'completado'),
+            ('Entrevista', 'completado'),
+            ('Contratado', 'contratado'),
+        ]
+    if estado == 'stock':
+        # No se eligió esta vez, pero su perfil queda guardado
+        return [
+            ('Postulado', 'completado'),
+            ('En revisión', 'completado'),
+            ('Entrevista', 'completado' if tuvo_entrevista else 'omitido'),
+            ('En espera', 'stock'),
+        ]
+    if estado == 'rechazado':
+        # Si nunca hubo citación, la entrevista no se marca como hecha
+        return [
+            ('Postulado', 'completado'),
+            ('En revisión', 'completado'),
+            ('Entrevista', 'completado' if tuvo_entrevista else 'omitido'),
+            ('No seleccionado', 'rechazado'),
+        ]
+
+    actual = {'postulado': 0, 'revision': 1, 'entrevista': 2}.get(estado, 0)
+    pasos = []
+    for indice, etiqueta in enumerate(['Postulado', 'En revisión', 'Entrevista', 'Decisión']):
+        if indice < actual:
+            pasos.append((etiqueta, 'completado'))
+        elif indice == actual:
+            pasos.append((etiqueta, 'activo'))
+        else:
+            pasos.append((etiqueta, 'pendiente'))
+    return pasos
+
 
 @usuario_bp.route('/postulaciones/<int:id>/retirar', methods=['POST'])
 @login_required
@@ -2192,6 +2313,13 @@ def responder_citacion(token, respuesta):
 
     if citacion is None or respuesta not in ['confirmar', 'rechazar']:
         return render_template('usuario/responder_citacion.html', citacion=None)
+
+    # Reemplazada por una citación nueva: se responde desde el último correo
+    if citacion.cancelada:
+        return render_template('usuario/responder_citacion.html', citacion=citacion, cancelada=True)
+
+    if citacion.fecha < date.today():
+        return render_template('usuario/responder_citacion.html', citacion=citacion, vencida=True)
 
     # Si ya respondió antes, no permitir sobreescribir
     if citacion.respuesta:

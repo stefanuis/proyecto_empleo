@@ -27,6 +27,7 @@ class InforAcademicaItemForm(Form):
     nivel = SelectField(
     "Tipo de formación académica",
     choices=[
+        ("primaria", "Primaria"),
         ("Bachillerato", "Bachillerato"),
         ("tecnico", "Técnico"),
         ("tecnologo", "Tecnólogo"),

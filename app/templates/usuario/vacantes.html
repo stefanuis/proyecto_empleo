@@ -1,72 +1,111 @@
 {% extends 'usuario/base.html' %}
 
 {% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filtros_vacantes.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/usuario_vacantes.css') }}">
 {% endblock %}
 {% block contenido %}
 
-<div class="main-area">
+{# Quita un parámetro de la URL (y vuelve a la página 1) #}
+{% macro url_sin(clave) -%}
+    {%- set args = {} -%}
+    {%- for k, v in request.args.items() if k != clave and k != 'page' -%}
+        {%- set _ = args.update({k: v}) -%}
+    {%- endfor -%}
+    {{ url_for('usuario.vacantes', **args) }}
+{%- endmacro %}
 
-    <header class="topbar-vacantes">
-        <p class="topbar-title">Vacantes activas</p>
-        <div class="topbar-actions">
-            <i class="ti ti-bell"></i>
-        </div>
-    </header>
+<div class="main-area">
 
     <main class="page-content">
 
-        <form method="GET" class="filtros" action="{{ url_for('usuario.vacantes') }}">
+        <header class="vf-encabezado">
+            <h1 class="vf-titulo">Vacantes</h1>
+            <p class="vf-resumen" aria-live="polite">
+                {% if pagination.total == 1 %}1 vacante abierta{% else %}{{ pagination.total }} vacantes abiertas{% endif %}
+                {%- if filtros_activos %} con estos filtros{% endif %}
+            </p>
+        </header>
 
-            <div class="input-buscar buscador-vacantes">
-                <i class="ti ti-search"></i>
-                <input type="text" name="q" placeholder="Buscar por nombre" value="{{ q }}">
-                <button type="submit" name="accion" value="buscar" class="btn-secondary btn-sm">
-                    Buscar
+        <form method="GET" class="vf-barra" id="vf-form" action="{{ url_for('usuario.vacantes') }}" role="search">
+
+            <div class="vf-fila">
+                <label class="vf-buscar">
+                    <span class="sr-only">Buscar vacantes</span>
+                    <i class="ti ti-search" aria-hidden="true"></i>
+                    <input type="search" name="q" value="{{ q }}"
+                           placeholder="Cargo, palabra clave o área">
+                </label>
+                <button type="submit" class="btn-primary vf-btn-buscar">Buscar</button>
+                {% set n_filtros = filtros_activos|rejectattr(0, 'equalto', 'q')|list|length %}
+                <button type="button" class="vf-btn-filtros" id="vf-btn-filtros"
+                        aria-expanded="false" aria-controls="vf-panel">
+                    <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
+                    Filtros{% if n_filtros %} ({{ n_filtros }}){% endif %}
                 </button>
             </div>
 
-            <div class="vac-filtros-selects">
+            <div class="vf-panel" id="vf-panel">
+                <label class="vf-campo">
+                    <span class="vf-etiqueta">Área de aplicación</span>
+                    <select name="area_aplicacion" class="vf-select" data-autoenviar>
+                        <option value="">Todas</option>
+                        {% for value, label in areas %}
+                            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
 
-                <select name="area_aplicacion" class="vac-filtro-select vac-filtro-select-area">
-                    <option value="">Todas las áreas de aplicación</option>
-                    {% for value, label in areas %}
-                        {% if value %}
-                            <option value="{{ value }}" {% if area_aplicacion_seleccionada == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
+                <label class="vf-campo">
+                    <span class="vf-etiqueta">Nivel académico</span>
+                    <select name="nivel" class="vf-select" data-autoenviar>
+                        <option value="">Todos</option>
+                        {% for valor in niveles %}
+                            <option value="{{ valor }}" {% if nivel_seleccionado == valor %}selected{% endif %}>{{ valor }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
 
-                <select name="nivel" class="vac-filtro-select">
-                    <option value="">Todos los niveles</option>
-                    <option value="Bachillerato" {% if nivel_seleccionado == 'Bachillerato' %}selected{% endif %}>Bachillerato</option>
-                    <option value="tecnico" {% if nivel_seleccionado == 'tecnico' %}selected{% endif %}>Técnico</option>
-                    <option value="tecnologo" {% if nivel_seleccionado == 'tecnologo' %}selected{% endif %}>Tecnólogo</option>
-                    <option value="universitario" {% if nivel_seleccionado == 'universitario' %}selected{% endif %}>Universitario</option>
-                    <option value="especializacion" {% if nivel_seleccionado == 'especializacion' %}selected{% endif %}>Especialización</option>
-                    <option value="maestria" {% if nivel_seleccionado == 'maestria' %}selected{% endif %}>Maestría</option>
-                    <option value="doctorado" {% if nivel_seleccionado == 'doctorado' %}selected{% endif %}>Doctorado</option>
-                </select>
+                <label class="vf-campo">
+                    <span class="vf-etiqueta">Ordenar por</span>
+                    <select name="orden" class="vf-select" data-autoenviar>
+                        {% for valor, etiqueta in ordenes.items() %}
+                            <option value="{{ valor }}" {% if orden_seleccionado == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
 
-                <select name="estado" class="vac-filtro-select">
-                    <option value="Activa" {% if request.args.get('estado', 'Activa') == 'Activa' %}selected{% endif %}>Abierto</option>
-                    <option value="Cerrada" {% if request.args.get('estado') == 'Cerrada' %}selected{% endif %}>Cerrado</option>
-                </select>
+                <label class="vf-interruptor">
+                    <input type="checkbox" name="postulables" value="1" role="switch"
+                           {% if solo_postulables %}checked{% endif %} data-autoenviar>
+                    <span class="vf-interruptor-pista" aria-hidden="true"></span>
+                    <span>Solo a las que puedo postularme</span>
+                </label>
 
-            </div>
-
-            <div class="vac-filtros-acciones">
-                <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">
-                    Restablecer
-                </button>
-                <button type="submit" name="accion" value="filtrar" class="btn-primary btn-sm">
-                    Aplicar filtros
-                </button>
+                <noscript><button type="submit" class="btn-secondary btn-sm">Aplicar</button></noscript>
             </div>
 
         </form>
+
+        {% if filtros_activos %}
+        <div class="vf-activos" aria-label="Filtros activos">
+            {% for clave, texto in filtros_activos %}
+                <a class="vf-chip" href="{{ url_sin(clave) }}" aria-label="Quitar filtro {{ texto }}">
+                    {{ texto }} <i class="ti ti-x" aria-hidden="true"></i>
+                </a>
+            {% endfor %}
+            {% if filtros_activos|length > 1 %}
+                <a class="vf-limpiar" href="{{ url_for('usuario.vacantes', orden=orden_seleccionado if orden_seleccionado != 'recientes' else None) }}">Limpiar todo</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if solo_postulables and perfil_profesional_faltante %}
+        <p class="aviso-compatibilidad vf-aviso">
+            Para saber a qué vacantes puedes postularte,
+            <a href="{{ url_for('usuario.perfil_profesional') }}">completa tu Perfil profesional</a>.
+        </p>
+        {% endif %}
 
         <div class="grid-vacantes" id="lista-vacantes">
 
@@ -91,6 +130,14 @@
                         {% if v.salario %}<span class="tag">{{ v.salario }}</span>{% endif %}
                         {% if v.nivel_academico %}<span class="tag">{{ v.nivel_academico }}</span>{% endif %}
                         {% if v.requiere_video %}<span class="tag tag-video">Requiere video</span>{% endif %}
+                        {% if v.fecha_cierre %}
+                            {% set dias_cierre = (v.fecha_cierre.date() - hoy).days %}
+                            {% if dias_cierre == 0 %}
+                                <span class="tag vf-tag-cierre"><i class="ti ti-clock" aria-hidden="true"></i> Cierra hoy</span>
+                            {% elif dias_cierre <= 7 %}
+                                <span class="tag vf-tag-cierre"><i class="ti ti-clock" aria-hidden="true"></i> Cierra en {{ dias_cierre }} día{{ 's' if dias_cierre != 1 }}</span>
+                            {% endif %}
+                        {% endif %}
                         {% set coincidencia = coincidencias.get(v.id) %}
                         {% if coincidencia %}
                             <span class="tag">Cumples {{ coincidencia[0] }} de {{ coincidencia[1] }} funciones</span>
@@ -121,8 +168,13 @@
             {% else %}
                 <div class="empty-state">
                     <span class="empty-icon">🔍</span>
-                    <h3>No hay vacantes disponibles</h3>
-                    <p>Vuelve a intentarlo más tarde o ajusta los filtros.</p>
+                    {% if filtros_activos %}
+                        <h3>Ninguna vacante coincide con tu búsqueda</h3>
+                        <p>Prueba con otras palabras o <a href="{{ url_for('usuario.vacantes') }}">quita los filtros</a>.</p>
+                    {% else %}
+                        <h3>No hay vacantes abiertas por ahora</h3>
+                        <p>Vuelve a revisar pronto: publicamos vacantes nuevas con frecuencia.</p>
+                    {% endif %}
                 </div>
             {% endfor %}
 
@@ -151,6 +203,25 @@
 
     </main>
 </div>
+
+<script>
+// Los selects y el interruptor aplican el filtro al instante
+(function () {
+    const form = document.getElementById("vf-form");
+    const panel = document.getElementById("vf-panel");
+    const boton = document.getElementById("vf-btn-filtros");
+
+    form.querySelectorAll("[data-autoenviar]").forEach(function (campo) {
+        campo.addEventListener("change", function () { form.submit(); });
+    });
+
+    // En celular el panel de filtros se abre con el botón "Filtros"
+    boton.addEventListener("click", function () {
+        const abierto = panel.classList.toggle("abierto");
+        boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+    });
+})();
+</script>
 
 
 {% endblock %}

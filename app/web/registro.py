@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timedelta
 from app.models.user import User
 from app.extensions import db
-from app.utils.correo import enviar_correo as enviar_correo_html
+from app.utils.correo import enviar_correo as enviar_correo_html, url_externa
 from app.utils.permisos import url_panel
 from flask_login import current_user
 
@@ -13,11 +13,7 @@ from . import web_bp
 TOKEN_EXPIRACION_MINUTOS = 30
 
 def enviar_correo(email, el_token, nombres):
-    enlace = url_for(
-        'web.confirmacion',
-        token=el_token,
-        _external=True
-    )
+    enlace = url_externa('web.confirmacion', token=el_token)
 
     return enviar_correo_html(
         email,
@@ -199,7 +195,7 @@ def enviar_invitacion_admin(usuario):
     """Genera un enlace nuevo y lo envía por correo (no hace commit)."""
     usuario.token = secrets.token_urlsafe(32)
     usuario.token_envio = datetime.now()
-    enlace = url_for('web.activar_cuenta', token=usuario.token, _external=True)
+    enlace = url_externa('web.activar_cuenta', token=usuario.token)
     return enviar_correo_html(
         usuario.correo,
         'Activa tu cuenta de administrador - Clinica Panamericana',

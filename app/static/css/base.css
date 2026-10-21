@@ -25,11 +25,17 @@
 
   --sidebar-width: 240px;
   --sidebar-collapsed: 64px;
-  --navbar-height: 80px;
+  --navbar-height: 64px;
 
   --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* Escala de títulos: la usan todas las páginas */
+  --fs-titulo-pagina: 22px;   /* título principal de la página ("Hola, Ana", "Vacantes") */
+  --fs-titulo-seccion: 17px;  /* títulos de tarjetas y secciones */
+  --fs-titulo-menor: 15px;    /* subtítulos dentro de una sección */
+  --fw-titulo: 600;
 
   --radius-sm: 6px;
   --radius-md: 10px;

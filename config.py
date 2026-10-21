@@ -47,3 +47,7 @@ class Config:
     MAIL_USE_TLS = _env_bool("MAIL_USE_TLS")
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    # Remitente validado en Mailjet; si falta se usa el de app/utils/correo.py
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
+    # Dirección pública del sitio para los enlaces de los correos
+    URL_PUBLICA = os.getenv("URL_PUBLICA")

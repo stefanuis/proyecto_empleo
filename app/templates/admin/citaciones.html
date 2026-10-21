@@ -1,7 +1,7 @@
-
 {% extends 'admin/base.html' %}
 
 {% block page_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/filtros_vacantes.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/admin_citaciones.css') }}">
 {% endblock %}
 
@@ -9,43 +9,126 @@
 
 {% block contenido %}
 
+{# Quita un filtro de la URL (y vuelve a la página 1). Con valor, quita solo
+   ese valor de un filtro que admite varios (estado). #}
+{% macro url_sin(clave, valor=None) -%}
+    {%- set args = {} -%}
+    {%- for k, valores in request.args.lists() if k != 'page' -%}
+        {%- if k == clave -%}
+            {%- set restantes = valores|reject('equalto', valor)|list if valor else [] -%}
+            {%- if restantes %}{% set _ = args.update({k: restantes}) %}{% endif -%}
+        {%- else -%}
+            {%- set _ = args.update({k: valores}) -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {{ url_for('admin.listar_citaciones', **args) }}
+{%- endmacro %}
+
+{# Etiqueta con la respuesta del candidato (tabla y detalle); cada estado
+   tiene su color en admin_citaciones.css #}
+{% macro badge_respuesta(c) -%}
+    {%- if c.cancelada -%}
+        <span class="cit-estado cit-estado--cancelada">Cancelada</span>
+    {%- elif c.respuesta == 'confirmada' -%}
+        <span class="cit-estado cit-estado--confirmada">Confirmada</span>
+    {%- elif c.respuesta == 'rechazada' -%}
+        <span class="cit-estado cit-estado--rechazada">No asistirá</span>
+    {%- elif c.fecha and c.fecha < hoy -%}
+        <span class="cit-estado cit-estado--vencida" title="La fecha pasó y el candidato nunca respondió">Sin respuesta</span>
+    {%- else -%}
+        <span class="cit-estado cit-estado--pendiente">Sin responder</span>
+    {%- endif -%}
+{%- endmacro %}
+
 <div class="post-header">
     <div>
         <h2 class="post-titulo">Citaciones</h2>
-        <p class="post-subtitulo">Gestiona las entrevistas y confirmaciones de asistencia.</p>
+        <p class="post-subtitulo" aria-live="polite">
+            {{ pagination.total }} {{ 'citación' if pagination.total == 1 else 'citaciones' }}
+            {%- if filtros_activos %} con estos filtros{% endif %}
+        </p>
     </div>
+    <a class="btn-secondary btn-sm" href="{{ url_for('admin.listar_citaciones', cuando='proximas') }}">Ver agenda próxima</a>
 </div>
 
-<form method="GET" action="{{ url_for('admin.listar_citaciones') }}">
-    <div class="filtros-avanzados-panel post-filtros-panel">
-        <div class="post-filtros-grid-3">
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Buscar candidato</p>
-                <input type="text" name="buscar" placeholder="Nombre o apellido..." value="{{ request.args.get('buscar', '') }}">
-            </div>
+<form class="vf-barra" id="vf-form" method="GET" action="{{ url_for('admin.listar_citaciones') }}" role="search">
+    <div class="vf-fila">
+        <label class="vf-buscar">
+            <span class="sr-only">Buscar candidato</span>
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="search" name="q" placeholder="Nombre, apellido o correo del candidato" value="{{ q }}">
+        </label>
+        <button type="submit" class="btn-primary vf-btn-buscar">Buscar</button>
+        {% set n_filtros = filtros_activos|rejectattr(0, 'equalto', 'q')|list|length %}
+        <button type="button" class="vf-btn-filtros" id="vf-btn-filtros"
+                aria-expanded="false" aria-controls="vf-panel">
+            <i class="ti ti-adjustments-horizontal" aria-hidden="true"></i>
+            Filtros{% if n_filtros %} ({{ n_filtros }}){% endif %}
+        </button>
+    </div>
 
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Estado</p>
-                <select name="estado">
-                    <option value="">Todos los estados</option>
-                    <option value="pendiente" {% if request.args.get('estado') == 'pendiente' %}selected{% endif %}>Pendiente</option>
-                    <option value="confirmada" {% if request.args.get('estado') == 'confirmada' %}selected{% endif %}>Confirmada</option>
-                    <option value="cancelada" {% if request.args.get('estado') == 'cancelada' %}selected{% endif %}>Cancelada</option>
-                </select>
-            </div>
+    <div class="vf-panel vf-panel-admin" id="vf-panel">
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Vacante</span>
+            <select name="vacante_id" class="vf-select" data-autoenviar>
+                <option value="">Todas</option>
+                {% for v in vacantes %}
+                    <option value="{{ v.id }}" {% if vacante_seleccionada == v.id|string %}selected{% endif %}>{{ v.titulo }}</option>
+                {% endfor %}
+            </select>
+        </label>
 
-            <div class="vac-filtro-grupo">
-                <p class="filtro-grupo-titulo">Fecha</p>
-                <input type="date" name="fecha" value="{{ request.args.get('fecha', '') }}">
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Respuesta del candidato</span>
+            <select name="estado" class="vf-select" data-autoenviar>
+                <option value="">Todas</option>
+                {% for valor, etiqueta in estados.items() %}
+                    <option value="{{ valor }}" {% if estados_seleccionados|length == 1 and estados_seleccionados[0] == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="vf-campo">
+            <span class="vf-etiqueta">Fecha de la entrevista</span>
+            <select name="cuando" class="vf-select" data-autoenviar>
+                <option value="">Todas</option>
+                <option value="proximas" {% if cuando == 'proximas' %}selected{% endif %}>Próximas (desde hoy)</option>
+                <option value="pasadas" {% if cuando == 'pasadas' %}selected{% endif %}>Pasadas</option>
+            </select>
+        </label>
+
+        <div class="vf-campo cit-rango">
+            <span class="vf-etiqueta">Rango de fechas</span>
+            <div class="cit-rango-campos">
+                <input type="date" name="fecha_desde" id="fecha-desde" class="vf-select" aria-label="Desde"
+                       value="{{ fecha_desde }}" data-autoenviar>
+                <input type="date" name="fecha_hasta" id="fecha-hasta" class="vf-select" aria-label="Hasta"
+                       value="{{ fecha_hasta }}" data-autoenviar>
             </div>
         </div>
 
-        <div class="post-filtros-acciones">
-            <button type="button" class="btn-secondary btn-sm" onclick="window.location.href=window.location.pathname">Restablecer</button>
-            <button type="submit" class="btn-primary btn-sm">Aplicar filtros</button>
-        </div>
+        <noscript><button type="submit" class="btn-secondary btn-sm">Aplicar</button></noscript>
     </div>
 </form>
+
+{% if fechas_invertidas %}
+<p class="aviso-compatibilidad vf-aviso" role="status">
+    La fecha "desde" era posterior a la fecha "hasta"; las intercambiamos.
+</p>
+{% endif %}
+
+{% if filtros_activos %}
+<div class="vf-activos" aria-label="Filtros activos">
+    {% for clave, valor, texto in filtros_activos %}
+        <a class="vf-chip" href="{{ url_sin(clave, valor) }}" aria-label="Quitar filtro {{ texto }}">
+            {{ texto }} <i class="ti ti-x" aria-hidden="true"></i>
+        </a>
+    {% endfor %}
+    {% if filtros_activos|length > 1 %}
+        <a class="vf-limpiar" href="{{ url_for('admin.listar_citaciones') }}">Limpiar todo</a>
+    {% endif %}
+</div>
+{% endif %}
 
 <div class="vac-tabla-container">
     <table class="vac-tabla">
@@ -53,82 +136,144 @@
             <tr>
                 <th>Candidato</th>
                 <th>Vacante</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Estado</th>
-                <th>Respondió</th>
+                <th>Entrevista</th>
+                <th>Lugar</th>
+                <th>Respuesta</th>
                 <th>Acciones</th>
             </tr>
         </thead>
 
         <tbody>
             {% for citacion, postulacion, candidato, vacante in citaciones %}
-            <tr>
-                <td><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></td>
+            {% set pasada = citacion.fecha and citacion.fecha < hoy %}
+            <tr class="{% if citacion.cancelada %}cit-fila-cancelada{% elif pasada %}cit-fila-pasada{% endif %}">
+                <td>
+                    <a class="cit-candidato" href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}"
+                       title="Ver hoja de vida"><strong>{{ candidato.nombres }} {{ candidato.apellidos }}</strong></a>
+                    <span class="cit-sub">{{ candidato.correo }}</span>
+                </td>
                 <td>{{ vacante.titulo }}</td>
 
-                <td>
+                <td class="cit-cuando">
                     {% if citacion.fecha %}
                         {{ citacion.fecha.strftime('%d/%m/%Y') }}
+                        <span class="cit-sub">
+                            {{ citacion.hora|hora_12 if citacion.hora else '—' }}
+                            {% if citacion.fecha == hoy %}<span class="cit-hoy">Hoy</span>{% endif %}
+                        </span>
                     {% else %}
                         —
                     {% endif %}
                 </td>
 
-                <td>
-                    {% if citacion.hora %}
-                        {{ citacion.hora.strftime('%H:%M') }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </td>
+                <td class="cit-lugar">{{ citacion.lugar or '—' }}</td>
 
                 <td>
-                    {% if citacion.estado == 'pendiente' %}
-                        <span class="badge badge-orange">Pendiente</span>
-                    {% elif citacion.estado == 'confirmada' %}
-                        <span class="badge badge-green">Confirmada</span>
-                    {% elif citacion.estado == 'rechazada' %}
-                        <span class="badge badge-red">Rechazada</span>
-                    {% elif citacion.estado == 'cancelada' %}
-                        <span class="badge badge-red">Cancelada</span>
-                    {% else %}
-                        <span class="badge badge-gray">{{ citacion.estado or 'Sin estado' }}</span>
-                    {% endif %}
-                </td>
-
-                <td>
-                    {# respuesta guarda 'confirmada' / 'rechazada'; aquí se muestra cuándo respondió #}
+                    {{ badge_respuesta(citacion) }}
                     {% if citacion.respuesta and citacion.fecha_respuesta %}
-                        {{ citacion.fecha_respuesta.strftime('%d/%m/%Y %H:%M') }}
-                    {% elif citacion.respuesta %}
-                        Sí
-                    {% else %}
-                        <span class="badge badge-gray">Sin respuesta</span>
+                        <span class="cit-sub">el {{ citacion.fecha_respuesta.strftime('%d/%m %H:%M') }}</span>
                     {% endif %}
                 </td>
 
                 <td>
+                    {% set puede_reprogramar = not citacion.cancelada and postulacion.estado not in ['contratado', 'rechazado', 'retirada'] %}
                     <div class="acciones">
-                        <a href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}" class="btn-secondary btn-sm">Ver detalle</a>
+                        <button type="button" class="btn-secondary btn-sm btn-detalle"
+                                data-detalle="detalle-{{ citacion.id }}">
+                            Detalle
+                        </button>
 
+                        {% if puede_reprogramar %}
                         <button type="button"
                                 class="btn-secondary btn-sm btn-reprogramar"
-                                data-id="{{ citacion.id }}"
+                                id="reprogramar-{{ citacion.id }}"
                                 data-url="{{ url_for('admin.reprogramar_citacion', id=citacion.id) }}"
+                                data-candidato="{{ candidato.nombres }} {{ candidato.apellidos }}"
                                 data-fecha="{{ citacion.fecha.strftime('%Y-%m-%d') if citacion.fecha else '' }}"
                                 data-hora="{{ citacion.hora.strftime('%H:%M') if citacion.hora else '' }}"
                                 data-lugar="{{ citacion.lugar or '' }}"
                                 data-mensaje="{{ citacion.mensaje or '' }}">
                             Reprogramar
                         </button>
+                        {% endif %}
                     </div>
+
+                    {# Contenido del detalle: se copia a la ventana al pulsar "Detalle" #}
+                    <template id="detalle-{{ citacion.id }}">
+                        <h2 class="cit-detalle-titulo">Detalle de la citación</h2>
+                        <p class="modal-meta">{{ vacante.titulo }} · {{ badge_respuesta(citacion) }}</p>
+
+                        <dl class="cit-detalle-lista">
+                            <div>
+                                <dt>Candidato</dt>
+                                <dd>{{ candidato.nombres }} {{ candidato.apellidos }}</dd>
+                            </div>
+                            <div>
+                                <dt>Contacto</dt>
+                                <dd>
+                                    <a href="mailto:{{ candidato.correo }}">{{ candidato.correo }}</a>
+                                    {% set telefono = telefonos.get(candidato.id) %}
+                                    {% if telefono %}<br><a href="tel:{{ telefono }}">{{ telefono }}</a>{% endif %}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt>Fecha</dt>
+                                <dd>{{ citacion.fecha|fecha_con_dia }}{% if citacion.fecha == hoy %} <span class="cit-hoy">Hoy</span>{% endif %}</dd>
+                            </div>
+                            <div>
+                                <dt>Hora</dt>
+                                <dd>{{ citacion.hora|hora_12 }}</dd>
+                            </div>
+                            <div class="cit-detalle-ancho">
+                                <dt>Lugar o enlace</dt>
+                                <dd>{{ citacion.lugar or '—' }}</dd>
+                            </div>
+                            <div class="cit-detalle-ancho">
+                                <dt>Mensaje al candidato</dt>
+                                <dd>{{ citacion.mensaje or '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Enviada</dt>
+                                <dd>{{ citacion.fecha_envio.strftime('%d/%m/%Y %H:%M') if citacion.fecha_envio else '—' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Respondió</dt>
+                                <dd>{{ citacion.fecha_respuesta.strftime('%d/%m/%Y %H:%M') if citacion.fecha_respuesta else 'Aún no' }}</dd>
+                            </div>
+                        </dl>
+
+                        {% set anteriores = historial.get(postulacion.id, [])|rejectattr('id', 'equalto', citacion.id)|list %}
+                        {% if anteriores %}
+                        <h3 class="cit-detalle-subtitulo">Otras citaciones de esta postulación</h3>
+                        <ul class="cit-historial">
+                            {% for otra in anteriores %}
+                            <li>
+                                <span>{{ otra.fecha.strftime('%d/%m/%Y') }} · {{ otra.hora|hora_12 }}</span>
+                                {{ badge_respuesta(otra) }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+
+                        <div class="cit-modal-acciones">
+                            <a class="btn-secondary btn-sm" href="{{ url_for('admin.ver_expediente', id=postulacion.id) }}">Ver hoja de vida</a>
+                            {% if puede_reprogramar %}
+                            <button type="button" class="btn-primary btn-sm" data-abrir-reprogramar="reprogramar-{{ citacion.id }}">Reprogramar</button>
+                            {% endif %}
+                        </div>
+                    </template>
                 </td>
             </tr>
 
             {% else %}
             <tr>
-                <td colspan="7" class="post-tabla-vacia">No hay citaciones registradas.</td>
+                <td colspan="6" class="post-tabla-vacia">
+                    {% if filtros_activos %}
+                        Ninguna citación coincide con los filtros. <a href="{{ url_for('admin.listar_citaciones') }}">Quitar filtros</a>
+                    {% else %}
+                        Aún no hay citaciones. Se crean desde la lista de postulantes de cada vacante.
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -136,48 +281,61 @@
 </div>
 
 {% if pagination and pagination.pages > 1 %}
-{# flat=False conserva los filtros de estado (varias casillas) al cambiar de página #}
-{% set args = request.args.to_dict(flat=False) %}
+{# lists() conserva los filtros con varios valores (estado) al cambiar de página #}
+{% set args = {} %}
+{% for k, valores in request.args.lists() if k != 'page' %}{% set _ = args.update({k: valores}) %}{% endfor %}
 <div class="vac-paginador">
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_prev }}"
-       href="{% if pagination.has_prev %}{{ url_for('admin.listar_citaciones', **dict(args, page=pagination.prev_num)) }}{% else %}#{% endif %}">
+       href="{% if pagination.has_prev %}{{ url_for('admin.listar_citaciones', page=pagination.prev_num, **args) }}{% else %}#{% endif %}">
         ← Anterior
     </a>
 
     <span class="vac-paginador-info">
         Página {{ pagination.page }} de {{ pagination.pages }}
-        · {{ pagination.total }} {{ 'citación' if pagination.total == 1 else 'citaciones' }}
     </span>
 
     <a class="vac-paginador-btn {{ 'disabled' if not pagination.has_next }}"
-       href="{% if pagination.has_next %}{{ url_for('admin.listar_citaciones', **dict(args, page=pagination.next_num)) }}{% else %}#{% endif %}">
+       href="{% if pagination.has_next %}{{ url_for('admin.listar_citaciones', page=pagination.next_num, **args) }}{% else %}#{% endif %}">
         Siguiente →
     </a>
 
 </div>
 {% endif %}
 
+<!-- MODAL DETALLE -->
+
+<div id="modal-detalle" class="vacante-modal-overlay" style="display: none;"
+     role="dialog" aria-modal="true" aria-label="Detalle de la citación">
+    <div class="vacante-modal-caja cit-detalle-caja">
+        <button type="button" class="modal-cerrar" id="modal-cerrar-detalle" aria-label="Cerrar">&times;</button>
+        <div id="modal-detalle-contenido"></div>
+    </div>
+</div>
+
 <!-- MODAL REPROGRAMAR -->
 
-<div id="modal-reprogramar" class="vacante-modal-overlay" style="display: none;">
+<div id="modal-reprogramar" class="vacante-modal-overlay" style="display: none;"
+     role="dialog" aria-modal="true" aria-labelledby="modal-reprogramar-titulo">
 
     <div class="vacante-modal-caja">
 
-        <button type="button" class="modal-cerrar" id="modal-cerrar-reprogramar">&times;</button>
+        <button type="button" class="modal-cerrar" id="modal-cerrar-reprogramar" aria-label="Cerrar">&times;</button>
 
         <h2 id="modal-reprogramar-titulo">Reprogramar citación</h2>
 
         <p class="modal-meta" id="modal-reprogramar-resumen">
-            Modifica la fecha y hora de la entrevista.
+            Se enviará un correo al candidato con los nuevos datos y deberá confirmar de nuevo.
         </p>
 
         <form id="form-reprogramar" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="volver" value="{{ request.full_path }}">
 
             <div class="campo campo-completo">
                 <label class="form-label" for="modal-reprogramar-fecha">Nueva fecha</label>
-                <input type="date" id="modal-reprogramar-fecha" name="fecha" class="form-control" required>
+                <input type="date" id="modal-reprogramar-fecha" name="fecha" class="form-control"
+                       min="{{ hoy.isoformat() }}" required>
             </div>
 
             <div class="campo campo-completo">
@@ -195,9 +353,9 @@
                 <textarea id="modal-reprogramar-mensaje" name="mensaje" class="form-control" rows="3" placeholder="Mensaje adicional para el candidato..."></textarea>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+            <div class="cit-modal-acciones">
                 <button type="button" class="btn-secondary btn-sm" id="modal-cancelar-reprogramar">Cancelar</button>
-                <button type="submit" class="btn-primary btn-sm">Reprogramar citación</button>
+                <button type="submit" class="btn-primary btn-sm">Reprogramar y enviar correo</button>
             </div>
 
         </form>
@@ -206,64 +364,105 @@
 
 </div>
 
-
-
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    console.log("JavaScript de citaciones cargado");
+    // ---- Filtros: se aplican al instante y las fechas no quedan al revés ----
+    const form = document.getElementById("vf-form");
+    const panel = document.getElementById("vf-panel");
+    const botonFiltros = document.getElementById("vf-btn-filtros");
+    const desde = document.getElementById("fecha-desde");
+    const hasta = document.getElementById("fecha-hasta");
 
+    function limitarFechas() {
+        hasta.min = desde.value || "";
+        desde.max = hasta.value || "";
+    }
+    limitarFechas();
+
+    form.querySelectorAll("[data-autoenviar]").forEach(function (campo) {
+        campo.addEventListener("change", function () {
+            limitarFechas();
+            form.submit();
+        });
+    });
+
+    botonFiltros.addEventListener("click", function () {
+        const abierto = panel.classList.toggle("abierto");
+        botonFiltros.setAttribute("aria-expanded", abierto ? "true" : "false");
+    });
+
+    // ---- Modal de reprogramar ----
     const modal = document.getElementById("modal-reprogramar");
     const formulario = document.getElementById("form-reprogramar");
+    const resumen = document.getElementById("modal-reprogramar-resumen");
     const fecha = document.getElementById("modal-reprogramar-fecha");
     const hora = document.getElementById("modal-reprogramar-hora");
     const lugar = document.getElementById("modal-reprogramar-lugar");
     const mensaje = document.getElementById("modal-reprogramar-mensaje");
-    const cerrar = document.getElementById("modal-cerrar-reprogramar");
-    const cancelar = document.getElementById("modal-cancelar-reprogramar");
-    const botones = document.querySelectorAll(".btn-reprogramar");
 
-    console.log("Modal:", modal);
-    console.log("Botones:", botones.length);
+    function cerrarModal() {
+        modal.style.display = "none";
+    }
 
-    botones.forEach(function (boton) {
-
+    document.querySelectorAll(".btn-reprogramar").forEach(function (boton) {
         boton.addEventListener("click", function () {
-
-            console.log("Botón Reprogramar presionado");
-
             fecha.value = boton.dataset.fecha || "";
             hora.value = boton.dataset.hora || "";
             lugar.value = boton.dataset.lugar || "";
             mensaje.value = boton.dataset.mensaje || "";
-
+            resumen.textContent = "Se enviará un correo a " + boton.dataset.candidato +
+                " con los nuevos datos y deberá confirmar de nuevo.";
             formulario.action = boton.dataset.url;
-
             modal.style.display = "flex";
-
+            fecha.focus();
         });
-
     });
 
-    cerrar.addEventListener("click", function () {
-        modal.style.display = "none";
-    });
-
-    cancelar.addEventListener("click", function () {
-        modal.style.display = "none";
-    });
-
+    document.getElementById("modal-cerrar-reprogramar").addEventListener("click", cerrarModal);
+    document.getElementById("modal-cancelar-reprogramar").addEventListener("click", cerrarModal);
     modal.addEventListener("click", function (event) {
-
-        if (event.target === modal) {
-            modal.style.display = "none";
-        }
-
+        if (event.target === modal) cerrarModal();
     });
 
+    // ---- Modal de detalle ----
+    const modalDetalle = document.getElementById("modal-detalle");
+    const contenidoDetalle = document.getElementById("modal-detalle-contenido");
+    let botonOrigen = null;
+
+    function cerrarDetalle() {
+        modalDetalle.style.display = "none";
+        if (botonOrigen) botonOrigen.focus();
+    }
+
+    document.querySelectorAll(".btn-detalle").forEach(function (boton) {
+        boton.addEventListener("click", function () {
+            const plantilla = document.getElementById(boton.dataset.detalle);
+            contenidoDetalle.replaceChildren(plantilla.content.cloneNode(true));
+            botonOrigen = boton;
+            modalDetalle.style.display = "flex";
+            document.getElementById("modal-cerrar-detalle").focus();
+        });
+    });
+
+    // "Reprogramar" dentro del detalle abre la ventana de reprogramar de esa fila
+    contenidoDetalle.addEventListener("click", function (event) {
+        const boton = event.target.closest("[data-abrir-reprogramar]");
+        if (!boton) return;
+        modalDetalle.style.display = "none";
+        document.getElementById(boton.dataset.abrirReprogramar).click();
+    });
+
+    document.getElementById("modal-cerrar-detalle").addEventListener("click", cerrarDetalle);
+    modalDetalle.addEventListener("click", function (event) {
+        if (event.target === modalDetalle) cerrarDetalle();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape") return;
+        if (modal.style.display === "flex") cerrarModal();
+        if (modalDetalle.style.display === "flex") cerrarDetalle();
+    });
 });
 </script>
 {% endblock %}
-
-

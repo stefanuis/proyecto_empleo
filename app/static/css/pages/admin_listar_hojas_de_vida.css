@@ -102,8 +102,8 @@
 }
 
 .post-titulo {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: var(--fs-titulo-pagina);
+    font-weight: var(--fw-titulo);
     color: #1a1a1a;
     margin: 0 0 4px 0;
 }
@@ -212,4 +212,50 @@
         width: 100%;
         text-align: center;
     }
+}
+
+/* ── Barra de selección y descarga ── */
+.hv-acciones-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 12px;
+}
+
+.hv-seleccion {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+}
+
+.hv-zip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hv-col-check {
+    width: 36px;
+}
+
+.hv-sub,
+.hv-sin-datos {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.hv-sin-datos {
+    color: var(--badge-orange-text);
+}
+
+.vac-tabla-vacia a {
+    color: var(--primary);
+}
+
+.badge-stock {
+    background: #E0F2F1;
+    color: #00695C;
 }

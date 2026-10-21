@@ -242,10 +242,10 @@
 
         <section class="hv-section">
             <div class="hv-section-heading">
-                <h2>Discapacidades</h2>
-                <a href="{{ pasos_urls.discapacidades }}"
-                   class="{{ 'btn-secondary' if discapacidades else 'btn-primary' }} btn-sm">
-                    {{ 'Editar' if discapacidades else 'Completar' }}
+                {# Sección opcional: no registrar nada no es un dato pendiente #}
+                <h2>Discapacidad <span class="hv-opcional">(opcional)</span></h2>
+                <a href="{{ pasos_urls.discapacidades }}" class="btn-secondary btn-sm">
+                    {{ 'Editar' if discapacidades else 'Agregar' }}
                 </a>
             </div>
             {% if discapacidades %}
@@ -255,7 +255,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="hv-empty">—</p>
+                <p class="hv-empty">No registraste ninguna discapacidad. Si tienes alguna y quieres que la tengamos en cuenta para ajustes razonables, puedes agregarla.</p>
             {% endif %}
         </section>
 

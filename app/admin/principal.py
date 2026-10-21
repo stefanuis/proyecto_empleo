@@ -38,9 +38,8 @@ from app.models.cursos import Cursos
 from app.models.referencias_personales import ReferenciasPersonales
 from app.models.discapacidades import Discapacidades
 from app.models.referencias import Referencias
-from app.forms.postulacion import PostulacionForm
 from app.models.experiencia import Experiencia
-from app.models.citacion import Citaciones
+from app.models.citacion import ESTADO_CANCELADA, Citaciones
 from app.forms.citaciones import CitacionForm
 from app.models.docs import OtrosDocumentos
 from app.utils.generar_pdf import generar_pdf_expediente
@@ -61,10 +60,12 @@ from app.utils.perfil import (
     obtener_nivel_mas_alto,
 )
 from app.extensions import db
-from app.utils.correo import enviar_correo
+from app.utils.correo import enviar_correo, url_externa
+from app.utils.requisitos import cumple_requisitos, detalle_requisitos
+from app.utils.formato import fecha_con_dia, hora_12
 from app.utils.archivos import ruta_absoluta
 from app.utils.historial import historial_de, registrar_evento
-from app.constantes import ESTADOS_POSTULACION, MENSAJES_CAMBIO_ESTADO
+from app.constantes import ESTADOS_POSTULACION, MENSAJE_DESDE_STOCK, MENSAJES_CAMBIO_ESTADO
 from app.utils.permisos import exigir_rol
 
 
@@ -87,7 +88,8 @@ def _pendientes_dashboard():
     inicio_hoy = datetime.combine(hoy, datetime.min.time())
     fin_semana = hoy + timedelta(days=6 - hoy.weekday())
     citaciones_vigentes = Citaciones.query.filter(
-        or_(Citaciones.respuesta.is_(None), Citaciones.respuesta != 'rechazada')
+        Citaciones.vigente(),
+        or_(Citaciones.respuesta.is_(None), Citaciones.respuesta != 'rechazada'),
     )
 
     return [
@@ -98,7 +100,11 @@ def _pendientes_dashboard():
                 Postulacion.estado == 'postulado',
                 Postulacion.fecha_postulacion < hoy - timedelta(days=DIAS_SIN_REVISAR),
             ).count(),
-            "url": url_for('admin.listar_hoja_vida', estado='postulado'),
+            "url": url_for(
+                'admin.listar_hoja_vida',
+                estado='postulado',
+                fecha_hasta=(hoy - timedelta(days=DIAS_SIN_REVISAR + 1)).isoformat(),
+            ),
         },
         {
             "titulo": "Entrevistas hoy",
@@ -118,7 +124,7 @@ def _pendientes_dashboard():
             "titulo": "Citaciones sin respuesta",
             "detalle": "Entrevistas próximas que el candidato no ha confirmado",
             "cantidad": Citaciones.query.filter(
-                Citaciones.respuesta.is_(None), Citaciones.fecha >= hoy
+                Citaciones.vigente(), Citaciones.respuesta.is_(None), Citaciones.fecha >= hoy
             ).count(),
             "url": url_for('admin.listar_citaciones', estado='sin_responder', fecha_desde=hoy.isoformat()),
         },
@@ -285,8 +291,10 @@ def listar_vacantes():
     q = request.args.get("q", "").strip()
     area = request.args.get("area", "").strip()
     area_aplicacion = request.args.get("area_aplicacion", "").strip()
-    vacante_id = request.args.get("vacantes", "").strip()
     nivel = request.args.get("nivel", "").strip()
+    postulaciones = request.args.get("postulaciones", "").strip()
+    if postulaciones not in ("con", "sin"):
+        postulaciones = ""
     estado = request.args.get("estado", "").strip()
     fecha_desde = request.args.get("fecha_publicacion_desde", "").strip()
     fecha_hasta = request.args.get("fecha_publicacion_hasta", "").strip()
@@ -297,7 +305,10 @@ def listar_vacantes():
     solo_vencidas = request.args.get("vencidas") == "1"
     solo_sin_funciones = request.args.get("sin_funciones") == "1"
 
-    todas_las_vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
+    # Si las fechas llegan al revés se intercambian, en vez de no mostrar nada
+    fechas_invertidas = bool(fecha_desde and fecha_hasta and fecha_desde > fecha_hasta)
+    if fechas_invertidas:
+        fecha_desde, fecha_hasta = fecha_hasta, fecha_desde
 
     query = Vacante.query
 
@@ -322,17 +333,17 @@ def listar_vacantes():
     if area_aplicacion:
         query = query.filter(Vacante.area_aplicacion == area_aplicacion)
 
-    if vacante_id:
-        try:
-            query = query.filter(Vacante.id == int(vacante_id))
-        except ValueError:
-            pass
-
     if nivel:
         query = query.filter(Vacante.nivel_academico == nivel)
 
     if estado:
         query = query.filter(Vacante.estado == estado)
+
+    tiene_postulaciones = exists().where(Postulacion.id_vacante == Vacante.id)
+    if postulaciones == "con":
+        query = query.filter(tiene_postulaciones)
+    elif postulaciones == "sin":
+        query = query.filter(~tiene_postulaciones)
 
     if fecha_desde:
         try:
@@ -376,8 +387,37 @@ def listar_vacantes():
         )
 
     areas_aplicacion = VacanteForm.area_aplicacion.kwargs["choices"]
+    areas_departamento = [v for v, _ in VacanteForm.area.kwargs["choices"] if v]
     # Mismos valores que guarda el formulario de vacantes
     niveles = [v for v, _ in VacanteForm.nivel_academico.kwargs["choices"] if v]
+
+    # Filtros activos, para mostrarlos como etiquetas que se pueden quitar
+    filtros_activos = []
+    if q:
+        filtros_activos.append(("q", f"“{q}”"))
+    if area:
+        filtros_activos.append(("area", area))
+    if area_aplicacion:
+        filtros_activos.append(("area_aplicacion", area_aplicacion))
+    if nivel:
+        filtros_activos.append(("nivel", nivel))
+    if estado:
+        filtros_activos.append(("estado", estado))
+    if postulaciones:
+        filtros_activos.append((
+            "postulaciones",
+            "Con postulaciones" if postulaciones == "con" else "Sin postulaciones",
+        ))
+    if solo_vencidas:
+        filtros_activos.append(("vencidas", "Vencidas"))
+    if _fecha_legible(fecha_desde):
+        filtros_activos.append(
+            ("fecha_publicacion_desde", "Desde " + _fecha_legible(fecha_desde))
+        )
+    if _fecha_legible(fecha_hasta):
+        filtros_activos.append(
+            ("fecha_publicacion_hasta", "Hasta " + _fecha_legible(fecha_hasta))
+        )
 
     return render_template(
         "admin/listar_vacante.html",
@@ -385,19 +425,29 @@ def listar_vacantes():
         vacantes=vacantes,
         pagination=pagination,
         conteos=conteos,
-        todas_las_vacantes=todas_las_vacantes,
         areas=areas_aplicacion,
+        areas_departamento=areas_departamento,
         q=q,
         area_seleccionada=area,
         area_aplicacion_seleccionada=area_aplicacion,
-        vacante_seleccionada=vacante_id,
         nivel_seleccionado=nivel,
         estado_seleccionado=estado,
         fecha_publicacion_desde_valor=fecha_desde,
         fecha_publicacion_hasta_valor=fecha_hasta,
+        postulaciones_seleccionado=postulaciones,
+        fechas_invertidas=fechas_invertidas,
+        filtros_activos=filtros_activos,
         solo_vencidas=solo_vencidas,
         solo_sin_funciones=solo_sin_funciones,
     )
+
+
+def _fecha_legible(texto):
+    """'2026-10-21' -> '21/10/2026'; None si no es una fecha válida."""
+    try:
+        return datetime.strptime(texto, "%Y-%m-%d").strftime("%d/%m/%Y")
+    except ValueError:
+        return None
 
 
 
@@ -720,6 +770,8 @@ def listar_postulantes(id):
         "admin/listar_postulantes.html",
         vacante=vacante,
         postulaciones=postulaciones,
+        estados=ESTADOS_POSTULACION,
+        sugerencias_stock=_sugerencias_stock(vacante),
         pagination=pagination,
         estado_seleccionado=estado,
         experiencia_seleccionada=experiencia_minima,
@@ -773,53 +825,101 @@ def descargar_documentos_candidato(id):
 @admin_bp.route('/postulante/<int:id>/expediente')
 @login_required
 def ver_expediente(id):
-    if(session["rol"] == "admin"):
-        post = Postulacion.query.get_or_404(id)
-        usuario = User.query.get_or_404(post.id_usuario)
-        vacante = Vacante.query.get_or_404(post.id_vacante)
+    post = Postulacion.query.get_or_404(id)
+    usuario = User.query.get_or_404(post.id_usuario)
+    vacante = Vacante.query.get_or_404(post.id_vacante)
+    uid = post.id_usuario
 
-        personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
-        perfil_profesional = PerfilProfesional.query.filter_by(
-            id_usuario=post.id_usuario
-        ).first()
-        funciones_perfil = FuncionArea.query.join(
-            PerfilFuncion,
-            PerfilFuncion.id_funcion == FuncionArea.id,
-        ).filter(
-            PerfilFuncion.id_usuario == post.id_usuario,
-        ).order_by(FuncionArea.nombre).all()
-        academica = Info_academica.query.filter_by(id_usuario=post.id_usuario).all()
-        experiencia=Experiencia.query.filter_by(id_usuario=post.id_usuario).order_by(Experiencia.fecha_ingreso.desc()).all()
-        cursos=Cursos.query.filter_by(id_usuario=post.id_usuario).order_by(Cursos.fecha_realizacion.desc()).all()
-        referencias = Referencias.query.filter_by(id_usuario=post.id_usuario).all()
-        referencias_personales=ReferenciasPersonales.query.filter_by(id_usuario=post.id_usuario).all()
-        discapacidades=Discapacidades.query.filter_by(id_usuario=post.id_usuario).all()
-        documentos = OtrosDocumentos.query.filter_by(id_usuario=post.id_usuario).all()
+    # Puede faltar si el candidato no llenó Datos personales: la página igual se muestra
+    personal = Personal.query.filter_by(id_usuario=uid).first()
+    perfil_profesional = PerfilProfesional.query.filter_by(id_usuario=uid).first()
+    funciones_perfil = FuncionArea.query.join(
+        PerfilFuncion,
+        PerfilFuncion.id_funcion == FuncionArea.id,
+    ).filter(
+        PerfilFuncion.id_usuario == uid,
+    ).order_by(FuncionArea.nombre).all()
+    academica = Info_academica.query.filter_by(id_usuario=uid).all()
+    experiencia = Experiencia.query.filter_by(id_usuario=uid).order_by(Experiencia.fecha_ingreso.desc()).all()
+    cursos = Cursos.query.filter_by(id_usuario=uid).order_by(Cursos.fecha_realizacion.desc()).all()
+    referencias = Referencias.query.filter_by(id_usuario=uid).all()
+    referencias_personales = ReferenciasPersonales.query.filter_by(id_usuario=uid).all()
+    discapacidades = Discapacidades.query.filter_by(id_usuario=uid).all()
+    documentos = OtrosDocumentos.query.filter_by(id_usuario=uid).all()
 
-        funciones_vacante = funciones_de_vacante(vacante.id)
-        coincidencia = resumen_coincidencia(
-            funciones_vacante,
-            {funcion.id for funcion in funciones_perfil},
+    funciones_vacante = funciones_de_vacante(vacante.id)
+    coincidencia = resumen_coincidencia(
+        funciones_vacante,
+        {funcion.id for funcion in funciones_perfil},
+    )
+
+    # Última citación vigente (la de una reprogramación o una nueva cita)
+    citacion = (
+        Citaciones.query
+        .filter(Citaciones.id_postulacion == post.id, Citaciones.vigente())
+        .order_by(Citaciones.id.desc())
+        .first()
+    )
+
+    # Otras postulaciones del mismo candidato, para saber si ya se le evaluó
+    otras_postulaciones = (
+        db.session.query(Postulacion, Vacante)
+        .join(Vacante, Vacante.id == Postulacion.id_vacante)
+        .filter(Postulacion.id_usuario == uid, Postulacion.id != post.id)
+        .order_by(Postulacion.fecha_postulacion.desc())
+        .all()
+    )
+
+    # Anterior / siguiente postulante de la misma vacante (orden de postulación)
+    ids_vacante = [
+        pid for (pid,) in
+        db.session.query(Postulacion.id)
+        .filter(Postulacion.id_vacante == vacante.id)
+        .order_by(Postulacion.fecha_postulacion.desc(), Postulacion.id.desc())
+    ]
+    posicion = ids_vacante.index(post.id)
+    navegacion = {
+        "posicion": posicion + 1,
+        "total": len(ids_vacante),
+        "anterior": ids_vacante[posicion - 1] if posicion > 0 else None,
+        "siguiente": ids_vacante[posicion + 1] if posicion + 1 < len(ids_vacante) else None,
+    }
+
+    ubicacion = ""
+    if personal:
+        ubicacion = ", ".join(
+            parte for parte in (
+                personal.direccion, personal.barrio,
+                personal.municipio, personal.departamento,
+            ) if parte and parte.strip()
         )
 
-        return render_template('admin/expediente.html',
-                                post=post,
-                                usuario=usuario,
-                                vacante=vacante,
-                                coincidencia=coincidencia,
-                                historial=historial_de(post.id),
-                                personal=personal,
-                                perfil_profesional=perfil_profesional,
-                                funciones_perfil=funciones_perfil,
-                                academica=academica,
-                                experiencia=experiencia,
-                                cursos=cursos,
-                                referencias=referencias,
-                                referencias_personales=referencias_personales,
-                                discapacidades=discapacidades,
-                                documentos=documentos)
-    else:
-        return ("Hola, no deberias estar aqui, debe haber ocurrido un error.")
+    return render_template(
+        'admin/expediente.html',
+        post=post,
+        usuario=usuario,
+        vacante=vacante,
+        coincidencia=coincidencia,
+        requisitos=detalle_requisitos(uid, vacante),
+        historial=historial_de(post.id),
+        personal=personal,
+        ubicacion=ubicacion,
+        perfil_profesional=perfil_profesional,
+        funciones_perfil=funciones_perfil,
+        academica=academica,
+        experiencia=experiencia,
+        experiencia_total=formatear_experiencia(obtener_experiencia_total(uid)),
+        cursos=cursos,
+        referencias=referencias,
+        referencias_personales=referencias_personales,
+        discapacidades=discapacidades,
+        documentos=documentos,
+        citacion=citacion,
+        otras_postulaciones=otras_postulaciones,
+        navegacion=navegacion,
+        estados=ESTADOS_POSTULACION,
+        hoy=date.today(),
+    )
 
 NOTAS_POR_AREA = (
     ("notas_reclutador", "reclutador"),
@@ -918,14 +1018,128 @@ def actualizar_postulacion(id):
         mensaje += f" Se retiraron {len(retiradas)} postulación(es) abiertas del candidato."
     flash(mensaje, "success")
 
-    if cambio_estado and request.form.get("notificar") == "1" and nuevo_estado in MENSAJES_CAMBIO_ESTADO:
-        if _notificar_cambio_estado(postulacion, retiradas):
-            flash("Se avisó al candidato por correo.", "success")
+    if cambio_estado and request.form.get("notificar") == "1":
+        if nuevo_estado == "rechazado":
+            enviado = _notificar_rechazo(postulacion)
+        elif nuevo_estado in MENSAJES_CAMBIO_ESTADO:
+            enviado = _notificar_cambio_estado(postulacion, retiradas)
         else:
-            flash("No se pudo enviar el correo al candidato.", "warning")
+            enviado = None  # "Postulado" y "Retirada" no tienen correo
+        if enviado:
+            flash("Se avisó al candidato por correo.", "success")
+        elif enviado is False:
+            flash(
+                "No se pudo enviar el correo al candidato. Puedes reenviarlo desde su expediente.",
+                "warning",
+            )
         db.session.commit()
 
     return redirect(url_for('admin.listar_postulantes', id=postulacion.id_vacante))
+
+def _sugerencias_stock(vacante, limite=10):
+    """Personas en stock de otras vacantes de la misma área de aplicación
+    que todavía no están en esta vacante.
+
+    [{"postulacion", "vacante", "usuario", "personal", "requisitos"}]
+    """
+    ya_en_vacante = db.session.query(Postulacion.id_usuario).filter(
+        Postulacion.id_vacante == vacante.id
+    )
+    query = (
+        db.session.query(Postulacion, Vacante, User, Personal)
+        .join(Vacante, Vacante.id == Postulacion.id_vacante)
+        .join(User, User.id == Postulacion.id_usuario)
+        .outerjoin(Personal, Personal.id_usuario == Postulacion.id_usuario)
+        .filter(
+            Postulacion.estado == "stock",
+            Postulacion.id_vacante != vacante.id,
+            ~Postulacion.id_usuario.in_(ya_en_vacante),
+        )
+    )
+    if (vacante.area_aplicacion or "").strip():
+        query = query.filter(Vacante.area_aplicacion == vacante.area_aplicacion)
+
+    sugerencias = []
+    vistos = set()
+    for postulacion, otra_vacante, usuario, personal in query.order_by(
+        Postulacion.fecha_actualizacion.desc()
+    ):
+        # Una persona puede estar en stock en varias vacantes: se muestra una vez
+        if usuario.id in vistos:
+            continue
+        vistos.add(usuario.id)
+        sugerencias.append({
+            "postulacion": postulacion,
+            "vacante": otra_vacante,
+            "usuario": usuario,
+            "personal": personal,
+            "requisitos": cumple_requisitos(usuario.id, vacante),
+        })
+        if len(sugerencias) >= limite:
+            break
+    return sugerencias
+
+
+@admin_bp.route("/vacantes/<int:id>/agregar-desde-stock", methods=["POST"])
+@login_required
+def agregar_desde_stock(id):
+    """Agrega a esta vacante a una persona que estaba en stock en otra."""
+    vacante = Vacante.query.get_or_404(id)
+    volver = redirect(url_for('admin.listar_postulantes', id=id))
+
+    origen = db.session.get(Postulacion, request.form.get("postulacion_id", type=int))
+    if origen is None or origen.estado != "stock":
+        flash("Esa persona ya no está en stock.", "warning")
+        return volver
+
+    if Postulacion.query.filter_by(id_usuario=origen.id_usuario, id_vacante=id).first():
+        flash("Esa persona ya está en esta vacante.", "warning")
+        return volver
+
+    vacante_origen = db.session.get(Vacante, origen.id_vacante)
+    nueva = Postulacion(
+        id_usuario=origen.id_usuario,
+        id_vacante=id,
+        estado="revision",
+        fecha_postulacion=datetime.now(),
+    )
+    db.session.add(nueva)
+    db.session.flush()  # para tener el id de la nueva postulación en el historial
+    registrar_evento(
+        nueva.id,
+        "Agregado desde stock",
+        f"Estaba en stock en la vacante \"{vacante_origen.titulo if vacante_origen else ''}\".",
+    )
+    registrar_evento(
+        origen.id,
+        "Se agregó a otra vacante desde stock",
+        f"Vacante \"{vacante.titulo}\".",
+    )
+    db.session.commit()
+
+    candidato = db.session.get(User, origen.id_usuario)
+    enviado = bool(candidato and candidato.correo) and enviar_correo(
+        candidato.correo,
+        MENSAJE_DESDE_STOCK["asunto"],
+        "correos/estado_postulacion.html",
+        nombres=candidato.nombres,
+        vacante=vacante.titulo,
+        titulo=MENSAJE_DESDE_STOCK["titulo"],
+        mensaje=MENSAJE_DESDE_STOCK["mensaje"],
+        otras_retiradas=0,
+    )
+    if enviado:
+        registrar_evento(nueva.id, "Se notificó al candidato por correo", MENSAJE_DESDE_STOCK["asunto"])
+        db.session.commit()
+
+    nombre = f"{candidato.nombres} {candidato.apellidos}" if candidato else "La persona"
+    flash(
+        f"{nombre} se agregó a la vacante en estado En revisión."
+        + ("" if enviado else " No se pudo enviar el correo de aviso."),
+        "success" if enviado else "warning",
+    )
+    return volver
+
 
 @admin_bp.route("/vacantes/<int:id>/acciones-masivas", methods=["POST"])
 @login_required
@@ -940,7 +1154,7 @@ def acciones_masivas(id):
     }
     volver = redirect(request.referrer or url_for('admin.listar_postulantes', id=id))
 
-    if accion not in ("revision", "rechazar") or not ids:
+    if accion not in ("revision", "rechazar", "stock") or not ids:
         flash("Selecciona al menos un postulante y una acción válida.", "error")
         return volver
 
@@ -962,6 +1176,25 @@ def acciones_masivas(id):
         flash(mensaje, "success")
         return volver
 
+    if accion == "stock":
+        # Gustaron pero no se eligieron: quedan guardados y se les avisa
+        cambiadas = [
+            p for p in postulaciones
+            if p.estado not in ("contratado", "retirada", "rechazado", "stock")
+        ]
+        enviados = 0
+        for postulacion in cambiadas:
+            _cambiar_estado(postulacion, "stock")
+            if _notificar_cambio_estado(postulacion):
+                enviados += 1
+        db.session.commit()
+        mensaje = f"{len(cambiadas)} postulante(s) quedaron en stock; {enviados} correo(s) enviados."
+        omitidas = len(postulaciones) - len(cambiadas)
+        if omitidas:
+            mensaje += f" {omitidas} ya estaban en stock, contratados, retirados o rechazados."
+        flash(mensaje, "success" if enviados == len(cambiadas) else "warning")
+        return volver
+
     # Rechazar y enviar correo
     cambiadas = [
         p for p in postulaciones
@@ -970,14 +1203,7 @@ def acciones_masivas(id):
     enviados = 0
     for postulacion in cambiadas:
         _cambiar_estado(postulacion, "rechazado")
-        candidato = db.session.get(User, postulacion.id_usuario)
-        if candidato and candidato.correo and enviar_correo_rechazo(
-            email=candidato.correo,
-            nombres=candidato.nombres,
-            vacante=vacante.titulo,
-        ):
-            postulacion.fecha_correo_rechazo = datetime.now()
-            registrar_evento(postulacion.id, "Se envió el correo de rechazo al candidato")
+        if _notificar_rechazo(postulacion, vacante):
             enviados += 1
     db.session.commit()
 
@@ -1034,170 +1260,227 @@ def descargar_expediente(id):
     )
 
 
+# Niveles del formulario académico (valor guardado, etiqueta) para el filtro
+NIVELES_FILTRO_HV = [
+    ('primaria', 'Primaria'), ('Bachillerato', 'Bachillerato'), ('tecnico', 'Técnico'),
+    ('tecnologo', 'Tecnólogo'), ('universitario', 'Universitario'),
+    ('especializacion', 'Especialización'), ('maestria', 'Maestría'), ('doctorado', 'Doctorado'),
+]
+
+
+def _consulta_hojas_de_vida(args):
+    """Postulaciones con los filtros de la página de hojas de vida.
+
+    La comparten el listado y la descarga en ZIP, para que "descargar todo"
+    baje exactamente lo que se está viendo. Devuelve (query, filtros).
+    """
+    filtros = {
+        'vacante_id': args.get('vacante_id', '').strip(),
+        'estado': args.get('estado', '').strip(),
+        'q': args.get('q', '').strip(),
+        'fecha_desde': args.get('fecha_desde', '').strip(),
+        'fecha_hasta': args.get('fecha_hasta', '').strip(),
+        'nivel_academico': args.get('nivel_academico', '').strip(),
+        'completitud': args.get('completitud', '').strip(),
+        'fechas_invertidas': False,
+    }
+    if filtros['estado'] not in ESTADOS_POSTULACION:
+        filtros['estado'] = ''
+    if filtros['nivel_academico'] not in dict(NIVELES_FILTRO_HV):
+        filtros['nivel_academico'] = ''
+    if filtros['completitud'] not in ('completo', 'incompleto'):
+        filtros['completitud'] = ''
+
+    desde = _fecha_o_none(filtros['fecha_desde'])
+    hasta = _fecha_o_none(filtros['fecha_hasta'])
+    if desde and hasta and desde > hasta:
+        desde, hasta = hasta, desde
+        filtros['fechas_invertidas'] = True
+    filtros['fecha_desde'] = desde.isoformat() if desde else ''
+    filtros['fecha_hasta'] = hasta.isoformat() if hasta else ''
+
+    # outerjoin: también aparecen quienes no han llenado Datos personales
+    query = (
+        db.session.query(Postulacion)
+        .join(Vacante, Vacante.id == Postulacion.id_vacante)
+        .join(User, User.id == Postulacion.id_usuario)
+        .outerjoin(Personal, Personal.id_usuario == Postulacion.id_usuario)
+    )
+
+    if filtros['vacante_id'].isdigit():
+        query = query.filter(Postulacion.id_vacante == int(filtros['vacante_id']))
+
+    if filtros['estado']:
+        query = query.filter(Postulacion.estado == filtros['estado'])
+
+    if filtros['q']:
+        busqueda = f"%{filtros['q']}%"
+        query = query.filter(or_(
+            Personal.nombres.ilike(busqueda),
+            Personal.apellidos.ilike(busqueda),
+            func.concat(Personal.nombres, ' ', Personal.apellidos).ilike(busqueda),
+            Personal.num_doc.ilike(busqueda),
+            User.nombres.ilike(busqueda),
+            User.apellidos.ilike(busqueda),
+            User.correo.ilike(busqueda),
+        ))
+
+    if desde:
+        query = query.filter(Postulacion.fecha_postulacion >= datetime.combine(desde, datetime.min.time()))
+    if hasta:
+        query = query.filter(
+            Postulacion.fecha_postulacion < datetime.combine(hasta + timedelta(days=1), datetime.min.time())
+        )
+
+    if filtros['nivel_academico']:
+        query = query.filter(Postulacion.id_usuario.in_(
+            db.session.query(Info_academica.id_usuario)
+            .filter(Info_academica.nivel == filtros['nivel_academico'])
+        ))
+
+    query = query.order_by(Postulacion.fecha_postulacion.desc(), Postulacion.id.desc())
+    return query, filtros
+
+
+def _filtrar_por_completitud(postulaciones, completitud):
+    """Filtra en Python (la completitud no se puede calcular en SQL).
+
+    Calcula una sola vez por candidato aunque tenga varias postulaciones.
+    """
+    cache = {}
+    resultado = []
+    for post in postulaciones:
+        if post.id_usuario not in cache:
+            cache[post.id_usuario] = calcular_completitud_perfil(post.id_usuario)
+        completo = cache[post.id_usuario]['porcentaje'] == 100
+        if completo == (completitud == 'completo'):
+            post.completitud = cache[post.id_usuario]
+            resultado.append(post)
+    return resultado
+
+
 @admin_bp.route('/hoja-de-vida')
 @login_required
 def listar_hoja_vida():
+    query, filtros = _consulta_hojas_de_vida(request.args)
 
-    # --------------------------------------------------
-    # FILTROS RECIBIDOS POR GET
-    # --------------------------------------------------
-    vacante_id = request.args.get('vacante_id', '').strip()
-    estado = request.args.get('estado', '').strip()
-    q = request.args.get('q', '').strip()
-    fecha_desde = request.args.get('fecha_desde', '').strip()
-    fecha_hasta = request.args.get('fecha_hasta', '').strip()
-    nivel_academico = request.args.get('nivel_academico', '').strip()
-    completitud_filtro = request.args.get('completitud', '').strip()
-
-    # --------------------------------------------------
-    # PAGINACIÓN
-    # --------------------------------------------------
     page = request.args.get('page', 1, type=int)
     per_page = 15
 
+    if filtros['completitud']:
+        todos = _filtrar_por_completitud(query.all(), filtros['completitud'])
+        total = len(todos)
+        paginas = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, paginas))   # una página fuera de rango va a la última
+        postulantes = todos[(page - 1) * per_page: page * per_page]
+    else:
+        total = query.order_by(None).count()
+        paginas = max(1, (total + per_page - 1) // per_page)
+        page = max(1, min(page, paginas))
+        postulantes = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    pagination = {
+        'page': page,
+        'pages': paginas,
+        'total': total,
+        'has_prev': page > 1,
+        'has_next': page < paginas,
+        'prev_num': page - 1,
+        'next_num': page + 1,
+    }
+
+    # Datos de cada fila en pocas consultas (antes eran ~15 por fila)
+    ids_usuarios = {post.id_usuario for post in postulantes}
+    ids_vacantes = {post.id_vacante for post in postulantes}
+    personales = {
+        personal.id_usuario: personal
+        for personal in Personal.query.filter(Personal.id_usuario.in_(ids_usuarios))
+    } if ids_usuarios else {}
+    usuarios = {u.id: u for u in User.query.filter(User.id.in_(ids_usuarios))} if ids_usuarios else {}
+    vacantes_fila = {v.id: v for v in Vacante.query.filter(Vacante.id.in_(ids_vacantes))} if ids_vacantes else {}
+    completitudes = {}
+    niveles = {}
+    for post in postulantes:
+        post.personal = personales.get(post.id_usuario)
+        post.usuario = usuarios.get(post.id_usuario)
+        post.vacante = vacantes_fila.get(post.id_vacante)
+        if not getattr(post, 'completitud', None):
+            if post.id_usuario not in completitudes:
+                completitudes[post.id_usuario] = calcular_completitud_perfil(post.id_usuario)
+            post.completitud = completitudes[post.id_usuario]
+        if post.id_usuario not in niveles:
+            niveles[post.id_usuario] = obtener_nivel_mas_alto(post.id_usuario)
+        post.nivel_mas_alto = niveles[post.id_usuario]
+
     vacantes = Vacante.query.order_by(Vacante.titulo.asc()).all()
 
-    # --------------------------------------------------
-    # CONSULTA PRINCIPAL (con joins, sin N+1)
-    # --------------------------------------------------
-    query = db.session.query(Postulacion).join(
-        Vacante, Vacante.id == Postulacion.id_vacante
-    ).join(
-        Personal, Personal.id_usuario == Postulacion.id_usuario
-    )
-
-    if vacante_id:
-        try:
-            query = query.filter(Postulacion.id_vacante == int(vacante_id))
-        except ValueError:
-            pass
-
-    if estado:
-        query = query.filter(Postulacion.estado == estado)
-
-    if q:
-        query = query.filter(
-            db.or_(
-                Personal.nombres.ilike(f"%{q}%"),
-                Personal.apellidos.ilike(f"%{q}%"),
-                Personal.num_doc.ilike(f"%{q}%")
-            )
-        )
-
-    if fecha_desde:
-        try:
-            fecha_desde_dt = datetime.strptime(fecha_desde, "%Y-%m-%d")
-            query = query.filter(Postulacion.fecha_postulacion >= fecha_desde_dt)
-        except ValueError:
-            pass
-
-    if fecha_hasta:
-        try:
-            fecha_hasta_dt = datetime.strptime(fecha_hasta, "%Y-%m-%d") + timedelta(days=1)
-            query = query.filter(Postulacion.fecha_postulacion < fecha_hasta_dt)
-        except ValueError:
-            pass
-
-    if nivel_academico:
-        subq_nivel = db.session.query(
-            Info_academica.id_usuario
-        ).filter(
-            Info_academica.nivel == nivel_academico
-        ).subquery()
-
-        query = query.filter(
-            Postulacion.id_usuario.in_(db.session.query(subq_nivel.c.id_usuario))
-        )
-
-    query = query.order_by(Postulacion.fecha_postulacion.desc())
-
-    if completitud_filtro:
-        todos = query.all()
-
-        for post in todos:
-            post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
-            post.usuario = User.query.get(post.id_usuario)
-            post.vacante = Vacante.query.get(post.id_vacante)
-            post.completitud = calcular_completitud_perfil(post.id_usuario)
-            post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
-
-        if completitud_filtro == 'completo':
-            filtrados = [p for p in todos if p.completitud['porcentaje'] == 100]
-        else:
-            filtrados = [p for p in todos if p.completitud['porcentaje'] < 100]
-
-        total = len(filtrados)
-        inicio = (page - 1) * per_page
-        fin = inicio + per_page
-        postulantes = filtrados[inicio:fin]
-
-        total_paginas = max(1, (total + per_page - 1) // per_page)
-        pagination = {
-            'page': page,
-            'pages': total_paginas,
-            'total': total,
-            'has_prev': page > 1,
-            'has_next': page < total_paginas,
-            'prev_num': page - 1,
-            'next_num': page + 1,
-        }
-
-    # --------------------------------------------------
-    # CASO B: sin filtro de completitud
-    # Paginación real en SQL, mucho más eficiente:
-    # solo calculamos completitud para los 15 de la página actual.
-    # --------------------------------------------------
-    else:
-        paginado = db.paginate(
-            query,
-            page=page,
-            per_page=per_page,
-            error_out=False
-        )
-
-        postulantes = paginado.items
-
-        for post in postulantes:
-            post.personal = Personal.query.filter_by(id_usuario=post.id_usuario).first()
-            post.usuario = User.query.get(post.id_usuario)
-            post.vacante = Vacante.query.get(post.id_vacante)
-            post.completitud = calcular_completitud_perfil(post.id_usuario)
-            post.nivel_mas_alto = obtener_nivel_mas_alto(post.id_usuario)
-
-        pagination = {
-            'page': paginado.page,
-            'pages': paginado.pages,
-            'total': paginado.total,
-            'has_prev': paginado.has_prev,
-            'has_next': paginado.has_next,
-            'prev_num': paginado.prev_num,
-            'next_num': paginado.next_num,
-        }
+    # Filtros activos, para mostrarlos como etiquetas que se pueden quitar
+    filtros_activos = []
+    if filtros['q']:
+        filtros_activos.append(('q', f"“{filtros['q']}”"))
+    if filtros['vacante_id'].isdigit():
+        vacante = next((v for v in vacantes if v.id == int(filtros['vacante_id'])), None)
+        filtros_activos.append(('vacante_id', vacante.titulo if vacante else 'Vacante'))
+    if filtros['estado']:
+        filtros_activos.append(('estado', ESTADOS_POSTULACION[filtros['estado']]))
+    if filtros['nivel_academico']:
+        filtros_activos.append(('nivel_academico', dict(NIVELES_FILTRO_HV)[filtros['nivel_academico']]))
+    if filtros['completitud']:
+        filtros_activos.append((
+            'completitud', 'Completos' if filtros['completitud'] == 'completo' else 'Incompletos',
+        ))
+    if filtros['fecha_desde']:
+        filtros_activos.append(('fecha_desde', 'Desde ' + _fecha_legible(filtros['fecha_desde'])))
+    if filtros['fecha_hasta']:
+        filtros_activos.append(('fecha_hasta', 'Hasta ' + _fecha_legible(filtros['fecha_hasta'])))
 
     return render_template(
         'listar_hojas_de_vida.html',
         vacantes=vacantes,
         postulantes=postulantes,
-        vacante_seleccionada=vacante_id,
-        estado_seleccionado=estado,
-        q=q,
-        fecha_desde=fecha_desde,
-        fecha_hasta=fecha_hasta,
-        nivel_academico_seleccionado=nivel_academico,
-        completitud_seleccionada=completitud_filtro,
-        pagination=pagination
+        estados=ESTADOS_POSTULACION,
+        niveles=NIVELES_FILTRO_HV,
+        vacante_seleccionada=filtros['vacante_id'],
+        estado_seleccionado=filtros['estado'],
+        q=filtros['q'],
+        fecha_desde=filtros['fecha_desde'],
+        fecha_hasta=filtros['fecha_hasta'],
+        fechas_invertidas=filtros['fechas_invertidas'],
+        nivel_academico_seleccionado=filtros['nivel_academico'],
+        completitud_seleccionada=filtros['completitud'],
+        filtros_activos=filtros_activos,
+        pagination=pagination,
     )
+
+# Cada hoja de vida es un PDF generado en el momento: se limita el tamaño del ZIP
+MAX_ZIP_HOJAS_DE_VIDA = 200
+
 
 @admin_bp.route('/expedientes/descargar-zip')
 @login_required
 def descargar_expedientes_zip():
 
     ids = [int(i) for i in request.args.getlist('ids') if i.isdigit()]
+    volver = request.referrer or url_for('admin.listar_hoja_vida')
 
-    if not ids:
-        abort(400, description='No se seleccionaron postulantes.')
-
-    postulantes = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
+    if ids:
+        postulantes = Postulacion.query.filter(Postulacion.id.in_(ids)).all()
+    elif request.args.get('todos') == '1':
+        # "Descargar todos": los mismos que muestra el listado con sus filtros
+        query, filtros = _consulta_hojas_de_vida(request.args)
+        postulantes = query.all()
+        if filtros['completitud']:
+            postulantes = _filtrar_por_completitud(postulantes, filtros['completitud'])
+        if len(postulantes) > MAX_ZIP_HOJAS_DE_VIDA:
+            flash(
+                f'Son {len(postulantes)} hojas de vida; el máximo por descarga es '
+                f'{MAX_ZIP_HOJAS_DE_VIDA}. Filtra un poco más o selecciónalas por páginas.',
+                'warning',
+            )
+            return redirect(volver)
+    else:
+        flash('No seleccionaste ningún postulante.', 'warning')
+        return redirect(volver)
 
 
     usuarios_ya_procesados = set()
@@ -1209,6 +1492,7 @@ def descargar_expedientes_zip():
             postulantes_unicos.append(post)
 
     zip_buffer = io.BytesIO()
+    incluidos = 0
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         for post in postulantes_unicos:
             usuario = User.query.get_or_404(post.id_usuario)
@@ -1232,6 +1516,11 @@ def descargar_expedientes_zip():
 
             nombre_archivo = f"Hoja_de_vida_{personal.nombres}_{personal.apellidos}_{post.id}.pdf"
             zf.writestr(nombre_archivo, pdf_buffer.read())
+            incluidos += 1
+
+    if not incluidos:
+        flash('Ninguno de los candidatos tiene datos personales; no hay hojas de vida para descargar.', 'warning')
+        return redirect(volver)
 
     zip_buffer.seek(0)
 
@@ -1244,14 +1533,23 @@ def descargar_expedientes_zip():
 
 #### Gestion de envio de citaciones ########
 
-def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje, link_confirmar, link_rechazar):
+def enviar_correo_citacion(email, nombres, fecha, hora, lugar, mensaje, link_confirmar,
+                           link_rechazar, vacante="", reprogramada=False):
+    """fecha y hora son date/time: en el correo salen como 'viernes 24 de
+    octubre de 2026' y '9:30 a. m.'."""
+    asunto = (
+        'Tu entrevista fue reprogramada' if reprogramada
+        else 'Has sido citado a una entrevista'
+    )
     return enviar_correo(
         email,
-        'Has sido citado a una entrevista',
+        asunto,
         "c_citacion.html",
         nombres=nombres,
-        fecha=fecha,
-        hora=hora,
+        vacante=vacante,
+        reprogramada=reprogramada,
+        fecha=fecha_con_dia(fecha),
+        hora=hora_12(hora),
         lugar=lugar,
         mensaje=mensaje,
         link_confirmar=link_confirmar,
@@ -1266,17 +1564,59 @@ def _fecha_o_none(texto):
         return None
 
 
+# Estado de la citación que se elige en el filtro -> condición SQL
+ESTADOS_CITACION = {
+    "sin_responder": "Sin responder",
+    "confirmada": "Confirmada",
+    "rechazada": "No asistirá",
+    "cancelada": "Cancelada",
+}
+
+
+def _condicion_estado_citacion(estado):
+    if estado == "cancelada":
+        return Citaciones.estado == ESTADO_CANCELADA
+    condicion = {
+        "sin_responder": Citaciones.respuesta.is_(None),
+        "confirmada": Citaciones.respuesta == "confirmada",
+        "rechazada": Citaciones.respuesta == "rechazada",
+    }[estado]
+    return db.and_(Citaciones.vigente(), condicion)
+
+
 @admin_bp.route("/citaciones")
 @login_required
 def listar_citaciones():
 
     q = request.args.get('q', '').strip()
-    vacante_id = request.args.get('vacante_id')
-    estados_seleccionados = request.args.getlist('estado')
-    fecha_desde = request.args.get('fecha_desde')
-    fecha_hasta = request.args.get('fecha_hasta')
+    vacante_id = request.args.get('vacante_id', '').strip()
+    # Se admite más de un estado (?estado=a&estado=b), como llegan desde el dashboard
+    estados_seleccionados = [
+        e for e in request.args.getlist('estado') if e in ESTADOS_CITACION
+    ]
+    cuando = request.args.get('cuando', '').strip()
+    if cuando not in ('proximas', 'pasadas'):
+        cuando = ''
+    fecha_desde = request.args.get('fecha_desde', '').strip()
+    fecha_hasta = request.args.get('fecha_hasta', '').strip()
 
-    vacantes = Vacante.query.all()
+    fecha_desde_dt = _fecha_o_none(fecha_desde)
+    fecha_hasta_dt = _fecha_o_none(fecha_hasta)
+    fechas_invertidas = bool(fecha_desde_dt and fecha_hasta_dt and fecha_desde_dt > fecha_hasta_dt)
+    if fechas_invertidas:
+        fecha_desde_dt, fecha_hasta_dt = fecha_hasta_dt, fecha_desde_dt
+        fecha_desde, fecha_hasta = fecha_hasta, fecha_desde
+
+    # Solo vacantes que tienen citaciones, para no llenar el selector
+    vacantes = (
+        Vacante.query
+        .filter(Vacante.id.in_(
+            db.session.query(Postulacion.id_vacante)
+            .join(Citaciones, Citaciones.id_postulacion == Postulacion.id)
+        ))
+        .order_by(Vacante.titulo.asc())
+        .all()
+    )
 
     # Citaciones no tiene relationship() hacia Postulacion/User/Vacante,
     # así que seleccionamos las 4 entidades unidas explícitamente
@@ -1289,37 +1629,40 @@ def listar_citaciones():
 
     if q:
         busqueda = f"%{q}%"
-        query = query.filter(
-            (User.nombres.ilike(busqueda)) | (User.apellidos.ilike(busqueda))
-        )
+        query = query.filter(or_(
+            User.nombres.ilike(busqueda),
+            User.apellidos.ilike(busqueda),
+            User.correo.ilike(busqueda),
+            func.concat(User.nombres, ' ', User.apellidos).ilike(busqueda),
+        ))
 
-    if vacante_id and vacante_id.isdigit():
+    if vacante_id.isdigit():
         query = query.filter(Postulacion.id_vacante == int(vacante_id))
 
-    fecha_desde_dt = _fecha_o_none(fecha_desde)
+    hoy = date.today()
+    if cuando == 'proximas':
+        query = query.filter(Citaciones.fecha >= hoy)
+    elif cuando == 'pasadas':
+        query = query.filter(Citaciones.fecha < hoy)
+
     if fecha_desde_dt:
         query = query.filter(Citaciones.fecha >= fecha_desde_dt)
-
-    fecha_hasta_dt = _fecha_o_none(fecha_hasta)
     if fecha_hasta_dt:
         query = query.filter(Citaciones.fecha <= fecha_hasta_dt)
 
     if estados_seleccionados:
-        condiciones = []
-        if 'confirmada' in estados_seleccionados:
-            condiciones.append(Citaciones.respuesta == 'confirmada')
-        if 'rechazada' in estados_seleccionados:
-            condiciones.append(Citaciones.respuesta == 'rechazada')
-        if 'sin_responder' in estados_seleccionados:
-            condiciones.append(Citaciones.respuesta.is_(None))
+        query = query.filter(or_(*[
+            _condicion_estado_citacion(e) for e in estados_seleccionados
+        ]))
 
-        if condiciones:
-            query = query.filter(or_(*condiciones))
+    # Las próximas se leen como agenda (la más cercana primero)
+    if cuando == 'proximas':
+        orden = (Citaciones.fecha.asc(), Citaciones.hora.asc(), Citaciones.id.asc())
+    else:
+        orden = (Citaciones.fecha.desc(), Citaciones.hora.desc(), Citaciones.id.desc())
 
     page = request.args.get('page', 1, type=int)
-    paginado = query.order_by(
-        Citaciones.fecha.desc(), Citaciones.hora.desc(), Citaciones.id.desc()
-    ).paginate(page=page, per_page=15, error_out=False)
+    paginado = query.order_by(*orden).paginate(page=page, per_page=15, error_out=False)
     citaciones = paginado.items
     pagination = {
         'page': paginado.page,
@@ -1331,15 +1674,56 @@ def listar_citaciones():
         'next_num': paginado.next_num,
     }
 
+    # Para el detalle de cada citación: teléfono del candidato y todas las
+    # citaciones de su postulación (reprogramadas o reemplazadas)
+    ids_usuarios = {candidato.id for _, _, candidato, _ in citaciones}
+    ids_postulaciones = {postulacion.id for _, postulacion, _, _ in citaciones}
+    telefonos = {}
+    historial = {}
+    if citaciones:
+        telefonos = {
+            personal.id_usuario: personal.num_cel
+            for personal in Personal.query.filter(Personal.id_usuario.in_(ids_usuarios))
+        }
+        for anterior in (
+            Citaciones.query
+            .filter(Citaciones.id_postulacion.in_(ids_postulaciones))
+            .order_by(Citaciones.id.desc())
+        ):
+            historial.setdefault(anterior.id_postulacion, []).append(anterior)
+
+    # Filtros activos, para mostrarlos como etiquetas que se pueden quitar
+    filtros_activos = []
+    if q:
+        filtros_activos.append(('q', None, f"“{q}”"))
+    if vacante_id.isdigit():
+        vacante = next((v for v in vacantes if v.id == int(vacante_id)), None)
+        filtros_activos.append(('vacante_id', None, vacante.titulo if vacante else f"Vacante {vacante_id}"))
+    for estado in estados_seleccionados:
+        filtros_activos.append(('estado', estado, ESTADOS_CITACION[estado]))
+    if cuando:
+        filtros_activos.append(('cuando', None, 'Próximas' if cuando == 'proximas' else 'Pasadas'))
+    if fecha_desde_dt:
+        filtros_activos.append(('fecha_desde', None, 'Desde ' + fecha_desde_dt.strftime('%d/%m/%Y')))
+    if fecha_hasta_dt:
+        filtros_activos.append(('fecha_hasta', None, 'Hasta ' + fecha_hasta_dt.strftime('%d/%m/%Y')))
+
     return render_template(
         'admin/citaciones.html',
         citaciones=citaciones,
         vacantes=vacantes,
+        estados=ESTADOS_CITACION,
         q=q,
         vacante_seleccionada=vacante_id,
         estados_seleccionados=estados_seleccionados,
-        fecha_desde=fecha_desde,
-        fecha_hasta=fecha_hasta,
+        cuando=cuando,
+        fecha_desde=fecha_desde_dt.isoformat() if fecha_desde_dt else '',
+        fecha_hasta=fecha_hasta_dt.isoformat() if fecha_hasta_dt else '',
+        fechas_invertidas=fechas_invertidas,
+        filtros_activos=filtros_activos,
+        telefonos=telefonos,
+        historial=historial,
+        hoy=hoy,
         pagination=pagination,
     )
 
@@ -1386,11 +1770,18 @@ def citar_seleccionados(id):
         Postulacion.id.in_(ids),
         Postulacion.id_vacante == id,
     ).all()
+    vacante = db.session.get(Vacante, id)
 
     enviados = 0
     fallidos = 0
- 
+    omitidos = 0
+
     for post in postulaciones:
+        # Un proceso cerrado no se cita a entrevista
+        if post.estado in ('contratado', 'rechazado', 'retirada'):
+            omitidos += 1
+            continue
+
         candidato = User.query.get(post.id_usuario)
  
         if not candidato or not candidato.correo:
@@ -1410,31 +1801,32 @@ def citar_seleccionados(id):
             fecha_envio=datetime.now()
         )
  
-        link_confirmacion = url_for(
-            'usuario.responder_citacion',
-            token=token,
-            respuesta='confirmar',
-            _external=True
+        link_confirmacion = url_externa(
+            'usuario.responder_citacion', token=token, respuesta='confirmar'
         )
-        link_rechazo = url_for(
-            'usuario.responder_citacion',
-            token=token,
-            respuesta='rechazar',
-            _external=True
+        link_rechazo = url_externa(
+            'usuario.responder_citacion', token=token, respuesta='rechazar'
         )
- 
+
         exito = enviar_correo_citacion(
             email=candidato.correo,
             nombres=candidato.nombres,
-            fecha=fecha_str,
-            hora=hora_str,
+            fecha=fecha,
+            hora=hora,
             lugar=lugar,
             mensaje=mensaje,
             link_confirmar=link_confirmacion,
             link_rechazar=link_rechazo,
+            vacante=vacante.titulo if vacante else "",
         )
- 
+
         if exito:
+            # La citación anterior queda cancelada: sus enlaces dejan de servir
+            # y no aparece dos veces en el listado
+            Citaciones.query.filter(
+                Citaciones.id_postulacion == post.id,
+                Citaciones.vigente(),
+            ).update({"estado": ESTADO_CANCELADA}, synchronize_session=False)
             # Solo se guarda la citación si el candidato recibió el correo
             db.session.add(nueva_citacion)
             if post.estado != 'entrevista':
@@ -1450,11 +1842,16 @@ def citar_seleccionados(id):
  
     db.session.commit()
  
-    if fallidos == 0:
-        flash(f'Se citó a {enviados} postulante(s) correctamente.', 'success')
-    else:
-        flash(f'Se citó a {enviados} postulante(s). {fallidos} correo(s) no se pudieron enviar.', 'warning')
- 
+    partes = [f'Se citó a {enviados} postulante(s).']
+    if fallidos:
+        partes.append(f'{fallidos} correo(s) no se pudieron enviar.')
+    if omitidos:
+        partes.append(f'{omitidos} se omitieron porque su proceso ya terminó.')
+    flash(' '.join(partes), 'success' if not (fallidos or omitidos) else 'warning')
+
+    volver = request.form.get('volver') or ''
+    if volver.startswith('/'):
+        return redirect(volver)
     return redirect(url_for('admin.listar_postulantes', id=id))
 
 
@@ -1462,52 +1859,75 @@ def citar_seleccionados(id):
 @admin_bp.route("/citaciones/<int:id>/reprogramar", methods=["POST"])
 @login_required
 def reprogramar_citacion(id):
-
-    if session.get("rol") != "admin":
-        return "No tienes permiso para realizar esta acción", 403
-
     citacion = Citaciones.query.get_or_404(id)
+    volver = request.form.get("volver") or url_for("admin.listar_citaciones")
+    if not volver.startswith("/"):
+        volver = url_for("admin.listar_citaciones")
 
     fecha = request.form.get("fecha")
     hora = request.form.get("hora")
-    lugar = request.form.get("lugar") or citacion.lugar
-    mensaje = request.form.get("mensaje") or ""
+    lugar = (request.form.get("lugar") or "").strip() or citacion.lugar
+    mensaje = (request.form.get("mensaje") or "").strip()
+
+    if citacion.cancelada:
+        flash("Esta citación fue cancelada; cita de nuevo desde la lista de postulantes.", "error")
+        return redirect(volver)
 
     if not fecha or not hora:
         flash("Debes indicar la nueva fecha y hora.", "error")
-        return redirect(url_for("admin.listar_citaciones"))
+        return redirect(volver)
 
-    postulacion = Postulacion.query.get_or_404(
-        citacion.id_postulacion
-    )
+    postulacion = Postulacion.query.get_or_404(citacion.id_postulacion)
+    if postulacion.estado in ('contratado', 'rechazado', 'retirada'):
+        flash("El proceso de este candidato ya terminó; no se puede reprogramar.", "error")
+        return redirect(volver)
 
-    personal = Personal.query.filter_by(
-        id_usuario=postulacion.id_usuario
-    ).first()
     usuario = User.query.get(postulacion.id_usuario)
-
-    if not personal or not usuario or not usuario.correo:
-        flash("No se encontró la información de contacto de la cuenta del candidato.", "error")
-        return redirect(url_for("admin.listar_citaciones"))
+    if not usuario or not usuario.correo:
+        flash("El candidato no tiene un correo registrado.", "error")
+        return redirect(volver)
 
     try:
         nueva_fecha = datetime.strptime(fecha, "%Y-%m-%d").date()
         nueva_hora = datetime.strptime(hora, "%H:%M").time()
     except ValueError:
         flash("La fecha o la hora tienen un formato inválido.", "error")
-        return redirect(url_for("admin.listar_citaciones"))
+        return redirect(volver)
 
     if datetime.combine(nueva_fecha, nueva_hora) <= datetime.now():
         flash("La nueva citación debe ser en una fecha y hora futuras.", "error")
-        return redirect(url_for("admin.listar_citaciones"))
+        return redirect(volver)
+
+    vacante = db.session.get(Vacante, postulacion.id_vacante)
+
+    # Primero el correo: si no sale, la citación queda como estaba
+    enviado = enviar_correo_citacion(
+        email=usuario.correo,
+        nombres=usuario.nombres,
+        fecha=nueva_fecha,
+        hora=nueva_hora,
+        lugar=lugar,
+        mensaje=mensaje,
+        link_confirmar=url_externa(
+            "usuario.responder_citacion", token=citacion.token, respuesta="confirmar"
+        ),
+        link_rechazar=url_externa(
+            "usuario.responder_citacion", token=citacion.token, respuesta="rechazar"
+        ),
+        vacante=vacante.titulo if vacante else "",
+        reprogramada=True,
+    )
+    if not enviado:
+        flash("No se pudo enviar el correo al candidato; la citación no se cambió.", "error")
+        return redirect(volver)
 
     citacion.fecha = nueva_fecha
     citacion.hora = nueva_hora
-
     citacion.lugar = lugar
     citacion.mensaje = mensaje
+    citacion.fecha_envio = datetime.now()
 
-    # Reiniciar la respuesta anterior
+    # El candidato debe responder de nuevo
     citacion.respuesta = None
     citacion.estado = "pendiente"
     citacion.fecha_respuesta = None
@@ -1515,44 +1935,12 @@ def reprogramar_citacion(id):
     registrar_evento(
         postulacion.id,
         "Entrevista reprogramada",
-        f"{nueva_fecha.strftime('%d/%m/%Y')} a las {hora} · {lugar}",
+        f"{nueva_fecha.strftime('%d/%m/%Y')} a las {nueva_hora.strftime('%H:%M')} · {lugar}",
     )
     db.session.commit()
 
-    # Enlaces para responder a la nueva citación
-    link_confirmar = url_for(
-        "usuario.responder_citacion",
-        token=citacion.token,
-        respuesta="confirmar",
-        _external=True
-    )
-
-    link_rechazar = url_for(
-        "usuario.responder_citacion",
-        token=citacion.token,
-        respuesta="rechazar",
-        _external=True
-    )
-
-    enviar_correo_citacion(
-        email=usuario.correo,
-        nombres=personal.nombres,
-        fecha=fecha,
-        hora=hora,
-        lugar=lugar,
-        mensaje=f"Tu entrevista ha sido reprogramada. {mensaje}",
-        link_confirmar=link_confirmar,
-        link_rechazar=link_rechazar
-    )
-
-    flash(
-        "Citación reprogramada y correo enviado correctamente.",
-        "success"
-    )
-
-    return redirect(
-        url_for("admin.listar_citaciones")
-    )
+    flash("Citación reprogramada y correo enviado al candidato.", "success")
+    return redirect(volver)
 
 def enviar_correo_rechazo(email, nombres, vacante):
     return enviar_correo(
@@ -1562,6 +1950,27 @@ def enviar_correo_rechazo(email, nombres, vacante):
         nombres=nombres,
         vacante=vacante,
     )
+
+
+def _notificar_rechazo(postulacion, vacante=None):
+    """Envía el correo de rechazo y lo registra (no hace commit).
+
+    Lo usan el cambio de estado del expediente, la acción masiva
+    "Rechazar y enviar correo" y el reenvío. Devuelve True si se envió.
+    """
+    candidato = db.session.get(User, postulacion.id_usuario)
+    vacante = vacante or db.session.get(Vacante, postulacion.id_vacante)
+    if not candidato or not candidato.correo or not vacante:
+        return False
+    if not enviar_correo_rechazo(
+        email=candidato.correo,
+        nombres=candidato.nombres,
+        vacante=vacante.titulo,
+    ):
+        return False
+    postulacion.fecha_correo_rechazo = datetime.now()
+    registrar_evento(postulacion.id, "Se envió el correo de rechazo al candidato")
+    return True
 
 
 @admin_bp.route("/postulacion/<int:id>/enviar-rechazo", methods=["POST"])
@@ -1576,25 +1985,10 @@ def enviar_rechazo(id):
         flash('Solo se puede enviar este correo a postulaciones en estado "Rechazado".', 'error')
         return redirect(url_for('admin.ver_expediente', id=id))
 
-    candidato = User.query.get(postulacion.id_usuario)
-    vacante = Vacante.query.get(postulacion.id_vacante)
-
-    if not candidato or not candidato.correo or not vacante:
-        flash('El candidato no tiene correo registrado.', 'warning')
-        return redirect(url_for('admin.ver_expediente', id=id))
-
-    enviado = enviar_correo_rechazo(
-        email=candidato.correo,
-        nombres=candidato.nombres,
-        vacante=vacante.titulo,
-    )
-
-    if enviado:
-        postulacion.fecha_correo_rechazo = datetime.now()
-        registrar_evento(postulacion.id, "Se envió el correo de rechazo al candidato")
+    if _notificar_rechazo(postulacion):
         db.session.commit()
         flash('Correo de rechazo enviado al candidato.', 'success')
     else:
-        flash('No se pudo enviar el correo. Intenta de nuevo.', 'error')
+        flash('No se pudo enviar el correo. Revisa que el candidato tenga correo e intenta de nuevo.', 'error')
 
     return redirect(url_for('admin.ver_expediente', id=id))

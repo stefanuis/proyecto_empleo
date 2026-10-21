@@ -1,0 +1,200 @@
+/* =============================================
+   PORTAL DEL CANDIDATO EN CELULAR
+   Solo se carga en usuario/base.html (el admin no la usa). Va después de
+   los estilos de cada página para poder ajustarlos.
+   ============================================= */
+
+@media (max-width: 768px) {
+
+  /* ── Espacios: antes se sumaban 4 márgenes y los campos quedaban angostos ── */
+
+  .contenido {
+    padding: 16px 12px 32px;
+  }
+
+  .contenedor-padre {
+    padding: 0;
+  }
+
+  .contenedor-formulario.form-card {
+    margin: 0 auto;
+    padding: 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .registro-item,
+  .experiencia-fila {
+    padding: 14px 12px;
+  }
+
+  /* ── Campos de formulario ── */
+
+  /* Con letra de menos de 16px el iPhone hace zoom al tocar un campo */
+  .form-control,
+  .vf-select,
+  .vf-buscar input,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="search"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  .form-control,
+  .vf-select {
+    min-height: 44px;
+  }
+
+  /* Botones cómodos para el dedo (mínimo 44px de alto) */
+  .form-botones .btn-primary,
+  .form-botones .btn-secondary,
+  .btn-postular,
+  .btn-completar {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .form-botones {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .form-botones > * {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* "+ Agregar" de las filas repetibles: a todo el ancho */
+  #btn-agregar-curso,
+  #btn-agregar-referencia,
+  #btn-agregar-referencia-personal,
+  #btn-agregar-discapacidad,
+  .experiencia-agregar .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── Tarjeta de progreso del registro ("Paso 4 de 9") ──
+     En columna, la descripción heredaba flex-basis: 220px como ALTO y
+     dejaba un hueco de media pantalla. */
+  .barra-progreso-container {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+
+  .barra-progreso-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    gap: 2px 12px;
+    margin-bottom: 10px;
+  }
+
+  .barra-progreso-header .paso-descripcion {
+    grid-column: 1 / -1;
+    flex: none;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .barra-progreso-header .paso-nombre {
+    font-size: 15px;
+    white-space: normal;
+  }
+
+  /* Puntos de los pasos: área de toque más grande sin cambiar cómo se ven */
+  .pasos-indicador .paso-punto {
+    position: relative;
+  }
+
+  .pasos-indicador .paso-punto::after {
+    content: "";
+    position: absolute;
+    inset: -12px;
+  }
+
+  /* ── Inicio ── */
+
+  .encabezado h1 {
+    font-size: 20px;
+  }
+
+  /* Los 3 indicadores en una fila compacta, no 3 tarjetas grandes apiladas */
+  .kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .kpi-icono {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+
+  .kpi-valor {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .kpi-label {
+    font-size: 11.5px;
+    line-height: 1.35;
+  }
+
+  /* ── Mis postulaciones: buscador a todo el ancho ── */
+
+  .post-encabezado {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .post-buscar {
+    flex-basis: auto;
+  }
+
+  /* ── Registro completo: los 3 botones se salían de la pantalla ── */
+
+  .botones-exito {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .botones-exito > * {
+    justify-content: center;
+    min-height: 44px;
+    text-align: center;
+  }
+
+  /* ── Detalle de vacante: el botón de postular siempre a mano ── */
+
+  .vacante-volver-contenedor {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  /* El logo ya identifica el portal; el título se cortaba ("Portal de Empl…") */
+  .navbar-titulo {
+    display: none;
+  }
+
+  .kpi-icono {
+    display: none;
+  }
+}
